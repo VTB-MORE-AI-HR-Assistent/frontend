@@ -1,0 +1,532 @@
+# VTB AI HR Assistant - UI/Design System Documentation
+
+## 🎨 Design Philosophy
+
+VTB AI HR Assistant's design system is built on principles of **modern professionalism**, **trust and reliability**, and **human-centric AI interaction**. This comprehensive guide documents the design patterns, components, and techniques used to create a polished, professional interface for the AI-powered HR platform built with Next.js and React.
+
+## 🎯 Core Design Principles
+
+### 1. **Modern Gradient Design**
+
+- Subtle gradient backgrounds instead of flat colors
+- Creates depth and visual interest without overwhelming
+- Primary gradient: `bg-gradient-to-br from-slate-50 via-white to-blue-50`
+
+### 2. **Card-Based Architecture**
+
+- Content organized in cards with consistent styling
+- Multiple elevation levels using shadows
+- Hover states for interactive feedback
+
+### 3. **VTB Brand Color Palette**
+
+- Primary: VTB Blue (#1B4F8C) - Corporate identity
+- Secondary: Professional Blue (#2563EB to #4F46E5)
+- Success: Green tones (#16A34A)
+- Warning: Amber/Orange (#EA580C)
+- Error: Red/Rose (#DC2626)
+- Neutral: Slate gray scale
+
+### 4. **Strategic White Space**
+
+- 20-30% white space for breathing room
+- Consistent spacing scale (Tailwind's spacing system)
+- Clear content separation
+
+## 🎨 VTB Brand Color System
+
+### Primary Brand Colors
+
+```css
+/* VTB Corporate Colors */
+:root {
+  --vtb-blue: #1b4f8c; /* Primary VTB Blue */
+  --vtb-blue-dark: #143a66; /* Darker variant */
+  --vtb-blue-light: #2563eb; /* Lighter variant */
+  --vtb-sky: #3b82f6; /* Sky blue accent */
+  --vtb-indigo: #4f46e5; /* Indigo accent */
+}
+
+/* Gradient Combinations */
+.vtb-gradient {
+  background: linear-gradient(135deg, #1b4f8c 0%, #2563eb 100%);
+}
+
+.primary-gradient {
+  @apply bg-gradient-to-r from-[#1B4F8C] to-[#2563EB];
+}
+
+.light-gradient {
+  @apply bg-gradient-to-br from-slate-50 via-white to-blue-50;
+}
+
+.card-gradient {
+  @apply bg-gradient-to-br from-blue-50 to-indigo-50;
+}
+
+.vtb-hover-gradient {
+  background: linear-gradient(135deg, #143a66 0%, #1b4f8c 100%);
+}
+```
+
+### Extended Color Palette
+
+```css
+/* Secondary Colors */
+.secondary-blue {
+  color: #2563eb;
+}
+.secondary-indigo {
+  color: #4f46e5;
+}
+.secondary-sky {
+  color: #3b82f6;
+}
+
+/* Semantic Colors */
+.success {
+  @apply text-green-600 bg-green-50;
+}
+.warning {
+  @apply text-amber-600 bg-amber-50;
+}
+.error {
+  @apply text-red-600 bg-red-50;
+}
+.info {
+  @apply text-blue-600 bg-blue-50;
+}
+
+/* HR-Specific Status Colors */
+.candidate-approved {
+  @apply text-green-700 bg-green-100;
+}
+.candidate-pending {
+  @apply text-amber-700 bg-amber-100;
+}
+.candidate-rejected {
+  @apply text-red-700 bg-red-100;
+}
+.interview-scheduled {
+  @apply text-blue-700 bg-blue-100;
+}
+.interview-completed {
+  @apply text-indigo-700 bg-indigo-100;
+}
+```
+
+### Tailwind Config Extension
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        vtb: {
+          50: "#EFF6FF",
+          100: "#DBEAFE",
+          200: "#BFDBFE",
+          300: "#93C5FD",
+          400: "#60A5FA",
+          500: "#3B82F6",
+          600: "#2563EB",
+          700: "#1B4F8C", // Primary VTB Blue
+          800: "#143A66",
+          900: "#0F2942",
+        },
+      },
+    },
+  },
+};
+```
+
+### Dark Sections
+
+```css
+/* High contrast sections */
+.dark-section {
+  @apply bg-slate-900 text-white;
+}
+
+.dark-card {
+  @apply bg-slate-800 border-slate-700;
+}
+```
+
+## 🏗️ Layout Patterns
+
+### 1. **Fixed Navigation with Backdrop Blur**
+
+```html
+<nav
+  class="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200"
+>
+  <div class="max-w-7xl mx-auto px-6 py-4">
+    <!-- Navigation content -->
+  </div>
+</nav>
+```
+
+### 2. **Hero Sections**
+
+```html
+<section class="pt-32 pb-20 px-6 text-center">
+  <div class="max-w-4xl mx-auto">
+    <!-- Badge -->
+    <div
+      class="inline-flex items-center space-x-2 px-4 py-2 bg-blue-100 rounded-full mb-8"
+    >
+      <svg><!-- Icon --></svg>
+      <span class="text-sm font-medium text-blue-800">Label</span>
+    </div>
+
+    <!-- Headline with gradient text -->
+    <h1
+      class="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight"
+    >
+      Main headline with
+      <span
+        class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700"
+      >
+        gradient accent
+      </span>
+    </h1>
+  </div>
+</section>
+```
+
+### 3. **Feature Cards**
+
+```html
+<div
+  class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-200"
+>
+  <!-- Icon container -->
+  <div
+    class="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center mb-6"
+  >
+    <svg class="w-7 h-7 text-blue-600"><!-- Icon --></svg>
+  </div>
+
+  <h3 class="text-xl font-semibold text-slate-900 mb-3">Feature Title</h3>
+  <p class="text-slate-600">Description text</p>
+</div>
+```
+
+## 🧩 Component Library
+
+### 1. **Buttons**
+
+#### Primary Button (VTB Brand)
+
+```html
+<button
+  class="px-8 py-4 bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white rounded-xl font-semibold hover:shadow-xl hover:from-[#143A66] hover:to-[#1B4F8C] transition-all duration-200 flex items-center space-x-2"
+>
+  <span>Button Text</span>
+  <svg class="w-5 h-5"><!-- Arrow icon --></svg>
+</button>
+```
+
+#### Secondary Button
+
+```html
+<a
+  href="#"
+  class="px-8 py-4 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-all duration-200"
+>
+  Button Text
+</a>
+```
+
+#### Ghost Button
+
+```html
+<a
+  href="#"
+  class="px-5 py-2.5 text-slate-600 hover:text-slate-900 transition-colors"
+>
+  Button Text
+</a>
+```
+
+### 2. **Cards with Floating Background**
+
+```html
+<div class="relative">
+  <!-- Floating background -->
+  <div
+    class="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl transform rotate-3"
+  ></div>
+
+  <!-- Card content -->
+  <div
+    class="relative bg-white rounded-3xl shadow-xl p-8 border border-slate-200"
+  >
+    <!-- Content -->
+  </div>
+</div>
+```
+
+### 3. **Status Badges**
+
+```html
+<!-- Success -->
+<span class="px-3 py-1 bg-green-50 text-green-700 text-sm rounded-full"
+  >Active</span
+>
+
+<!-- Warning -->
+<span class="px-3 py-1 bg-amber-50 text-amber-700 text-sm rounded-full"
+  >Pending</span
+>
+
+<!-- Info -->
+<span class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full"
+  >#engineer</span
+>
+```
+
+### 4. **Avatar Circles**
+
+```html
+<div
+  class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center"
+>
+  <span class="text-white font-bold">JD</span>
+</div>
+```
+
+## 🎭 Visual Effects
+
+### 1. **Hover Transitions**
+
+```css
+/* Standard hover effect */
+.hover-lift {
+  @apply hover:shadow-lg transition-all duration-200;
+}
+
+/* With transform */
+.hover-lift-transform {
+  @apply hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5;
+}
+```
+
+### 2. **Floating Animation**
+
+```css
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+```
+
+### 3. **Gradient Text**
+
+```html
+<span
+  class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700"
+>
+  Gradient Text
+</span>
+```
+
+## 📱 Responsive Design
+
+### Breakpoint Strategy
+
+```css
+/* Mobile First Approach */
+/* Default: Mobile (< 768px) */
+/* md: Tablet (≥ 768px) */
+/* lg: Desktop (≥ 1024px) */
+/* xl: Large Desktop (≥ 1280px) */
+```
+
+### Responsive Grid Examples
+
+```html
+<!-- Feature grid: 1 column mobile, 2 tablet, 3 desktop -->
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+  <!-- Cards -->
+</div>
+
+<!-- Two column layout with responsive behavior -->
+<div class="grid md:grid-cols-2 gap-12 items-center">
+  <!-- Content -->
+</div>
+```
+
+## 🎨 Advanced Design Patterns
+
+### 1. **Mock UI Elements**
+
+Create realistic UI mockups without images:
+
+```html
+<!-- Search Bar Mock -->
+<div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white">
+  <h3 class="text-2xl font-bold mb-4">Advanced Search</h3>
+  <div class="flex items-center space-x-4">
+    <input
+      type="text"
+      placeholder="Search..."
+      class="flex-1 px-6 py-3 rounded-lg text-slate-900 placeholder-slate-400"
+    />
+    <button
+      class="px-6 py-3 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50"
+    >
+      Search
+    </button>
+  </div>
+</div>
+```
+
+### 2. **Progress Indicators**
+
+```html
+<div class="bg-slate-50 rounded-lg p-4 text-sm">
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-slate-600">Upload</span>
+    <span class="text-green-600">✓</span>
+  </div>
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-slate-600">Processing</span>
+    <span class="text-green-600">✓</span>
+  </div>
+  <div class="flex items-center justify-between">
+    <span class="text-slate-600">Ready</span>
+    <span class="text-green-600">✓</span>
+  </div>
+</div>
+```
+
+### 3. **Statistics Cards**
+
+```html
+<div class="bg-blue-50 rounded-lg p-4">
+  <p class="text-2xl font-bold text-blue-600">2,847</p>
+  <p class="text-sm text-slate-600">Total CVs Processed</p>
+</div>
+```
+
+## 🌓 Dark Mode Sections
+
+For emphasis and visual variety:
+
+```html
+<section class="px-6 py-20 bg-slate-900 text-white">
+  <div class="max-w-7xl mx-auto">
+    <!-- Dark theme content -->
+    <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700">
+      <!-- Card content -->
+    </div>
+  </div>
+</section>
+```
+
+## 🎯 Best Practices
+
+### 1. **Consistent Spacing**
+
+- Use Tailwind's spacing scale consistently
+- Common padding: `p-4`, `p-6`, `p-8`
+- Common margins: `mb-4`, `mb-6`, `mb-8`, `mb-16`
+
+### 2. **Typography Hierarchy**
+
+```css
+/* Headings */
+h1 {
+  @apply text-5xl md:text-6xl font-bold;
+}
+h2 {
+  @apply text-3xl font-bold;
+}
+h3 {
+  @apply text-xl font-semibold;
+}
+
+/* Body text */
+p {
+  @apply text-slate-600;
+}
+.text-large {
+  @apply text-xl;
+}
+.text-small {
+  @apply text-sm;
+}
+```
+
+### 3. **Interactive States**
+
+- Always include hover states
+- Use transitions for smooth interactions
+- Provide visual feedback for all actions
+
+### 4. **Accessibility**
+
+- Maintain color contrast ratios
+- Use semantic HTML
+- Include focus states for keyboard navigation
+- Add appropriate ARIA labels
+
+## 🎁 Quick Start Template
+
+Here's a basic page template incorporating all design elements:
+
+```erb
+<% content_for :title, "Page Title" %>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+  <!-- Navigation -->
+  <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+    <!-- Nav content -->
+  </nav>
+
+  <!-- Hero -->
+  <section class="pt-32 pb-20 px-6 text-center">
+    <!-- Hero content -->
+  </section>
+
+  <!-- Features -->
+  <section class="px-6 pb-20">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Feature cards -->
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="px-6 py-20 bg-gradient-to-r from-blue-600 to-indigo-700">
+    <!-- CTA content -->
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-12 px-6">
+    <!-- Footer content -->
+  </footer>
+</div>
+```
+
+## 📚 Resources
+
+- **Tailwind CSS**: https://tailwindcss.com/
+- **Heroicons**: https://heroicons.com/ (for SVG icons)
+- **Color Psychology**: Use colors intentionally to evoke emotions
+- **F-Pattern Design**: Optimize layouts for natural eye movement
+
+This design system creates a modern, professional, and highly usable interface that can be adapted for any Rails 8 project while maintaining consistency and polish throughout the application.
