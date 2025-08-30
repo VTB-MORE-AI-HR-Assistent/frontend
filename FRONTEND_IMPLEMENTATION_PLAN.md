@@ -109,9 +109,9 @@
    export interface User {
      id: string;
      email: string;
-     name: string;
-     role: "HR_ADMIN" | "HR_USER" | "CANDIDATE";
-     avatar?: string;
+     firstName: string;
+     lastName: string;
+     password: string;
    }
 
    export interface Vacancy {
@@ -245,6 +245,7 @@
    ```
 
 3. **Custom Utility Classes**
+
    ```css
    /* app/globals.css - Add after shadcn styles */
    @layer utilities {
