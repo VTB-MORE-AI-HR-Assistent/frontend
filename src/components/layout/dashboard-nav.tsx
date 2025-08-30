@@ -7,11 +7,6 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  BarChart3,
-  Settings,
-  FileText,
-  UserCheck,
-  Building,
   ChevronLeft,
   ChevronRight,
   BookOpen
@@ -39,31 +34,6 @@ const navItems = [
     title: "Interview Prep",
     href: "/interview-prep",
     icon: BookOpen,
-  },
-  {
-    title: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: FileText,
-  },
-  {
-    title: "Team",
-    href: "/team",
-    icon: UserCheck,
-  },
-  {
-    title: "Company",
-    href: "/company",
-    icon: Building,
-  },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
   },
 ]
 
