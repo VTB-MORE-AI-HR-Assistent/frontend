@@ -9,9 +9,9 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, className }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-[#1B4F8C]/5 to-[#2563EB]/5" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-[#2563EB]/5 to-[#4F46E5]/5" />
         <div className="absolute top-1/2 left-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-[#1B4F8C]/3 to-transparent" />
@@ -54,12 +54,12 @@ export function AuthLayout({ children, className }: AuthLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className={cn("relative z-10 flex min-h-[calc(100vh-64px)] items-center justify-center p-6", className)}>
+      <main className={cn("relative z-10 flex flex-1 items-center justify-center p-6", className)}>
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-200 bg-white/50 backdrop-blur-sm">
+      <footer className="relative z-10 mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-sm">
         <div className="container-vtb px-6 py-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-slate-600">
