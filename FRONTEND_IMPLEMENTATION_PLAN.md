@@ -423,30 +423,6 @@
    - Form validation
    - Terms acceptance
 
-3. **Password Reset**
-   - Request reset form
-   - Reset confirmation
-   - New password form
-
-### Day 3-4: Onboarding Flow
-
-**Goal**: Create user onboarding UI
-
-#### Components:
-
-1. **HR Onboarding**
-
-   - Company setup wizard
-   - Team invitation
-   - Department configuration
-   - Welcome tour
-
-2. **Candidate Onboarding**
-   - Profile completion
-   - Resume upload
-   - Skill selection
-   - Preferences setup
-
 ### Day 5: Protected Routes
 
 **Goal**: Implement route protection UI
@@ -456,7 +432,6 @@
 1. **Route Guards**
    - Loading states
    - Redirect logic
-   - Role-based access UI
    - 404/403 pages
 
 **Deliverables**: Complete authentication and onboarding UI
