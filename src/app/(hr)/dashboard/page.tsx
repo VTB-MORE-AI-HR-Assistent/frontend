@@ -27,7 +27,7 @@ import {
 
 export default function DashboardPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-4 pt-6 pb-20 md:pb-6 md:p-8">
       {/* Page Header */}
       <div className="flex items-center justify-between space-y-2">
         <div>

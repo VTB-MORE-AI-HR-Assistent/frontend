@@ -1,5 +1,6 @@
 import { DashboardNav } from "@/components/layout/dashboard-nav"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 
 export default function HRLayout({
   children,
@@ -15,6 +16,7 @@ export default function HRLayout({
           {children}
         </main>
       </div>
+      <MobileBottomNav />
     </div>
   )
 }

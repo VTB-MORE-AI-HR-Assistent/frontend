@@ -19,9 +19,9 @@ import {
   Settings,
   LogOut,
   HelpCircle,
-  Menu
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { MobileNav } from "./mobile-nav"
 
 export function DashboardHeader() {
   const { user, logout } = useAuth()
@@ -36,9 +36,7 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-40 w-full border-b bg-white">
       <div className="flex h-16 items-center gap-4 px-4 md:px-6">
         {/* Mobile Menu */}
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
+        <MobileNav />
 
         {/* Search Bar */}
         <div className="flex-1 flex items-center gap-4">

@@ -43,7 +43,7 @@ export function DashboardNav() {
 
   return (
     <div className={cn(
-      "relative bg-white border-r transition-all duration-300",
+      "hidden md:block relative bg-white border-r transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="sticky top-0 p-4">
