@@ -3,12 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AuthLayout } from "@/components/layout/auth-layout"
+import { AuthSplitLayout } from "@/components/layout/auth-split-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { VTBCard } from "@/components/ui/vtb-card"
 import { ROUTES } from "@/lib/constants"
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
 
@@ -67,155 +66,167 @@ export default function LoginPage() {
     // Mock API call
     setTimeout(() => {
       setIsLoading(false)
-      // Redirect based on email domain (mock logic)
-      if (formData.email.includes("@vtb.com")) {
-        router.push(ROUTES.HR_DASHBOARD)
-      } else {
-        router.push(ROUTES.CANDIDATE_PORTAL)
-      }
+      // Always redirect to HR Dashboard since we only have HR managers
+      router.push(ROUTES.HR_DASHBOARD)
     }, 1500)
   }
 
+  const slides = [
+    {
+      title: "Welcome to the Future of HR",
+      subtitle: "Streamline your recruitment with AI",
+      description: "Transform your hiring process with intelligent automation, data-driven insights, and seamless candidate management."
+    },
+    {
+      title: "Smart Candidate Matching",
+      subtitle: "Find the perfect fit faster",
+      description: "Our AI analyzes skills, experience, and cultural fit to match you with ideal candidates in seconds, not days."
+    },
+    {
+      title: "Data-Driven Decisions",
+      subtitle: "Hire with confidence",
+      description: "Access real-time analytics and insights that help you make informed hiring decisions and improve your recruitment strategy."
+    }
+  ]
+
   return (
-    <AuthLayout>
-      <div className="w-full max-w-[400px]">
-        <VTBCard variant="elevated" className="p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-sm text-slate-600">
-              Sign in to your VTB HR account
-            </p>
-          </div>
+    <AuthSplitLayout slides={slides}>
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            Sign in
+          </h1>
+          <p className="text-sm text-slate-600">
+            Welcome back! Please enter your details.
+          </p>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  className="pl-10"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-[#1B4F8C] hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  className="pl-10 pr-10"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Remember Me */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@vtb.com"
+                className="pl-10 h-11"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={isLoading}
               />
-              <Label
-                htmlFor="remember"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Remember me for 30 days
-              </Label>
             </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="vtbPrimary"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  Sign In
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              )}
-            </Button>
-          </form>
-
-          {/* Sign Up Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
-              Don't have an account?{" "}
-              <Link
-                href={ROUTES.REGISTER}
-                className="font-medium text-[#1B4F8C] hover:underline"
-              >
-                Sign up
-              </Link>
-            </p>
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email}</p>
+            )}
           </div>
-        </VTBCard>
 
-        {/* Help Links */}
-        <div className="mt-4 flex justify-center gap-4 text-xs text-slate-500">
-          <Link href="/help" className="hover:text-slate-700">
-            Need help?
-          </Link>
-          <span>•</span>
-          <Link href="/contact" className="hover:text-slate-700">
-            Contact support
+          {/* Password Field */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-[#1B4F8C] hover:text-[#2563EB] transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                className="pl-10 pr-10 h-11"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Remember Me */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              disabled={isLoading}
+            />
+            <Label
+              htmlFor="remember"
+              className="text-sm font-normal cursor-pointer select-none"
+            >
+              Remember me for 30 days
+            </Label>
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="vtbPrimary"
+            className="w-full h-11"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              <span className="flex items-center">
+                Sign In
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </span>
+            )}
+          </Button>
+        </form>
+
+        {/* Sign Up Link */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-slate-600">
+            Don't have an account?{" "}
+            <Link
+              href={ROUTES.REGISTER}
+              className="font-medium text-[#1B4F8C] hover:text-[#2563EB] transition-colors"
+            >
+              Create your account
+            </Link>
+          </p>
+        </div>
+
+        {/* Help Link */}
+        <div className="mt-6 text-center">
+          <Link 
+            href="/contact" 
+            className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            Need help? Contact support
           </Link>
         </div>
       </div>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }

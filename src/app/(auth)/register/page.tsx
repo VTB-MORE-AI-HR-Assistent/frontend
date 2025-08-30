@@ -3,12 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AuthLayout } from "@/components/layout/auth-layout"
+import { AuthSplitLayout } from "@/components/layout/auth-split-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { VTBCard } from "@/components/ui/vtb-card"
 import { ROUTES } from "@/lib/constants"
 import { 
   Mail, 
@@ -106,243 +105,249 @@ export default function RegisterPage() {
     }, 1500)
   }
 
+  const slides = [
+    {
+      title: "Join Our HR Revolution",
+      subtitle: "Start hiring smarter today",
+      description: "Access powerful AI tools, streamlined workflows, and comprehensive analytics to build your dream team faster than ever."
+    },
+    {
+      title: "Automate Your Workflow",
+      subtitle: "Save hours every week",
+      description: "Let AI handle repetitive tasks like resume screening and interview scheduling while you focus on building relationships."
+    },
+    {
+      title: "Scale Your Hiring",
+      subtitle: "Grow without limits",
+      description: "Whether you're hiring one person or one hundred, our platform scales with your needs and maintains quality at every step."
+    }
+  ]
+
   return (
-    <AuthLayout>
-      <div className="w-full max-w-[450px]">
-        <VTBCard variant="elevated" className="p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">
-              Create Your Account
-            </h1>
-            <p className="text-sm text-slate-600">
-              Join VTB HR Assistant to streamline your recruitment
-            </p>
+    <AuthSplitLayout slides={slides}>
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            Create an account
+          </h1>
+          <p className="text-sm text-slate-600">
+            Start your journey with VTB HR Assistant
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  className="pl-10 h-11"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.firstName && (
+                <p className="text-xs text-red-500">{errors.firstName}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  className="pl-10 h-11"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.lastName && (
+                <p className="text-xs text-red-500">{errors.lastName}</p>
+              )}
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="firstName"
-                    placeholder="John"
-                    className="pl-10"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    disabled={isLoading}
-                  />
-                </div>
-                {errors.firstName && (
-                  <p className="text-xs text-red-500">{errors.firstName}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="lastName"
-                    placeholder="Doe"
-                    className="pl-10"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    disabled={isLoading}
-                  />
-                </div>
-                {errors.lastName && (
-                  <p className="text-xs text-red-500">{errors.lastName}</p>
-                )}
-              </div>
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@vtb.com"
+                className="pl-10 h-11"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={isLoading}
+              />
             </div>
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email}</p>
+            )}
+          </div>
 
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@vtb.com"
-                  className="pl-10"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a strong password"
-                  className="pl-10 pr-10"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
-              )}
-              
-              {/* Password requirements */}
-              {formData.password && (
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Check className={`h-3 w-3 ${passwordStrength.length ? 'text-green-500' : 'text-slate-300'}`} />
-                    <span className={passwordStrength.length ? 'text-green-600' : 'text-slate-500'}>
-                      At least 8 characters
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Check className={`h-3 w-3 ${passwordStrength.uppercase ? 'text-green-500' : 'text-slate-300'}`} />
-                    <span className={passwordStrength.uppercase ? 'text-green-600' : 'text-slate-500'}>
-                      One uppercase letter
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Check className={`h-3 w-3 ${passwordStrength.number ? 'text-green-500' : 'text-slate-300'}`} />
-                    <span className={passwordStrength.number ? 'text-green-600' : 'text-slate-500'}>
-                      One number
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your password"
-                  className="pl-10 pr-10"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="text-xs text-red-500">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {/* Terms Agreement */}
-            <div className="space-y-2">
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                  disabled={isLoading}
-                />
-                <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
-                  I agree to the{" "}
-                  <Link href="/terms" className="text-[#1B4F8C] hover:underline">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="/privacy" className="text-[#1B4F8C] hover:underline">
-                    Privacy Policy
-                  </Link>
-                </Label>
-              </div>
-              {errors.terms && (
-                <p className="text-xs text-red-500 ml-6">{errors.terms}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="vtbPrimary"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  Create Account
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              )}
-            </Button>
-          </form>
-
-          {/* Sign In Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link
-                href={ROUTES.LOGIN}
-                className="font-medium text-[#1B4F8C] hover:underline"
+          {/* Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a strong password"
+                className="pl-10 pr-10 h-11"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
               >
-                Sign in
-              </Link>
-            </p>
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password}</p>
+            )}
+            
+            {/* Password requirements */}
+            {formData.password && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <Check className={`h-3 w-3 ${passwordStrength.length ? 'text-green-500' : 'text-slate-300'}`} />
+                  <span className={passwordStrength.length ? 'text-green-600' : 'text-slate-500'}>
+                    At least 8 characters
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Check className={`h-3 w-3 ${passwordStrength.uppercase ? 'text-green-500' : 'text-slate-300'}`} />
+                  <span className={passwordStrength.uppercase ? 'text-green-600' : 'text-slate-500'}>
+                    One uppercase letter
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Check className={`h-3 w-3 ${passwordStrength.number ? 'text-green-500' : 'text-slate-300'}`} />
+                  <span className={passwordStrength.number ? 'text-green-600' : 'text-slate-500'}>
+                    One number
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-        </VTBCard>
 
-        {/* Help Links */}
-        <div className="mt-4 flex justify-center gap-4 text-xs text-slate-500">
-          <Link href="/help" className="hover:text-slate-700">
-            Need help?
-          </Link>
-          <span>•</span>
-          <Link href="/contact" className="hover:text-slate-700">
-            Contact support
-          </Link>
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                className="pl-10 pr-10 h-11"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          {/* Terms Agreement */}
+          <div className="space-y-2">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                disabled={isLoading}
+                className="mt-1"
+              />
+              <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer select-none">
+                I agree to the{" "}
+                <Link href="/terms" className="text-[#1B4F8C] hover:text-[#2563EB] transition-colors">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-[#1B4F8C] hover:text-[#2563EB] transition-colors">
+                  Privacy Policy
+                </Link>
+              </Label>
+            </div>
+            {errors.terms && (
+              <p className="text-xs text-red-500 ml-6">{errors.terms}</p>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="vtbPrimary"
+            className="w-full h-11"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating account...
+              </span>
+            ) : (
+              <span className="flex items-center">
+                Create Account
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </span>
+            )}
+          </Button>
+        </form>
+
+        {/* Sign In Link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            Already have an account?{" "}
+            <Link
+              href={ROUTES.LOGIN}
+              className="font-medium text-[#1B4F8C] hover:text-[#2563EB] transition-colors"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }
