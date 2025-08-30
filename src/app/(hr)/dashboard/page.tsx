@@ -18,12 +18,13 @@ import {
   Filter,
   Download
 } from "lucide-react"
-import { 
-  ApplicationTrendsChart, 
-  DepartmentDistributionChart,
-  TimeToHireChart,
-  HiringFunnelChart 
-} from "@/components/lazy/lazy-charts"
+// Charts removed per user request
+// import { 
+//   ApplicationTrendsChart, 
+//   DepartmentDistributionChart,
+//   TimeToHireChart,
+//   HiringFunnelChart 
+// } from "@/components/lazy/lazy-charts"
 
 export default function DashboardPage() {
   return (
@@ -127,32 +128,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Application Trends</CardTitle>
-            <CardDescription>
-              Number of applications received over the last 6 months
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ApplicationTrendsChart />
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Department Distribution</CardTitle>
-            <CardDescription>
-              Active vacancies by department
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DepartmentDistributionChart />
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Activity Feed & Additional Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -335,32 +310,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Additional Metrics */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Time to Hire</CardTitle>
-            <CardDescription>
-              Average days to hire by department
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TimeToHireChart />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hiring Funnel</CardTitle>
-            <CardDescription>
-              Candidate progression through stages
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <HiringFunnelChart />
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }
