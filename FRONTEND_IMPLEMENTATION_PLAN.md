@@ -412,14 +412,11 @@
 
    - Email/password form
    - Remember me checkbox
-   - Forgot password link
-   - Social login buttons (UI only)
    - VTB branded design
 
 2. **Register Page**
 
    - Multi-step registration
-   - Role selection (HR/Candidate)
    - Form validation
    - Terms acceptance
 

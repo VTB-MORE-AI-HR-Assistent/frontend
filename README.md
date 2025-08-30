@@ -1,36 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VTB AI HR Assistant
 
-## Getting Started
+A modern, AI-powered HR management platform built with Next.js, TypeScript, and Tailwind CSS. This application streamlines the recruitment process with intelligent automation, data-driven insights, and seamless candidate management.
 
-First, run the development server:
+![VTB HR Assistant](https://img.shields.io/badge/VTB-HR_Assistant-1B4F8C?style=for-the-badge)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)
 
+## 🚀 Features
+
+### Authentication System
+- **Modern Split-Screen Design**: Beautiful authentication pages with animated carousel
+- **Secure Login**: Email/password authentication with validation
+- **Smart Registration**: Streamlined single-page registration flow
+- **Password Strength Indicators**: Real-time password strength feedback
+- **Responsive Design**: Perfect experience on all devices
+
+### UI/UX Highlights
+- **VTB Brand Identity**: Custom color palette and design system
+- **Component Library**: Extended shadcn/ui components with VTB styling
+- **Animated Interfaces**: Smooth transitions and floating elements
+- **Dark/Light Themes**: Support for multiple color modes
+- **Accessibility**: WCAG compliant components
+
+### Technical Features
+- **Type Safety**: Full TypeScript implementation
+- **Mock Data System**: Complete mock data for development
+- **Reusable Components**: Modular component architecture
+- **Performance Optimized**: Fast loading and rendering
+- **SEO Ready**: Meta tags and structured data support
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 15.5](https://nextjs.org/) with App Router
+- **Language**: [TypeScript 5](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS 3.4](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Forms**: [React Hook Form](https://react-hook-form.com/)
+- **Tables**: [TanStack Table](https://tanstack.com/table)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Date Handling**: [date-fns](https://date-fns.org/)
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 18.18.0 or higher
+- npm or yarn package manager
+
+### Setup Instructions
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/vtb-ai-hr-assistant.git
+cd vtb-ai-hr-assistant/my-app
+```
+
+2. **Install dependencies**
+```bash
+npm install
+# or
+yarn install
+```
+
+3. **Run the development server**
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. **Open your browser**
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+my-app/
+├── src/
+│   ├── app/                  # Next.js app router pages
+│   │   ├── (auth)/           # Authentication pages
+│   │   │   ├── login/        # Login page
+│   │   │   └── register/     # Registration page
+│   │   ├── (hr)/            # HR dashboard pages (coming soon)
+│   │   ├── (candidate)/     # Candidate portal pages (coming soon)
+│   │   └── globals.css      # Global styles
+│   │
+│   ├── components/           # React components
+│   │   ├── ui/              # Base UI components (shadcn/ui)
+│   │   │   ├── button.tsx   # Extended button with VTB variants
+│   │   │   ├── vtb-card.tsx # Custom VTB card components
+│   │   │   └── ...          # Other UI components
+│   │   ├── features/        # Feature-specific components
+│   │   │   ├── status-badge.tsx
+│   │   │   └── data-table.tsx
+│   │   └── layout/          # Layout components
+│   │       ├── auth-split-layout.tsx  # Split-screen auth layout
+│   │       ├── navigation.tsx
+│   │       ├── sidebar.tsx
+│   │       └── dashboard-layout.tsx
+│   │
+│   ├── lib/                 # Utility functions
+│   │   ├── constants.ts     # App constants and routes
+│   │   ├── mock-data.ts     # Mock data for development
+│   │   └── utils.ts         # Helper functions
+│   │
+│   └── types/               # TypeScript type definitions
+│       └── index.ts         # Shared interfaces
+│
+├── public/                  # Static assets
+├── ai_docs/                # Documentation
+│   └── documentation/      # Implementation logs
+└── package.json           # Project dependencies
+```
 
-## Learn More
+## 🎨 Design System
 
-To learn more about Next.js, take a look at the following resources:
+### Color Palette
+- **Primary Blue**: `#1B4F8C` - VTB brand color
+- **Secondary Blue**: `#2563EB` - Accent blue
+- **Indigo**: `#4F46E5` - Supporting color
+- **Gradients**: Linear gradients combining brand colors
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Component Variants
+- **Buttons**: vtbPrimary, vtbSecondary, vtbGhost, vtbSuccess, vtbDanger
+- **Cards**: default, gradient, dark, elevated, outline
+- **Badges**: Status-specific colors and styles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚦 Available Scripts
 
-## Deploy on Vercel
+```bash
+# Development
+npm run dev          # Start development server
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Production
+npm run build        # Build for production
+npm run start        # Start production server
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Code Quality
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript compiler check
+```
+
+## 📱 Pages Overview
+
+### Authentication Pages
+- **`/login`** - Modern split-screen login with carousel
+- **`/register`** - Streamlined registration for HR managers
+
+### Coming Soon
+- **HR Dashboard** - Main dashboard for HR managers
+- **Candidate Management** - View and manage candidates
+- **Job Postings** - Create and manage job vacancies
+- **Analytics** - Recruitment metrics and insights
+- **Interview Scheduling** - AI-powered scheduling system
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env.local` file in the root directory:
+
+```env
+# Add your environment variables here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Tailwind Configuration
+The project uses Tailwind CSS v3 with custom VTB design tokens. Configuration can be found in `tailwind.config.ts`.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is proprietary and confidential. All rights reserved by VTB Bank.
+
+## 🙏 Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons by [Lucide](https://lucide.dev/)
+- Design inspiration from modern authentication patterns
+
+## 📞 Contact
+
+For questions or support, please contact the VTB HR Development Team.
+
+---
+
+**Built with ❤️ by VTB Bank Development Team**
