@@ -7,14 +7,14 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  Calendar,
   BarChart3,
   Settings,
   FileText,
   UserCheck,
   Building,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  BookOpen
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -36,9 +36,9 @@ const navItems = [
     icon: Users,
   },
   {
-    title: "Interviews",
-    href: "/interviews",
-    icon: Calendar,
+    title: "Interview Prep",
+    href: "/interview-prep",
+    icon: BookOpen,
   },
   {
     title: "Analytics",
