@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AuthSplitLayout } from "@/components/layout/auth-split-layout"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +22,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -99,8 +101,15 @@ export default function RegisterPage() {
     
     // Mock API call
     setTimeout(() => {
+      // Use the auth context login method (auto-login after registration)
+      login({
+        id: '1',
+        email: formData.email,
+        name: `${formData.firstName} ${formData.lastName}`,
+        role: 'hr_manager'
+      })
       setIsLoading(false)
-      // Redirect to HR Dashboard after registration
+      // The route guard will handle the redirect
       router.push(ROUTES.HR_DASHBOARD)
     }, 1500)
   }
