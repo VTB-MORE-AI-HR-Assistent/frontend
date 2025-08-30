@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs" // Will be used in future updates
 import { 
   Users, 
   Briefcase, 
@@ -11,9 +11,9 @@ import {
   TrendingUp,
   ArrowUp,
   ArrowDown,
-  Clock,
+  // Clock, // Will be used in future updates
   CheckCircle,
-  AlertCircle,
+  // AlertCircle, // Will be used in future updates
   MoreHorizontal,
   Filter,
   Download
@@ -23,7 +23,7 @@ import {
   DepartmentDistributionChart,
   TimeToHireChart,
   HiringFunnelChart 
-} from "@/components/charts/dashboard-charts"
+} from "@/components/lazy/lazy-charts"
 
 export default function DashboardPage() {
   return (
@@ -33,7 +33,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">
-            Welcome back! Here's your recruitment overview
+            Welcome back! Here&apos;s your recruitment overview
           </p>
         </div>
         <div className="flex items-center space-x-2">

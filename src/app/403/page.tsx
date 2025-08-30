@@ -36,7 +36,7 @@ export default function ForbiddenPage() {
           Access Forbidden
         </h2>
         <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto">
-          You don't have permission to access this page. Please contact your administrator if you believe this is an error.
+          You don&apos;t have permission to access this page. Please contact your administrator if you believe this is an error.
         </p>
 
         {/* Permission Info Box */}

@@ -229,7 +229,7 @@ export default function CandidatePipelinePage() {
   const [candidatesByStage, setCandidatesByStage] = useState(mockCandidatesByStage)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDepartment, setFilterDepartment] = useState("all")
-  const [draggedCandidate, setDraggedCandidate] = useState<any>(null)
+  const [draggedCandidate, setDraggedCandidate] = useState<typeof candidatesByStage['new'][0] | null>(null)
   const [draggedFromStage, setDraggedFromStage] = useState<string | null>(null)
   const [dragOverStage, setDragOverStage] = useState<string | null>(null)
 
@@ -258,7 +258,7 @@ export default function CandidatePipelinePage() {
   }
 
   // Drag and Drop handlers
-  const handleDragStart = (e: React.DragEvent, candidate: any, stageId: string) => {
+  const handleDragStart = (e: React.DragEvent, candidate: typeof candidatesByStage['new'][0], stageId: string) => {
     setDraggedCandidate(candidate)
     setDraggedFromStage(stageId)
     e.dataTransfer.effectAllowed = "move"
@@ -293,6 +293,7 @@ export default function CandidatePipelinePage() {
       // Add candidate to new stage
       const toStage = newCandidatesByStage[toStageId as keyof typeof candidatesByStage]
       const updatedCandidate = { ...draggedCandidate, daysInStage: 0 }
+      // @ts-expect-error - Complex union type, candidate structure varies by stage
       toStage.push(updatedCandidate)
       
       setCandidatesByStage(newCandidatesByStage)
@@ -318,9 +319,9 @@ export default function CandidatePipelinePage() {
     )
   }
 
-  const handleAddCandidate = (newCandidate: any) => {
+  const handleAddCandidate = (newCandidate: Record<string, unknown>) => {
     const newCandidatesByStage = { ...candidatesByStage }
-    newCandidatesByStage.new = [newCandidate, ...newCandidatesByStage.new]
+    newCandidatesByStage.new = [newCandidate as typeof candidatesByStage['new'][0], ...newCandidatesByStage.new]
     setCandidatesByStage(newCandidatesByStage)
     console.log("New candidate added to pipeline:", newCandidate)
   }
@@ -548,24 +549,23 @@ export default function CandidatePipelinePage() {
                             <span>{candidate.vacancy}</span>
                             <span>{candidate.daysInStage}d in stage</span>
                           </div>
-
-                          {/* Stage-specific information */}
-                          {stage.id === "interview" && candidate.interviewDate && (
+                          
+                          {stage.id === "interview" && 'interviewDate' in candidate && (candidate as Record<string, unknown>).interviewDate ? (
                             <div className="flex items-center gap-1 text-xs text-blue-600 mt-2">
                               <Calendar className="h-3 w-3" />
-                              <span>Interview: {candidate.interviewType} on {candidate.interviewDate}</span>
+                              <span>Interview: {'interviewType' in candidate ? String((candidate as Record<string, unknown>).interviewType) : ''} on {'interviewDate' in candidate ? String((candidate as Record<string, unknown>).interviewDate) : ''}</span>
                             </div>
-                          )}
-                          {stage.id === "offer" && candidate.offerStatus && (
+                          ) : null}
+                          {stage.id === "offer" && 'offerStatus' in candidate && (candidate as Record<string, unknown>).offerStatus ? (
                             <Badge className="mt-2 text-xs bg-green-100 text-green-800">
-                              Offer {candidate.offerStatus}
+                              Offer {'offerStatus' in candidate ? String((candidate as Record<string, unknown>).offerStatus) : ''}
                             </Badge>
-                          )}
-                          {stage.id === "rejected" && candidate.rejectionReason && (
+                          ) : null}
+                          {stage.id === "rejected" && 'rejectionReason' in candidate && (candidate as Record<string, unknown>).rejectionReason ? (
                             <p className="text-xs text-red-600 mt-2">
-                              Reason: {candidate.rejectionReason}
+                              Reason: {'rejectionReason' in candidate ? String((candidate as Record<string, unknown>).rejectionReason) : ''}
                             </p>
-                          )}
+                          ) : null}
                         </div>
                       </CardContent>
                     </Card>

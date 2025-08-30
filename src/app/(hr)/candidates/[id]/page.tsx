@@ -12,9 +12,9 @@ import {
   MapPin,
   Briefcase,
   GraduationCap,
-  Award,
+  // Award, // Will be used in future updates
   Clock,
-  Star,
+  // Star, // Will be used in future updates
   FileText,
   Video,
   MessageSquare,
@@ -22,17 +22,18 @@ import {
   Trash2,
   MoreVertical,
   ChevronRight,
-  ExternalLink,
+  // ExternalLink, // Will be used in future updates
   CheckCircle,
   XCircle,
   AlertCircle,
   Target,
   TrendingUp,
-  User,
+  // User, // Will be used in future updates
   Building,
   Globe,
   Linkedin,
-  Github
+  Github,
+  Eye
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -73,7 +74,7 @@ const mockCandidate = {
   phone: "+7 (495) 123-45-67",
   location: "Moscow, Russia",
   currentPosition: "Senior Frontend Developer at Tech Corp",
-  experience: "5+ years",
+  experienceLevel: "5+ years",
   education: "MSU, Computer Science, 2018",
   languages: ["Russian (Native)", "English (Fluent)"],
   salary: {
@@ -213,7 +214,7 @@ const mockCandidate = {
 }
 
 export default function CandidateProfilePage() {
-  const params = useParams()
+  // const params = useParams() // Will be used in future updates
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [newNote, setNewNote] = useState("")
@@ -391,7 +392,7 @@ export default function CandidateProfilePage() {
             <CardTitle className="text-sm font-medium">Experience</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{candidate.experience}</div>
+            <div className="text-xl font-bold">{candidate.experienceLevel}</div>
           </CardContent>
         </Card>
         <Card>

@@ -249,8 +249,8 @@ export default function CandidatesPage() {
     setSelectedCandidates([])
   }
 
-  const handleAddCandidate = (newCandidate: any) => {
-    setCandidates([newCandidate, ...candidates])
+  const handleAddCandidate = (newCandidate: Partial<typeof candidates[0]>) => {
+    setCandidates([newCandidate as typeof candidates[0], ...candidates])
     console.log("New candidate added:", newCandidate)
   }
 
@@ -377,7 +377,7 @@ export default function CandidatesPage() {
       </div>
 
       {/* View Mode Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'grid')}>
         <TabsList>
           <TabsTrigger value="list">
             <List className="h-4 w-4 mr-2" />

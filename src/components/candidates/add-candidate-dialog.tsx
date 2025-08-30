@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface AddCandidateDialogProps {
   trigger?: React.ReactNode
-  onAdd?: (candidate: any) => void
+  onAdd?: (candidate: Record<string, unknown>) => void
 }
 
 export function AddCandidateDialog({ trigger, onAdd }: AddCandidateDialogProps) {

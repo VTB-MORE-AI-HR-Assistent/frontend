@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  LineChart,
-  Line,
+  // LineChart, // Will be used in future updates
+  // Line, // Will be used in future updates
   BarChart,
   Bar,
   PieChart,
@@ -104,7 +104,14 @@ export function DepartmentDistributionChart() {
   const RADIAN = Math.PI / 180
   const renderCustomizedLabel = ({
     cx, cy, midAngle, innerRadius, outerRadius, percent
-  }: any) => {
+  }: {
+    cx: number
+    cy: number
+    midAngle: number
+    innerRadius: number
+    outerRadius: number
+    percent: number
+  }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
@@ -144,7 +151,7 @@ export function DepartmentDistributionChart() {
         <Legend 
           verticalAlign="bottom" 
           height={36}
-          formatter={(value: string, entry: any) => (
+          formatter={(value: string, entry: { color: string }) => (
             <span style={{ color: entry.color }}>{value}</span>
           )}
         />

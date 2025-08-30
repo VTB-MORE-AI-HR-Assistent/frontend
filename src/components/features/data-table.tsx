@@ -344,7 +344,7 @@ export function DataTable<TData, TValue>({
 }
 
 // Helper function to create a sortable column header
-export function createSortableHeader(column: any, title: string) {
+export function createSortableHeader(column: { getIsSorted: () => string | false; toggleSorting: () => void }, title: string) {
   return (
     <Button
       variant="ghost"

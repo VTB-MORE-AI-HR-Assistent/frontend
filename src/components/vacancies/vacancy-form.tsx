@@ -48,7 +48,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface VacancyFormProps {
   mode: "create" | "edit"
-  initialData?: any
+  initialData?: {
+    id?: string
+    title: string
+    department: string
+    location: string
+    type: string
+    experience: string
+    salary_min: string
+    salary_max: string
+    description: string
+    requirements: string[]
+    responsibilities: string[]
+    benefits: string[]
+    skills: string[]
+    status?: string
+    urgency?: string
+    remote_options?: string
+    visa_sponsorship?: string
+  }
 }
 
 export default function VacancyForm({ mode, initialData }: VacancyFormProps) {
@@ -77,7 +95,7 @@ export default function VacancyForm({ mode, initialData }: VacancyFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -159,7 +177,7 @@ export default function VacancyForm({ mode, initialData }: VacancyFormProps) {
 
   const handleSaveAsDraft = () => {
     setFormData(prev => ({ ...prev, status: "draft" }))
-    handleSubmit(new Event('submit') as any)
+    handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>)
   }
 
   return (

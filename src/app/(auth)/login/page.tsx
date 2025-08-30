@@ -13,7 +13,7 @@ import { ROUTES } from "@/lib/constants"
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
 
 export default function LoginPage() {
-  const router = useRouter()
+  // const router = useRouter() // Temporarily commented, will be used for future navigation
   const { login } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -210,7 +210,7 @@ export default function LoginPage() {
         {/* Sign Up Link */}
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href={ROUTES.REGISTER}
               className="font-medium text-[#1B4F8C] hover:text-[#2563EB] transition-colors"
