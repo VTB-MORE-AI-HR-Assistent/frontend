@@ -499,7 +499,6 @@
 3. **Bulk Operations**
    - Mass email
    - Status updates
-   - Export to CSV
 
 **Deliverables**: Complete HR dashboard with all management features
 
@@ -521,25 +520,20 @@
    - Document uploads
 
 2. **Job Browser**
+
    - Job cards with match %
    - Advanced filters
    - Saved searches
    - Job alerts setup
 
-### Day 3-4: Application Management
-
-**Goal**: Application tracking UI
-
-#### Features:
-
-1. **My Applications**
+3. **My Applications**
 
    - Application status cards
    - Timeline view
    - Withdrawal option
    - Reapply functionality
 
-2. **Application Flow**
+4. **Application Flow**
    - Job detail view
    - Quick apply
    - Cover letter builder
