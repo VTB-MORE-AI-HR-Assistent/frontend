@@ -1,8 +1,8 @@
 "use client"
 
 import React from "react"
-import VacancyForm from "@/components/vacancies/vacancy-form"
+import VacancyFormWithImport from "@/components/vacancies/vacancy-form-with-import"
 
 export default function NewVacancyPage() {
-  return <VacancyForm mode="create" />
+  return <VacancyFormWithImport mode="create" />
 }
