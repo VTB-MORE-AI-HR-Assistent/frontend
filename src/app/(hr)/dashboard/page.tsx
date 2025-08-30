@@ -1,313 +1,334 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs" // Will be used in future updates
+import { Badge } from "@/components/ui/badge"
 import { 
+  Brain,
+  Clock,
   Users, 
-  Briefcase, 
-  Calendar, 
+  Briefcase,
+  ChevronRight,
+  Calendar,
+  FileText,
   TrendingUp,
-  ArrowUp,
-  ArrowDown,
-  // Clock, // Will be used in future updates
+  Bell,
+  Star,
+  AlertCircle,
   CheckCircle,
-  // AlertCircle, // Will be used in future updates
-  MoreHorizontal,
-  Filter,
-  Download
+  ArrowRight,
+  Plus,
+  Search,
+  UserPlus,
+  FileSearch,
+  MessageSquare,
+  Sparkles
 } from "lucide-react"
-// Charts removed per user request
-// import { 
-//   ApplicationTrendsChart, 
-//   DepartmentDistributionChart,
-//   TimeToHireChart,
-//   HiringFunnelChart 
-// } from "@/components/lazy/lazy-charts"
 
 export default function DashboardPage() {
+  // Mock data - in real app would come from backend
+  const quickStats = {
+    openPositions: 12,
+    totalCandidates: 347,
+    interviewsToday: 3,
+    pendingReviews: 18
+  }
+
+  const recentActivity = [
+    {
+      id: 1,
+      type: "new_candidate",
+      message: "New application for Senior Developer",
+      name: "Maria Petrova",
+      time: "5 minutes ago",
+      icon: UserPlus,
+      color: "text-blue-600"
+    },
+    {
+      id: 2,
+      type: "interview",
+      message: "Interview scheduled for tomorrow",
+      name: "Alexander Smirnov - Product Manager",
+      time: "1 hour ago",
+      icon: Calendar,
+      color: "text-green-600"
+    },
+    {
+      id: 3,
+      type: "ai_match",
+      message: "AI found 5 matches for Backend Developer",
+      name: "Review matches",
+      time: "2 hours ago",
+      icon: Sparkles,
+      color: "text-purple-600"
+    },
+    {
+      id: 4,
+      type: "feedback",
+      message: "Interview feedback received",
+      name: "Elena Kozlova passed technical round",
+      time: "3 hours ago",
+      icon: MessageSquare,
+      color: "text-amber-600"
+    }
+  ]
+
+  const todayTasks = [
+    {
+      id: 1,
+      time: "10:00 AM",
+      title: "Interview with Ivan Petrov",
+      role: "Frontend Developer",
+      type: "Technical Interview"
+    },
+    {
+      id: 2,
+      time: "2:00 PM",
+      title: "Review AI matches",
+      role: "Data Scientist position",
+      type: "15 new candidates"
+    },
+    {
+      id: 3,
+      time: "4:00 PM",
+      title: "Team sync",
+      role: "Weekly hiring review",
+      type: "Meeting"
+    }
+  ]
+
+  const topVacancies = [
+    { id: 1, title: "Senior React Developer", candidates: 45, new: 12, urgent: true },
+    { id: 2, title: "Product Manager", candidates: 23, new: 5, urgent: false },
+    { id: 3, title: "DevOps Engineer", candidates: 31, new: 8, urgent: false },
+    { id: 4, title: "QA Automation Engineer", candidates: 18, new: 3, urgent: true }
+  ]
+
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 pb-20 md:pb-6 md:p-8">
-      {/* Page Header */}
-      <div className="flex items-center justify-between space-y-2">
+    <div className="flex-1 space-y-6 p-4 pt-6 pb-20 md:pb-6 md:p-8">
+      {/* Welcome Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, John
+          </h1>
           <p className="text-muted-foreground">
-            Welcome back! Here&apos;s your recruitment overview
+            Here's what's happening with your recruitment today
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Filter
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Today</p>
+          <p className="font-semibold">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Vacancies Card */}
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Vacancies
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 inline-flex items-center">
-                <ArrowUp className="h-3 w-3 mr-1" />
-                12%
-              </span>{" "}
-              from last month
-            </p>
+            <div className="text-2xl font-bold">{quickStats.openPositions}</div>
+            <p className="text-xs text-muted-foreground">3 urgent to fill</p>
           </CardContent>
         </Card>
 
-        {/* Active Candidates Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Candidates
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Candidates</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">573</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 inline-flex items-center">
-                <ArrowUp className="h-3 w-3 mr-1" />
-                28%
-              </span>{" "}
-              from last month
-            </p>
+            <div className="text-2xl font-bold">{quickStats.totalCandidates}</div>
+            <p className="text-xs text-muted-foreground">+23 this week</p>
           </CardContent>
         </Card>
 
-        {/* Scheduled Interviews Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Scheduled Interviews
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Interviews</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              Next 7 days
-            </p>
+            <div className="text-2xl font-bold">{quickStats.interviewsToday}</div>
+            <p className="text-xs text-muted-foreground">Next at 10:00 AM</p>
           </CardContent>
         </Card>
 
-        {/* Hiring Rate Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Hiring Rate
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">68%</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-red-600 inline-flex items-center">
-                <ArrowDown className="h-3 w-3 mr-1" />
-                5%
-              </span>{" "}
-              from last month
-            </p>
+            <div className="text-2xl font-bold">{quickStats.pendingReviews}</div>
+            <p className="text-xs text-muted-foreground">AI processed</p>
           </CardContent>
         </Card>
       </div>
 
-
-      {/* Activity Feed & Additional Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Activity Feed */}
-        <Card className="col-span-4">
+      {/* Main Content Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Today's Schedule */}
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest updates from your recruitment pipeline
-            </CardDescription>
+            <CardTitle className="flex items-center justify-between">
+              <span>Today's Schedule</span>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Activity Item 1 */}
-              <div className="flex items-start space-x-4">
-                <div className="rounded-full bg-blue-100 p-2">
-                  <Users className="h-4 w-4 text-[#1B4F8C]" />
+              {todayTasks.map((task) => (
+                <div key={task.id} className="flex items-start space-x-3">
+                  <div className="text-xs font-medium text-muted-foreground w-16 pt-1">
+                    {task.time}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">{task.role}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {task.type}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    New application received
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Ivan Petrov applied for Senior Frontend Developer
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    2 minutes ago
-                  </p>
-                </div>
-              </div>
-
-              {/* Activity Item 2 */}
-              <div className="flex items-start space-x-4">
-                <div className="rounded-full bg-green-100 p-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Interview completed
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Maria Ivanova completed technical interview
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    1 hour ago
-                  </p>
-                </div>
-              </div>
-
-              {/* Activity Item 3 */}
-              <div className="flex items-start space-x-4">
-                <div className="rounded-full bg-amber-100 p-2">
-                  <Calendar className="h-4 w-4 text-amber-600" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Interview scheduled
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Alexander Smirnov scheduled for tomorrow at 10:00 AM
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    3 hours ago
-                  </p>
-                </div>
-              </div>
-
-              {/* Activity Item 4 */}
-              <div className="flex items-start space-x-4">
-                <div className="rounded-full bg-purple-100 p-2">
-                  <Briefcase className="h-4 w-4 text-purple-600" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    New vacancy posted
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Backend Developer position opened in Engineering
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    5 hours ago
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
+            <Button variant="outline" className="w-full mt-4" size="sm">
+              View full calendar
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Upcoming Interviews */}
-        <Card className="col-span-3">
+        {/* Recent Activity */}
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Upcoming Interviews</CardTitle>
-            <CardDescription>
-              Next scheduled interviews
-            </CardDescription>
+            <CardTitle className="flex items-center justify-between">
+              <span>Recent Activity</span>
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Interview 1 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                    <span className="text-sm font-medium">AS</span>
+              {recentActivity.map((activity) => {
+                const Icon = activity.icon
+                return (
+                  <div key={activity.id} className="flex items-start space-x-3">
+                    <div className={`mt-1 ${activity.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm">{activity.message}</p>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {activity.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.time}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      Alexander Smirnov
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Tomorrow, 10:00 AM
-                    </p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Interview 2 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                    <span className="text-sm font-medium">EK</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      Elena Kozlova
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Tomorrow, 2:00 PM
-                    </p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Interview 3 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                    <span className="text-sm font-medium">DM</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      Dmitry Mikhailov
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Dec 3, 11:00 AM
-                    </p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Interview 4 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                    <span className="text-sm font-medium">OL</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      Olga Lebedeva
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Dec 3, 3:00 PM
-                    </p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
+                )
+              })}
             </div>
+            <Button variant="outline" className="w-full mt-4" size="sm">
+              View all activity
+            </Button>
           </CardContent>
         </Card>
+
+        {/* Top Vacancies */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Active Vacancies</span>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topVacancies.map((vacancy) => (
+                <div key={vacancy.id} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{vacancy.title}</p>
+                      {vacancy.urgent && (
+                        <Badge variant="destructive" className="text-xs">
+                          Urgent
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {vacancy.candidates} candidates · {vacancy.new} new
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Link href="/vacancies">
+              <Button variant="outline" className="w-full mt-4" size="sm">
+                Manage all vacancies
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Link href="/vacancies/new">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <Plus className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">Post New Job</p>
+                <p className="text-xs text-muted-foreground">Create vacancy</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/candidates">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <Search className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">Search Candidates</p>
+                <p className="text-xs text-muted-foreground">Browse database</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/candidates/pipeline">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <TrendingUp className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">View Pipeline</p>
+                <p className="text-xs text-muted-foreground">Track progress</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/interview-prep">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <Brain className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">AI Assistant</p>
+                <p className="text-xs text-muted-foreground">Get AI help</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
     </div>
