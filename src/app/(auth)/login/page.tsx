@@ -66,17 +66,11 @@ export default function LoginPage() {
     setIsLoading(true)
     
     // Mock API call
-    setTimeout(() => {
+    setTimeout(async () => {
       // Use the auth context login method
-      login({
-        id: '1',
-        email: formData.email,
-        name: 'HR Manager',
-        role: 'hr_manager'
-      })
+      await login(formData.email, formData.password)
       setIsLoading(false)
-      // The route guard will handle the redirect
-      router.push(ROUTES.HR_DASHBOARD)
+      // The auth context will handle the redirect
     }, 1500)
   }
 

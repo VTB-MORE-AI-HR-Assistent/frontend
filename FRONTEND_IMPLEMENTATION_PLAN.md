@@ -450,17 +450,6 @@
    - Scheduled interviews
    - Hiring funnel
 
-2. **Charts & Graphs**
-
-   - Application trends
-   - Department distribution
-   - Time-to-hire metrics
-
-3. **Activity Feed**
-   - Recent applications
-   - Upcoming interviews
-   - Team activities
-
 ### Day 2-3: Vacancy Management
 
 **Goal**: Complete vacancy CRUD UI

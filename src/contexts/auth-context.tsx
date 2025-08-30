@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { User, UserRole } from '@/types'
+import { User } from '@/types'
 import { ROUTES } from '@/lib/constants'
 
 interface AuthContextType {
@@ -22,7 +22,25 @@ const mockCheckAuth = (): User | null => {
   if (typeof window !== 'undefined') {
     const storedUser = localStorage.getItem('vtb_user')
     if (storedUser) {
-      return JSON.parse(storedUser)
+      try {
+        const parsed = JSON.parse(storedUser)
+        // Clean up any old data with role field
+        const { role, ...cleanUser } = parsed
+        // Return clean user object
+        return {
+          id: cleanUser.id || '1',
+          email: cleanUser.email || '',
+          firstName: cleanUser.firstName || 'John',
+          lastName: cleanUser.lastName || 'Doe',
+          name: cleanUser.name || 'John Doe',
+          createdAt: cleanUser.createdAt ? new Date(cleanUser.createdAt) : new Date(),
+          updatedAt: cleanUser.updatedAt ? new Date(cleanUser.updatedAt) : new Date(),
+        }
+      } catch (e) {
+        // If parsing fails, clear the invalid data
+        localStorage.removeItem('vtb_user')
+        return null
+      }
     }
   }
   return null
@@ -36,6 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check authentication status on mount
   useEffect(() => {
+    // Clear any old data with role field on mount
+    const stored = localStorage.getItem('vtb_user')
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        if (parsed.role !== undefined) {
+          // Old data detected, clear it
+          localStorage.removeItem('vtb_user')
+        }
+      } catch (e) {
+        localStorage.removeItem('vtb_user')
+      }
+    }
     checkAuth()
   }, [])
 
@@ -44,6 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Simulate API call delay
     setTimeout(() => {
       const mockUser = mockCheckAuth()
+      if (mockUser) {
+        // Update localStorage with clean data
+        localStorage.setItem('vtb_user', JSON.stringify(mockUser))
+      }
       setUser(mockUser)
       setIsLoading(false)
     }, 500)
@@ -56,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       firstName: 'John',
       lastName: 'Doe',
-      role: 'HR_MANAGER' as UserRole,
+      name: 'John Doe',
       createdAt: new Date(),
       updatedAt: new Date(),
     }

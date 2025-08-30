@@ -100,17 +100,11 @@ export default function RegisterPage() {
     setIsLoading(true)
     
     // Mock API call
-    setTimeout(() => {
+    setTimeout(async () => {
       // Use the auth context login method (auto-login after registration)
-      login({
-        id: '1',
-        email: formData.email,
-        name: `${formData.firstName} ${formData.lastName}`,
-        role: 'hr_manager'
-      })
+      await login(formData.email, formData.password)
       setIsLoading(false)
-      // The route guard will handle the redirect
-      router.push(ROUTES.HR_DASHBOARD)
+      // The auth context will handle the redirect
     }, 1500)
   }
 
