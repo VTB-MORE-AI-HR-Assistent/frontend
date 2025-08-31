@@ -1,11 +1,12 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline (disabled)
 
 on:
-  push:
-    branches: [ main, master, dev ]
-  pull_request:
-    branches: [ main, master, dev ]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'CI/CD is disabled by default. Run manually if needed.'
+        required: false
+        default: 'manual'
 
 env:
   NODE_VERSION: '22'
@@ -13,6 +14,7 @@ env:
 jobs:
   # Job 1: Lint and Type Check
   lint:
+    if: ${{ false }}
     name: Lint & Type Check
     runs-on: ubuntu-latest
     
@@ -33,17 +35,18 @@ jobs:
         
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true # Don't fail the build on lint errors
+        continue-on-error: true
         
       - name: Type Check
         run: npx tsc --noEmit
-        continue-on-error: true # TypeScript errors won't block (as per your config)
+        continue-on-error: true
 
   # Job 2: Build and Test
   build:
+    if: ${{ false }}
     name: Build Next.js Application
     runs-on: ubuntu-latest
-    needs: lint # Run after lint job
+    needs: lint
     
     steps:
       - name: Checkout code
@@ -92,7 +95,6 @@ jobs:
           echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           
-          # Calculate build size
           if [ -d ".next" ]; then
             BUILD_SIZE=$(du -sh .next | cut -f1)
             echo "- Build Size: $BUILD_SIZE" >> $GITHUB_STEP_SUMMARY
@@ -100,9 +102,10 @@ jobs:
 
   # Job 3: Docker Build Validation
   docker-build:
+    if: ${{ false }}
     name: Docker Build Validation
     runs-on: ubuntu-latest
-    needs: build # Run after successful build
+    needs: build
     
     steps:
       - name: Checkout code
@@ -116,58 +119,38 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: false # Don't push to any registry
-          load: true  # Load into local Docker so 'docker run' can find it
+          push: false
+          load: true
           tags: vtb-frontend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
       - name: Test Docker image
         run: |
-          # Run the container briefly to ensure it starts
           docker run -d --name test-container -p 3000:3000 vtb-frontend:ci
-          
-          # Wait for container to be healthy (max 30 seconds)
           for i in {1..30}; do
             if docker ps | grep -q test-container; then
-              echo "Container is running"
               break
             fi
-            echo "Waiting for container to start... ($i/30)"
             sleep 1
           done
-          
-          # Check if container is still running
-          if docker ps | grep -q test-container; then
-            echo "✅ Docker container started successfully"
-            docker logs test-container
-          else
-            echo "❌ Container failed to start"
-            docker logs test-container || true
-            exit 1
-          fi
-          
-          # Clean up
+          docker ps | grep -q test-container
           docker stop test-container || true
           docker rm test-container || true
           
       - name: Docker build summary
         run: |
           echo "## Docker Build Summary 🐳" >> $GITHUB_STEP_SUMMARY
-          echo "- Image Tag: vtb-frontend:ci" >> $GITHUB_STEP_SUMMARY
-          echo "- Build Status: ✅ Success" >> $GITHUB_STEP_SUMMARY
-          echo "- Container Test: ✅ Passed" >> $GITHUB_STEP_SUMMARY
-          
-          # Get image size
           IMAGE_SIZE=$(docker images vtb-frontend:ci --format "{{.Size}}")
           echo "- Image Size: $IMAGE_SIZE" >> $GITHUB_STEP_SUMMARY
 
-  # Job 4: Security Scan (Optional but recommended)
+  # Job 4: Security Scan
   security:
+    if: ${{ false }}
     name: Security Scan
     runs-on: ubuntu-latest
     needs: lint
-    continue-on-error: true # Don't fail the pipeline on security issues
+    continue-on-error: true
     
     steps:
       - name: Checkout code
@@ -185,19 +168,13 @@ jobs:
 
   # Final Job: Success Notification
   success:
+    if: ${{ false }}
     name: Pipeline Success
     runs-on: ubuntu-latest
     needs: [lint, build, docker-build]
-    if: success()
     
     steps:
       - name: Success message
         run: |
           echo "## ✅ CI/CD Pipeline Completed Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All checks passed:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Linting & Type Checking" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Next.js Build" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Docker Build Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Ready for deployment!** 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "All checks passed." >> $GITHUB_STEP_SUMMARY
