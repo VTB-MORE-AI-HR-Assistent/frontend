@@ -1,230 +1,61 @@
-name: Deploy to Server
+name: Deploy Frontend
 
 on:
-  workflow_dispatch: # Manual trigger
   push:
-    branches: [ main ]
-    
-env:
-  NODE_VERSION: '20'
+    branches: ["main", "master", "dev"]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # Build and prepare for deployment
-  build:
-    name: Build Application
+  deploy:
+    name: Build and Deploy on Remote Server
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Build Next.js
-        run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
-          
-      - name: Build Docker image
-        run: |
-          docker build -t vtb-hr-app:latest .
-          docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
-          
-      - name: Upload Docker image
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: vtb-hr-app.tar.gz
-          retention-days: 1
 
-  # Deploy to server using SSH
-  deploy-ssh:
-    name: Deploy via SSH
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' # Only deploy from main branch
-    
     steps:
-      - name: Download Docker image
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload project to server
+        uses: appleboy/scp-action@v0.1.7
         with:
-          name: docker-image
-          
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.0
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "~/vtb-frontend"
+          overwrite: true
+
+      - name: Build and restart container on server
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
           script: |
-            # Create deployment directory if it doesn't exist
-            mkdir -p ${{ secrets.SERVER_PATH }}
-            cd ${{ secrets.SERVER_PATH }}
-            
-            # Stop existing container if running
-            docker stop vtb-hr-app || true
-            docker rm vtb-hr-app || true
-            
-      - name: Copy Docker image to server
-        uses: appleboy/scp-action@v0.1.5
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "vtb-hr-app.tar.gz"
-          target: "${{ secrets.SERVER_PATH }}"
-          
-      - name: Load and run Docker container
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            cd ${{ secrets.SERVER_PATH }}
-            
-            # Load Docker image
-            docker load < vtb-hr-app.tar.gz
-            
-            # Run new container
+            set -e
+            cd ~/vtb-frontend
+
+            echo "Building Docker image..."
+            DOCKER_BUILDKIT=1 docker build -t vtb-frontend:latest .
+
+            echo "Stopping previous container if exists..."
+            if [ "$(docker ps -q -f name=^vtb-frontend$)" ]; then
+              docker stop vtb-frontend || true
+            fi
+            if [ "$(docker ps -aq -f name=^vtb-frontend$)" ]; then
+              docker rm vtb-frontend || true
+            fi
+
+            echo "Starting new container..."
             docker run -d \
-              --name vtb-hr-app \
-              --restart unless-stopped \
+              --name vtb-frontend \
               -p 3000:3000 \
               -e NODE_ENV=production \
-              vtb-hr-app:latest
-            
-            # Health check
-            sleep 10
-            if docker ps | grep -q vtb-hr-app; then
-              echo "✅ Deployment successful!"
-              docker logs vtb-hr-app --tail 50
-            else
-              echo "❌ Deployment failed!"
-              docker logs vtb-hr-app
-              exit 1
-            fi
-            
-            # Cleanup
-            rm vtb-hr-app.tar.gz
+              -e HOSTNAME=0.0.0.0 \
+              --restart unless-stopped \
+              vtb-frontend:latest
 
-  # Alternative: Deploy using Docker Compose
-  deploy-compose:
-    name: Deploy with Docker Compose
-    runs-on: ubuntu-latest
-    needs: build
-    if: false # Enable by changing to true and disable deploy-ssh
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Create docker-compose.yml
-        run: |
-          cat > docker-compose.prod.yml << EOF
-          version: '3.8'
-          services:
-            app:
-              image: vtb-hr-app:latest
-              container_name: vtb-hr-app
-              ports:
-                - "3000:3000"
-              environment:
-                - NODE_ENV=production
-                - NEXT_TELEMETRY_DISABLED=1
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:3000"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-          EOF
-          
-      - name: Deploy via SSH with Docker Compose
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            cd ${{ secrets.SERVER_PATH }}
-            
-            # Copy docker-compose file
-            cat > docker-compose.yml << 'EOF'
-            ${{ steps.create-compose.outputs.compose_content }}
-            EOF
-            
-            # Pull and run
-            docker-compose down || true
-            docker-compose up -d
-            
-            # Check status
-            docker-compose ps
-
-  # Alternative: Deploy without Docker (direct Node.js)
-  deploy-node:
-    name: Deploy Node.js (No Docker)
-    runs-on: ubuntu-latest
-    needs: build
-    if: false # Enable if you prefer Node.js deployment without Docker
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            # Navigate to app directory
-            cd ${{ secrets.SERVER_PATH }}
-            
-            # Pull latest code
-            git pull origin main
-            
-            # Install dependencies
-            npm ci --production
-            
-            # Build application
-            npm run build
-            
-            # Restart PM2 process (assuming PM2 is installed)
-            pm2 restart vtb-hr-app || pm2 start npm --name "vtb-hr-app" -- start
-            
-            # Save PM2 configuration
-            pm2 save
-            pm2 startup
-
-  # Notification job
-  notify:
-    name: Deployment Notification
-    runs-on: ubuntu-latest
-    needs: [deploy-ssh]
-    if: always()
-    
-    steps:
-      - name: Deployment Status
-        run: |
-          if [ "${{ needs.deploy-ssh.result }}" == "success" ]; then
-            echo "## ✅ Deployment Successful!" >> $GITHUB_STEP_SUMMARY
-            echo "Application deployed to: ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
-            echo "Access at: http://${{ secrets.SERVER_HOST }}:3000" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## ❌ Deployment Failed!" >> $GITHUB_STEP_SUMMARY
-            echo "Check the logs for more details." >> $GITHUB_STEP_SUMMARY
-          fi
+            echo "Deployment completed."

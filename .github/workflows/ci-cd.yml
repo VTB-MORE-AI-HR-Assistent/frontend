@@ -2,13 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, master, dev ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, master, dev ]
   workflow_dispatch: # Allow manual trigger
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   
 jobs:
   # Job 1: Lint and Type Check
@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,7 +29,7 @@ jobs:
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
         
       - name: Run ESLint
         run: npm run lint
@@ -46,6 +48,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,7 +68,7 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
             
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
         
       - name: Build application
         run: npm run build
@@ -113,14 +117,14 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false # Don't push to any registry
-          tags: vtb-hr-app:latest
+          tags: vtb-frontend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
       - name: Test Docker image
         run: |
           # Run the container briefly to ensure it starts
-          docker run -d --name test-container -p 3000:3000 vtb-hr-app:latest
+          docker run -d --name test-container -p 3000:3000 vtb-frontend:ci
           
           # Wait for container to be healthy (max 30 seconds)
           for i in {1..30}; do
@@ -138,7 +142,7 @@ jobs:
             docker logs test-container
           else
             echo "❌ Container failed to start"
-            docker logs test-container
+            docker logs test-container || true
             exit 1
           fi
           
@@ -149,12 +153,12 @@ jobs:
       - name: Docker build summary
         run: |
           echo "## Docker Build Summary 🐳" >> $GITHUB_STEP_SUMMARY
-          echo "- Image Tag: vtb-hr-app:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- Image Tag: vtb-frontend:ci" >> $GITHUB_STEP_SUMMARY
           echo "- Build Status: ✅ Success" >> $GITHUB_STEP_SUMMARY
           echo "- Container Test: ✅ Passed" >> $GITHUB_STEP_SUMMARY
           
           # Get image size
-          IMAGE_SIZE=$(docker images vtb-hr-app:latest --format "{{.Size}}")
+          IMAGE_SIZE=$(docker images vtb-frontend:ci --format "{{.Size}}")
           echo "- Image Size: $IMAGE_SIZE" >> $GITHUB_STEP_SUMMARY
 
   # Job 4: Security Scan (Optional but recommended)
