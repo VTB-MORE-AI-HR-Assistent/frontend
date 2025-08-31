@@ -13,11 +13,12 @@ jobs:
     name: Build and Deploy on Remote Server
     runs-on: ubuntu-latest
     env:
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USER: ${{ secrets.SSH_USER }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
       SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+      SERVER_PATH: ${{ secrets.SERVER_PATH || '~/vtb-frontend' }}
 
     steps:
       - name: Checkout repository
@@ -26,47 +27,49 @@ jobs:
       - name: Verify SSH secrets
         run: |
           echo "Verifying SSH secrets..."
-          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ]; then
-            echo "::error::SSH_HOST or SSH_USER not set"; exit 1; fi
-          if [ -z "${SSH_PRIVATE_KEY}" ] && [ -z "${SSH_PASSWORD}" ]; then
-            echo "::error::Provide SSH_PRIVATE_KEY or SSH_PASSWORD secret"; exit 1; fi
+          if [ -z "${SERVER_HOST}" ] || [ -z "${SERVER_USER}" ]; then
+            echo "::error::SERVER_HOST or SERVER_USER not set"; exit 1; fi
+          if [ -z "${SERVER_SSH_KEY}" ] && [ -z "${SSH_PASSWORD}" ]; then
+            echo "::error::Provide SERVER_SSH_KEY or SSH_PASSWORD secret"; exit 1; fi
+          if [ -z "${SERVER_PATH}" ]; then
+            echo "::error::SERVER_PATH not set"; exit 1; fi
 
       - name: Upload project to server (SSH key)
-        if: env.SSH_PRIVATE_KEY != ''
+        if: env.SERVER_SSH_KEY != ''
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ env.SSH_HOST }}
-          username: ${{ env.SSH_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          port: ${{ env.SSH_PORT }}
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          port: ${{ env.SERVER_PORT }}
           source: "."
-          target: "~/vtb-frontend"
+          target: ${{ env.SERVER_PATH }}
           overwrite: true
 
       - name: Upload project to server (password)
-        if: env.SSH_PRIVATE_KEY == '' && env.SSH_PASSWORD != ''
+        if: env.SERVER_SSH_KEY == '' && env.SSH_PASSWORD != ''
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ env.SSH_HOST }}
-          username: ${{ env.SSH_USER }}
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
           password: ${{ env.SSH_PASSWORD }}
-          port: ${{ env.SSH_PORT }}
+          port: ${{ env.SERVER_PORT }}
           source: "."
-          target: "~/vtb-frontend"
+          target: ${{ env.SERVER_PATH }}
           overwrite: true
 
       - name: Build and restart container on server (SSH key)
-        if: env.SSH_PRIVATE_KEY != ''
+        if: env.SERVER_SSH_KEY != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.SSH_HOST }}
-          username: ${{ env.SSH_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          port: ${{ env.SSH_PORT }}
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          port: ${{ env.SERVER_PORT }}
           script_stop: true
           script: |
             set -e
-            cd ~/vtb-frontend
+            cd ${{ env.SERVER_PATH }}
 
             echo "Building Docker image..."
             DOCKER_BUILDKIT=1 docker build -t vtb-frontend:latest .
@@ -91,17 +94,17 @@ jobs:
             echo "Deployment completed."
 
       - name: Build and restart container on server (password)
-        if: env.SSH_PRIVATE_KEY == '' && env.SSH_PASSWORD != ''
+        if: env.SERVER_SSH_KEY == '' && env.SSH_PASSWORD != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.SSH_HOST }}
-          username: ${{ env.SSH_USER }}
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
           password: ${{ env.SSH_PASSWORD }}
-          port: ${{ env.SSH_PORT }}
+          port: ${{ env.SERVER_PORT }}
           script_stop: true
           script: |
             set -e
-            cd ~/vtb-frontend
+            cd ${{ env.SERVER_PATH }}
 
             echo "Building Docker image..."
             DOCKER_BUILDKIT=1 docker build -t vtb-frontend:latest .
