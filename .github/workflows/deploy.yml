@@ -2,8 +2,8 @@ name: Deploy to Server
 
 on:
   workflow_dispatch: # Manual trigger
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]  # Commented out - deployment only on manual trigger
     
 env:
   NODE_VERSION: '22'
