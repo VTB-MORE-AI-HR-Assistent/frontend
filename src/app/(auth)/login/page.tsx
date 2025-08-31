@@ -1,96 +1,99 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { AuthSplitLayout } from "@/components/layout/auth-split-layout"
-import { useAuth } from "@/contexts/auth-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ROUTES } from "@/lib/constants"
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
+import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AuthSplitLayout } from "@/components/layout/auth-split-layout";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ROUTES } from "@/lib/constants";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   // const router = useRouter() // Temporarily commented, will be used for future navigation
-  const { login } = useAuth()
-  const [showPassword, setShowPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [rememberMe, setRememberMe] = React.useState(false)
+  const { login } = useAuth();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState(false);
 
   // Form state
   const [formData, setFormData] = React.useState({
     email: "",
     password: "",
-  })
+  });
 
   const [errors, setErrors] = React.useState({
     email: "",
     password: "",
-  })
+  });
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     // Clear previous errors
-    setErrors({ email: "", password: "" })
-    
+    setErrors({ email: "", password: "" });
+
     // Basic validation
-    let hasErrors = false
-    const newErrors = { email: "", password: "" }
-    
+    let hasErrors = false;
+    const newErrors = { email: "", password: "" };
+
     if (!formData.email) {
-      newErrors.email = "Email is required"
-      hasErrors = true
+      newErrors.email = "Email is required";
+      hasErrors = true;
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
-      hasErrors = true
+      newErrors.email = "Please enter a valid email";
+      hasErrors = true;
     }
-    
+
     if (!formData.password) {
-      newErrors.password = "Password is required"
-      hasErrors = true
+      newErrors.password = "Password is required";
+      hasErrors = true;
     } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
-      hasErrors = true
+      newErrors.password = "Password must be at least 6 characters";
+      hasErrors = true;
     }
-    
+
     if (hasErrors) {
-      setErrors(newErrors)
-      return
+      setErrors(newErrors);
+      return;
     }
-    
+
     // Simulate login
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     // Mock API call
     setTimeout(async () => {
       // Use the auth context login method
-      await login(formData.email, formData.password)
-      setIsLoading(false)
+      await login(formData.email, formData.password);
+      setIsLoading(false);
       // The auth context will handle the redirect
-    }, 1500)
-  }
+    }, 1500);
+  };
 
   const slides = [
     {
       title: "Welcome to the Future of HR",
       subtitle: "Streamline your recruitment with AI",
-      description: "Transform your hiring process with intelligent automation, data-driven insights, and seamless candidate management."
+      description:
+        "Transform your hiring process with intelligent automation, data-driven insights, and seamless candidate management.",
     },
     {
       title: "Smart Candidate Matching",
       subtitle: "Find the perfect fit faster",
-      description: "Our AI analyzes skills, experience, and cultural fit to match you with ideal candidates in seconds, not days."
+      description:
+        "Our AI analyzes skills, experience, and cultural fit to match you with ideal candidates in seconds, not days.",
     },
     {
       title: "Data-Driven Decisions",
       subtitle: "Hire with confidence",
-      description: "Access real-time analytics and insights that help you make informed hiring decisions and improve your recruitment strategy."
-    }
-  ]
+      description:
+        "Access real-time analytics and insights that help you make informed hiring decisions and improve your recruitment strategy.",
+    },
+  ];
 
   return (
     <AuthSplitLayout slides={slides}>
@@ -98,7 +101,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Sign in
+            Sign in!!!!
           </h1>
           <p className="text-sm text-slate-600">
             Welcome back! Please enter your details.
@@ -118,7 +121,9 @@ export default function LoginPage() {
                 placeholder="name@vtb.com"
                 className="pl-10 h-11"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 disabled={isLoading}
               />
             </div>
@@ -146,7 +151,9 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 className="pl-10 pr-10 h-11"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 disabled={isLoading}
               />
               <button
@@ -192,9 +199,25 @@ export default function LoginPage() {
           >
             {isLoading ? (
               <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Signing in...
               </span>
@@ -222,8 +245,8 @@ export default function LoginPage() {
 
         {/* Help Link */}
         <div className="mt-6 text-center">
-          <Link 
-            href="/contact" 
+          <Link
+            href="/contact"
             className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
           >
             Need help? Contact support
@@ -231,5 +254,5 @@ export default function LoginPage() {
         </div>
       </div>
     </AuthSplitLayout>
-  )
+  );
 }
