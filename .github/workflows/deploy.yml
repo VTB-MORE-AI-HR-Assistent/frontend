@@ -2,8 +2,11 @@ name: Deploy to Server
 
 on:
   workflow_dispatch: # Manual trigger
-  push:
-    branches: [main] # Commented out - deployment only on manual trigger
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]  # Run after CI/CD Pipeline completes
+    types:
+      - completed
+    branches: [main]
 
 env:
   NODE_VERSION: "22"
@@ -13,6 +16,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout code
