@@ -2,41 +2,41 @@ name: Deploy to Server
 
 on:
   workflow_dispatch: # Manual trigger
-  # push:
-  #   branches: [ main ]  # Commented out - deployment only on manual trigger
-    
+  push:
+    branches: [main] # Commented out - deployment only on manual trigger
+
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: "22"
 
 jobs:
   # Build and prepare for deployment
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
+          cache: "npm"
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-        
+
       - name: Build Next.js
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          
+
       - name: Build Docker image
         run: |
           docker build -t vtb-hr-app:latest .
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
-          
+
       - name: Upload Docker image
         uses: actions/upload-artifact@v4
         with:
@@ -50,13 +50,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' # Only deploy from main branch
-    
+
     steps:
       - name: Download Docker image
         uses: actions/download-artifact@v4
         with:
           name: docker-image
-          
+
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -68,11 +68,11 @@ jobs:
             # Create deployment directory if it doesn't exist
             mkdir -p ${{ secrets.SERVER_PATH }}
             cd ${{ secrets.SERVER_PATH }}
-            
+
             # Stop existing container if running
             docker stop vtb-hr-app || true
             docker rm vtb-hr-app || true
-            
+
       - name: Copy Docker image to server
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -82,7 +82,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           source: "vtb-hr-app.tar.gz"
           target: "${{ secrets.SERVER_PATH }}"
-          
+
       - name: Load and run Docker container
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -92,10 +92,10 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             cd ${{ secrets.SERVER_PATH }}
-            
+
             # Load Docker image
             docker load < vtb-hr-app.tar.gz
-            
+
             # Run new container
             docker run -d \
               --name vtb-hr-app \
@@ -103,7 +103,7 @@ jobs:
               -p 3000:3000 \
               -e NODE_ENV=production \
               vtb-hr-app:latest
-            
+
             # Health check
             sleep 10
             if docker ps | grep -q vtb-hr-app; then
@@ -114,7 +114,7 @@ jobs:
               docker logs vtb-hr-app
               exit 1
             fi
-            
+
             # Cleanup
             rm vtb-hr-app.tar.gz
 
@@ -124,11 +124,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: false # Enable by changing to true and disable deploy-ssh
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Create docker-compose.yml
         run: |
           cat > docker-compose.prod.yml << EOF
@@ -149,7 +149,7 @@ jobs:
                 timeout: 10s
                 retries: 3
           EOF
-          
+
       - name: Deploy via SSH with Docker Compose
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -159,16 +159,16 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             cd ${{ secrets.SERVER_PATH }}
-            
+
             # Copy docker-compose file
             cat > docker-compose.yml << 'EOF'
             ${{ steps.create-compose.outputs.compose_content }}
             EOF
-            
+
             # Pull and run
             docker-compose down || true
             docker-compose up -d
-            
+
             # Check status
             docker-compose ps
 
@@ -178,11 +178,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: false # Enable if you prefer Node.js deployment without Docker
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -193,19 +193,19 @@ jobs:
           script: |
             # Navigate to app directory
             cd ${{ secrets.SERVER_PATH }}
-            
+
             # Pull latest code
             git pull origin main
-            
+
             # Install dependencies
             npm ci --production
-            
+
             # Build application
             npm run build
-            
+
             # Restart PM2 process (assuming PM2 is installed)
             pm2 restart vtb-hr-app || pm2 start npm --name "vtb-hr-app" -- start
-            
+
             # Save PM2 configuration
             pm2 save
             pm2 startup
@@ -216,7 +216,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-ssh]
     if: always()
-    
+
     steps:
       - name: Deployment Status
         run: |
