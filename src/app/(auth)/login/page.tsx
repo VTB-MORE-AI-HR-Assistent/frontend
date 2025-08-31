@@ -100,9 +100,7 @@ export default function LoginPage() {
       <div className="w-full">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Sign in!!!!
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Sign in</h1>
           <p className="text-sm text-slate-600">
             Welcome back! Please enter your details.
           </p>
