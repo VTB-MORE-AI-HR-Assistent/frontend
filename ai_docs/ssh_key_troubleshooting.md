@@ -1,6 +1,7 @@
 # SSH Key Troubleshooting Guide
 
 ## Current Error
+
 ```
 ssh.ParsePrivateKey: ssh: no key found
 ssh: handshake failed: ssh: unable to authenticate
@@ -15,11 +16,13 @@ This means the SSH key format is incorrect or the key isn't being recognized.
 The SSH key must include the FULL key with proper line breaks. When adding the secret:
 
 **❌ WRONG:**
+
 ```
 -----BEGIN RSA PRIVATE KEY-----MIIEpAIBAAKCAQEA...all on one line...-----END RSA PRIVATE KEY-----
 ```
 
 **✅ CORRECT:**
+
 ```
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
@@ -51,6 +54,8 @@ ssh your-user@your-server
 
 # Add to authorized_keys
 echo "paste-public-key-here" >> ~/.ssh/authorized_keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDk5sxyjDSmdKDxyvLrVAr2KZQKTdbiT3W+5X+fd0qEy4Z98t8KktdK1WV53H0K0S5sEPVWl+f6RTdokRExy05gvO7VPzErI6vphuPs+J6va/PyqCVviWAt69z7Poy6nkBmLadljGpvo639L4zuugjN10ycYdD8s3pDokDIBicATOhvY6Q51RLgj4mPUlyQf2A2rTNiTysqP2dYoosJFGdLzhXmBQjyxtsnToAIm1EMcnHEvgSPHwpGY5veToo1JLB0IGr8uAMZPtbYRy7a4NAzIGGGlREU/5jECTFnMyHtWTaLF2eR/aifqSGv81mif1657hYtpvdCjtb8P1IvZqBI40QSr7l+ugDzFBlVF7oWu5DoScTK89lrWdybrCAjD0kFzVmUWpRHLkiwUyhsEWx9JvNdVZ31prTEnxPT990Oan85IGy6wcccj5U0xUPNq3qhjfOQZOFm5jeXkMc4sBz5X8UzDG0pvcKgi3mFyao2yZtubUvKYyy4bVAr/xmeHaKjOeqfNE6NDYUAiynLUp8i/d6KDyRI3iY/ndgnKQRwYCZa8D7dfijj7EjCCJmdytFAu04rpwGfbWExMjEqvXMkjxIUhci3isccNCw2PRnNmYx0s47g6617WMMVLd6mhcjF8FgqF3FPKg+2w5nABo4k6sF6JRMxzjmx77/5lrfUhw== alexgreenblat@MacBook-Pro-Alex.local" >> ~/.ssh/authorized_keys
+
 chmod 600 ~/.ssh/authorized_keys
 chmod 700 ~/.ssh
 ```
@@ -67,9 +72,11 @@ chmod 700 ~/.ssh
 ### 5. Test SSH Connection Manually
 
 From your local machine:
+
 ```bash
 # Test with the key
 ssh -i ~/.ssh/github_actions your-user@your-server -p your-port
+ssh -i ~/.ssh/github_actions 5.129.236.219 -p 22
 
 # If this works, the key is correct
 ```
@@ -90,6 +97,7 @@ cat ~/.ssh/github_actions_ed25519.pub
 ```
 
 The ED25519 private key will look like:
+
 ```
 -----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtz
@@ -100,15 +108,17 @@ b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtz
 ### 6. Verify Other Secrets
 
 Make sure these are correct:
+
 - `SERVER_HOST`: Just the IP or domain (no http://, no port)
   - ✅ `157.230.45.123` or `example.com`
   - ❌ `http://157.230.45.123:22`
-  
 - `SERVER_USER`: The SSH username
+
   - ✅ `ubuntu`, `root`, `deploy`
   - ❌ `ubuntu@server`
 
 - `SERVER_PORT`: Just the number
+
   - ✅ `22` or `2222`
   - ❌ `port:22`
 
@@ -137,7 +147,7 @@ jobs:
           # Create key file
           echo "${{ secrets.SERVER_SSH_KEY }}" > key.pem
           chmod 600 key.pem
-          
+
           # Test connection
           ssh -o StrictHostKeyChecking=no \
               -i key.pem \
