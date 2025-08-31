@@ -16,16 +16,12 @@ import {
   Calendar,
   FileText,
   TrendingUp,
-  Bell,
   Star,
   AlertCircle,
   CheckCircle,
   ArrowRight,
   Plus,
   Search,
-  UserPlus,
-  FileSearch,
-  MessageSquare,
   Sparkles
 } from "lucide-react"
 
@@ -48,42 +44,61 @@ export default function DashboardPage() {
     pendingReviews: 18
   }
 
-  const recentActivity = [
+  const topMatchCandidates = [
     {
       id: 1,
-      type: "new_candidate",
-      message: "New application for Senior Developer",
       name: "Maria Petrova",
-      time: "5 minutes ago",
-      icon: UserPlus,
-      color: "text-blue-600"
+      position: "Senior Frontend Developer",
+      matchScore: 95,
+      vacancy: "Senior React Developer",
+      skills: ["React", "TypeScript", "Next.js"],
+      experience: "7 years",
+      status: "new",
+      avatar: null
     },
     {
       id: 2,
-      type: "interview",
-      message: "Interview scheduled for tomorrow",
-      name: "Alexander Smirnov - Product Manager",
-      time: "1 hour ago",
-      icon: Calendar,
-      color: "text-green-600"
+      name: "Alexander Smirnov",
+      position: "Product Manager",
+      matchScore: 92,
+      vacancy: "Product Manager",
+      skills: ["Agile", "Analytics", "Strategy"],
+      experience: "5 years",
+      status: "reviewing",
+      avatar: null
     },
     {
       id: 3,
-      type: "ai_match",
-      message: "AI found 5 matches for Backend Developer",
-      name: "Review matches",
-      time: "2 hours ago",
-      icon: Sparkles,
-      color: "text-purple-600"
+      name: "Elena Kozlova",
+      position: "Backend Developer",
+      matchScore: 89,
+      vacancy: "Backend Developer",
+      skills: ["Node.js", "Python", "MongoDB"],
+      experience: "4 years",
+      status: "interview",
+      avatar: null
     },
     {
       id: 4,
-      type: "feedback",
-      message: "Interview feedback received",
-      name: "Elena Kozlova passed technical round",
-      time: "3 hours ago",
-      icon: MessageSquare,
-      color: "text-amber-600"
+      name: "Ivan Petrov",
+      position: "DevOps Engineer",
+      matchScore: 87,
+      vacancy: "DevOps Engineer",
+      skills: ["Docker", "K8s", "AWS"],
+      experience: "6 years",
+      status: "new",
+      avatar: null
+    },
+    {
+      id: 5,
+      name: "Natalia Volkova",
+      position: "UX/UI Designer",
+      matchScore: 85,
+      vacancy: "UX/UI Designer",
+      skills: ["Figma", "Prototyping", "Research"],
+      experience: "3 years",
+      status: "reviewing",
+      avatar: null
     }
   ]
 
@@ -212,39 +227,86 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Top Match Candidates */}
         <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Recent Activity</span>
-              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span>Top Match Candidates</span>
+              <Sparkles className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
+            <CardDescription>
+              AI-matched candidates with highest compatibility
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-4 flex-1">
-              {recentActivity.map((activity) => {
-                const Icon = activity.icon
-                return (
-                  <div key={activity.id} className="flex items-start space-x-3">
-                    <div className={`mt-1 ${activity.color}`}>
-                      <Icon className="h-4 w-4" />
+            <div className="space-y-3 flex-1">
+              {topMatchCandidates.map((candidate) => (
+                <div key={candidate.id} className="group relative">
+                  <div className="flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
+                    {/* Avatar */}
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-sm">
+                        {candidate.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      {/* Match Score Badge */}
+                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full shadow-sm">
+                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                          candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
+                          candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {candidate.matchScore}%
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm">{activity.message}</p>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {activity.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.time}
-                      </p>
+                    
+                    {/* Candidate Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-sm truncate">{candidate.name}</p>
+                          <p className="text-xs text-muted-foreground">{candidate.position}</p>
+                        </div>
+                        {candidate.status === "new" && (
+                          <Badge className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0">New</Badge>
+                        )}
+                        {candidate.status === "reviewing" && (
+                          <Badge className="bg-yellow-100 text-yellow-700 text-xs px-1.5 py-0">Reviewing</Badge>
+                        )}
+                        {candidate.status === "interview" && (
+                          <Badge className="bg-green-100 text-green-700 text-xs px-1.5 py-0">Interview</Badge>
+                        )}
+                      </div>
+                      
+                      {/* Vacancy Match */}
+                      <div className="flex items-center gap-1 mt-1">
+                        <Briefcase className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{candidate.vacancy}</span>
+                      </div>
+                      
+                      {/* Skills */}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {candidate.skills.slice(0, 3).map((skill, i) => (
+                          <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
                     </div>
+                    
+                    {/* Action Button */}
+                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
-            <Button variant="outline" className="w-full mt-4" size="sm">
-              View all activity
-            </Button>
+            <Link href="/candidates">
+              <Button variant="outline" className="w-full mt-4" size="sm">
+                View all candidates
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
