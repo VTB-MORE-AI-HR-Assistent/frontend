@@ -128,19 +128,8 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
 
   const SidebarContent = () => (
     <>
-      {/* Logo Section */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-        {!isCollapsed && (
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="avatar-vtb w-10 h-10">
-              <span className="text-sm font-bold">VTB</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-900">VTB HR</span>
-              <span className="text-xs text-slate-500">AI Assistant</span>
-            </div>
-          </Link>
-        )}
+      {/* Collapse Button */}
+      <div className="flex h-16 items-center justify-end border-b border-slate-200 px-4">
         <Button
           variant="ghost"
           size="icon"

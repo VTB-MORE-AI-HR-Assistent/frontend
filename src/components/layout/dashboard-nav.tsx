@@ -47,21 +47,8 @@ export function DashboardNav() {
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="sticky top-0 p-4">
-        {/* Logo */}
-        <div className="flex items-center mb-8">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] rounded-lg">
-            <span className="text-white font-bold text-lg">VTB</span>
-          </div>
-          {!collapsed && (
-            <div className="ml-3">
-              <p className="font-semibold text-slate-900">VTB HR</p>
-              <p className="text-xs text-slate-500">Assistant</p>
-            </div>
-          )}
-        </div>
-
         {/* Navigation Items */}
-        <nav className="space-y-1">
+        <nav className="space-y-1 mt-4">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href

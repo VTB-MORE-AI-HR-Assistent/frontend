@@ -58,15 +58,7 @@ export function MobileNav() {
         </SheetTrigger>
         <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
           <SheetHeader className="border-b p-4">
-            <SheetTitle className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] rounded-lg">
-                <span className="text-white font-bold text-lg">VTB</span>
-              </div>
-              <div>
-                <p className="font-semibold text-slate-900">VTB HR</p>
-                <p className="text-xs text-slate-500">Assistant</p>
-              </div>
-            </SheetTitle>
+            <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
           
           <nav className="flex flex-col p-4 space-y-1">

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -34,9 +35,19 @@ export function DashboardHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white">
       <div className="flex h-16 items-center px-4 md:px-6">
-        {/* Left Section - Mobile Menu */}
-        <div className="flex items-center">
+        {/* Left Section - Logo and Mobile Menu */}
+        <div className="flex items-center gap-4">
           <MobileNav />
+          {/* Logo */}
+          <Link href="/" className="hidden md:flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center">
+              <span className="text-sm font-bold text-white">VTB</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-900">VTB HR</span>
+              <span className="text-xs text-slate-500">AI Assistant</span>
+            </div>
+          </Link>
         </div>
 
         {/* Center Section - Search (takes remaining space and centers) */}
