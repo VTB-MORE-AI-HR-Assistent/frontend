@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -10,21 +10,21 @@ RUN apk add --no-cache libc6-compat
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (tolerant to lockfile drift)
+RUN npm install --no-audit --no-fund
 
 # Copy all files
 COPY . .
 
 # Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 # Build the application
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 # Set working directory
 WORKDIR /app
@@ -51,9 +51,9 @@ USER nextjs
 EXPOSE 3000
 
 # Set environment variables
-ENV PORT 3000
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
