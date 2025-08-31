@@ -205,23 +205,23 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-4 flex-1">
+            <div className="space-y-2.5 flex-1">
               {todayTasks.map((task) => (
-                <div key={task.id} className="flex items-start space-x-3">
-                  <div className="text-xs font-medium text-muted-foreground w-16 pt-1">
+                <div key={task.id} className="flex items-start space-x-2">
+                  <div className="text-xs font-medium text-muted-foreground w-14 pt-0">
                     {task.time}
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">{task.title}</p>
-                    <p className="text-xs text-muted-foreground">{task.role}</p>
-                    <Badge variant="outline" className="text-xs">
+                  <div className="flex-1 space-y-0.5">
+                    <p className="text-sm font-medium leading-tight">{task.title}</p>
+                    <p className="text-xs text-muted-foreground leading-tight">{task.role}</p>
+                    <Badge variant="outline" className="text-xs py-0 px-1.5 h-5">
                       {task.type}
                     </Badge>
                   </div>
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4" size="sm">
+            <Button variant="outline" className="w-full mt-3 h-8" size="sm">
               View full calendar
             </Button>
           </CardContent>
@@ -239,18 +239,18 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-3 flex-1">
+            <div className="space-y-2 flex-1">
               {topMatchCandidates.map((candidate) => (
                 <div key={candidate.id} className="group relative">
-                  <div className="flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-2.5 p-2 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
                     {/* Avatar */}
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-xs">
                         {candidate.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       {/* Match Score Badge */}
-                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full shadow-sm">
-                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                      <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full shadow-sm">
+                        <div className={`text-[10px] font-bold px-1 py-0 rounded-full ${
                           candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
                           candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-700'
@@ -264,8 +264,8 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-medium text-sm truncate">{candidate.name}</p>
-                          <p className="text-xs text-muted-foreground">{candidate.position}</p>
+                          <p className="font-medium text-sm truncate leading-tight">{candidate.name}</p>
+                          <p className="text-xs text-muted-foreground leading-tight">{candidate.position}</p>
                         </div>
                         {candidate.status === "new" && (
                           <Badge className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0">New</Badge>
@@ -279,15 +279,15 @@ export default function DashboardPage() {
                       </div>
                       
                       {/* Vacancy Match */}
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-0.5 mt-0.5">
                         <Briefcase className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{candidate.vacancy}</span>
+                        <span className="text-xs text-muted-foreground leading-tight">{candidate.vacancy}</span>
                       </div>
                       
                       {/* Skills */}
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-1">
                         {candidate.skills.slice(0, 3).map((skill, i) => (
-                          <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                          <span key={i} className="inline-flex items-center px-1.5 py-0 rounded text-[10px] font-medium bg-gray-100 text-gray-700 h-4">
                             {skill}
                           </span>
                         ))}
@@ -303,7 +303,7 @@ export default function DashboardPage() {
               ))}
             </div>
             <Link href="/candidates">
-              <Button variant="outline" className="w-full mt-4" size="sm">
+              <Button variant="outline" className="w-full mt-3 h-8" size="sm">
                 View all candidates
               </Button>
             </Link>
@@ -312,37 +312,37 @@ export default function DashboardPage() {
 
         {/* Top Vacancies */}
         <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="flex items-center justify-between text-base">
               <span>Active Vacancies</span>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-3 flex-1">
+          <CardContent className="flex-1 flex flex-col pt-0">
+            <div className="space-y-2 flex-1">
               {topVacancies.map((vacancy) => (
-                <div key={vacancy.id} className="flex items-center justify-between">
+                <div key={vacancy.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{vacancy.title}</p>
+                      <p className="text-sm font-medium leading-tight">{vacancy.title}</p>
                       {vacancy.urgent && (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge variant="destructive" className="text-xs py-0 px-1.5 h-5">
                           Urgent
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground leading-tight">
                       {vacancy.candidates} candidates · {vacancy.new} new
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
             <Link href="/vacancies">
-              <Button variant="outline" className="w-full mt-4" size="sm">
+              <Button variant="outline" className="w-full mt-3 h-8" size="sm">
                 Manage all vacancies
               </Button>
             </Link>
