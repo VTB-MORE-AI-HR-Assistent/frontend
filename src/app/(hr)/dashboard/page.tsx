@@ -182,15 +182,15 @@ export default function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Today's Schedule */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Today's Schedule</span>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-4 flex-1">
               {todayTasks.map((task) => (
                 <div key={task.id} className="flex items-start space-x-3">
                   <div className="text-xs font-medium text-muted-foreground w-16 pt-1">
@@ -213,15 +213,15 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Recent Activity</span>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-4 flex-1">
               {recentActivity.map((activity) => {
                 const Icon = activity.icon
                 return (
@@ -249,15 +249,15 @@ export default function DashboardPage() {
         </Card>
 
         {/* Top Vacancies */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Active Vacancies</span>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-3 flex-1">
               {topVacancies.map((vacancy) => (
                 <div key={vacancy.id} className="flex items-center justify-between">
                   <div className="flex-1">
