@@ -5,7 +5,6 @@ import {
   Filter, 
   X, 
   ChevronDown,
-  Building,
   MapPin,
   DollarSign,
   Briefcase,
@@ -43,13 +42,11 @@ import { Separator } from "@/components/ui/separator"
 export interface VacancyFilters {
   search: string
   status: string[]
-  department: string[]
   location: string[]
   type: string[]
   experience: string[]
   salaryMin: number
   salaryMax: number
-  priority: string[]
 }
 
 interface VacancyFiltersProps {
@@ -61,13 +58,11 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
   const [filters, setFilters] = useState<VacancyFilters>({
     search: "",
     status: [],
-    department: [],
     location: [],
     type: [],
     experience: [],
     salaryMin: 0,
-    salaryMax: 1000000,
-    priority: []
+    salaryMax: 1000000
   })
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0)
@@ -81,16 +76,6 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
     { value: "closed", label: "Closed", color: "bg-red-100 text-red-800" }
   ]
 
-  const departmentOptions = [
-    "Engineering",
-    "Product",
-    "Design",
-    "Marketing",
-    "Sales",
-    "HR",
-    "Finance",
-    "Operations"
-  ]
 
   const locationOptions = [
     "Moscow",
@@ -119,12 +104,6 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
     "10+ years"
   ]
 
-  const priorityOptions = [
-    { value: "low", label: "Low", color: "bg-slate-100 text-slate-800" },
-    { value: "medium", label: "Medium", color: "bg-yellow-100 text-yellow-800" },
-    { value: "high", label: "High", color: "bg-orange-100 text-orange-800" },
-    { value: "urgent", label: "Urgent", color: "bg-red-100 text-red-800" }
-  ]
 
   const updateFilters = (newFilters: Partial<VacancyFilters>) => {
     const updated = { ...filters, ...newFilters }
@@ -135,12 +114,10 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
     let count = 0
     if (updated.search) count++
     if (updated.status.length > 0) count++
-    if (updated.department.length > 0) count++
     if (updated.location.length > 0) count++
     if (updated.type.length > 0) count++
     if (updated.experience.length > 0) count++
     if (updated.salaryMin > 0 || updated.salaryMax < 1000000) count++
-    if (updated.priority.length > 0) count++
     setActiveFiltersCount(count)
   }
 
@@ -250,13 +227,6 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
         />
 
         <QuickFilter
-          icon={Building}
-          label="Department"
-          options={departmentOptions}
-          filterKey="department"
-        />
-
-        <QuickFilter
           icon={MapPin}
           label="Location"
           options={locationOptions}
@@ -349,32 +319,6 @@ export function VacancyFilters({ onFiltersChange, totalResults }: VacancyFilters
                     <span>₽0</span>
                     <span>₽1,000,000+</span>
                   </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Priority Filter */}
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <div className="space-y-2">
-                  {priorityOptions.map((priority) => (
-                    <div key={priority.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={priority.value}
-                        checked={filters.priority.includes(priority.value)}
-                        onCheckedChange={() => toggleArrayFilter("priority", priority.value)}
-                      />
-                      <label
-                        htmlFor={priority.value}
-                        className="flex-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        <Badge variant="outline" className={priority.color}>
-                          {priority.label}
-                        </Badge>
-                      </label>
-                    </div>
-                  ))}
                 </div>
               </div>
 

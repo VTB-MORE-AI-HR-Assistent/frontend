@@ -204,13 +204,11 @@ export default function VacanciesPage() {
   const [filters, setFilters] = useState<FiltersType>({
     search: "",
     status: [],
-    department: [],
     location: [],
     type: [],
     experience: [],
     salaryMin: 0,
-    salaryMax: 1000000,
-    priority: []
+    salaryMax: 1000000
   })
 
   // Simulate data loading
@@ -229,7 +227,6 @@ export default function VacanciesPage() {
         const searchLower = filters.search.toLowerCase()
         const matchesSearch = 
           vacancy.title.toLowerCase().includes(searchLower) ||
-          vacancy.department.toLowerCase().includes(searchLower) ||
           vacancy.location.toLowerCase().includes(searchLower) ||
           vacancy.description.toLowerCase().includes(searchLower)
         if (!matchesSearch) return false
@@ -240,10 +237,6 @@ export default function VacanciesPage() {
         return false
       }
 
-      // Department filter
-      if (filters.department.length > 0 && !filters.department.includes(vacancy.department)) {
-        return false
-      }
 
       // Location filter
       if (filters.location.length > 0 && !filters.location.includes(vacancy.location)) {
@@ -270,10 +263,6 @@ export default function VacanciesPage() {
         }
       }
 
-      // Priority filter
-      if (filters.priority.length > 0 && !filters.priority.includes(vacancy.priority)) {
-        return false
-      }
 
       return true
     })
@@ -314,19 +303,6 @@ export default function VacanciesPage() {
     )
   }
 
-  const getPriorityBadge = (priority: string) => {
-    const colors: Record<string, string> = {
-      urgent: "bg-red-100 text-red-800 border-red-200",
-      high: "bg-orange-100 text-orange-800 border-orange-200",
-      medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      low: "bg-slate-100 text-slate-800 border-slate-200"
-    }
-    return (
-      <Badge className={colors[priority] || ""}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </Badge>
-    )
-  }
 
   const formatSalary = (min?: number, max?: number, currency?: string) => {
     if (!min && !max) return "Not specified"
@@ -361,57 +337,6 @@ export default function VacanciesPage() {
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vacancies</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vacancies.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {vacancies.filter(v => v.status === "active").length} active
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Candidates</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {vacancies.reduce((sum, v) => sum + v.candidates, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Across all vacancies</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled Interviews</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {vacancies.reduce((sum, v) => sum + v.interviews, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">This week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Urgent Positions</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {vacancies.filter(v => v.priority === "high" || v.priority === "urgent").length}
-            </div>
-            <p className="text-xs text-muted-foreground">High priority</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Advanced Filters */}
       <Card>
@@ -494,10 +419,8 @@ export default function VacanciesPage() {
                     />
                   </TableHead>
                   <TableHead>Position</TableHead>
-                  <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
                   <TableHead>Salary</TableHead>
                   <TableHead>Candidates</TableHead>
                   <TableHead>Deadline</TableHead>
@@ -507,7 +430,7 @@ export default function VacanciesPage() {
               <TableBody>
                 {filteredVacancies.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No vacancies found matching your filters
                     </TableCell>
                   </TableRow>
@@ -528,7 +451,6 @@ export default function VacanciesPage() {
                           </div>
                         </Link>
                       </TableCell>
-                      <TableCell>{vacancy.department}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
@@ -536,7 +458,6 @@ export default function VacanciesPage() {
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(vacancy.status)}</TableCell>
-                      <TableCell>{getPriorityBadge(vacancy.priority)}</TableCell>
                       <TableCell>
                         <span className="text-sm">
                           {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
@@ -618,13 +539,12 @@ export default function VacanciesPage() {
                       <Link href={`/vacancies/${vacancy.id}`}>
                         <CardTitle className="hover:underline">{vacancy.title}</CardTitle>
                       </Link>
-                      <CardDescription>{vacancy.department} • {vacancy.location}</CardDescription>
+                      <CardDescription>{vacancy.location}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex gap-2">
                           {getStatusBadge(vacancy.status)}
-                          {getPriorityBadge(vacancy.priority)}
                         </div>
                         <div className="text-sm space-y-1">
                           <div className="flex justify-between">
