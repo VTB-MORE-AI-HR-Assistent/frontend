@@ -140,6 +140,44 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Link href="/vacancies/new">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <Plus className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">Add Vacancy</p>
+                <p className="text-xs text-muted-foreground">Create new job posting</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/candidates/upload">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <FileText className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">Upload Resume</p>
+                <p className="text-xs text-muted-foreground">Import candidate profiles</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/candidates">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center p-6">
+              <Search className="h-5 w-5 mr-3 text-[#1B4F8C]" />
+              <div>
+                <p className="font-medium">Search Candidates</p>
+                <p className="text-xs text-muted-foreground">Browse database</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -248,57 +286,6 @@ export default function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Link href="/vacancies/new">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Plus className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">Post New Job</p>
-                <p className="text-xs text-muted-foreground">Create vacancy</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/candidates">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Search className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">Search Candidates</p>
-                <p className="text-xs text-muted-foreground">Browse database</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/candidates/pipeline">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <TrendingUp className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">View Pipeline</p>
-                <p className="text-xs text-muted-foreground">Track progress</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/interview-prep">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Brain className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">AI Assistant</p>
-                <p className="text-xs text-muted-foreground">Get AI help</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
       </div>
 
     </div>
