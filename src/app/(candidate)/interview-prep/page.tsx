@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { InterviewPrepSkeleton } from "@/components/skeletons/interview-prep-skeleton"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -144,9 +145,22 @@ const interviewTips = {
 }
 
 export default function InterviewPrepPage() {
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedInterview, setSelectedInterview] = useState(scheduledInterviews[0])
   const [activeResourceTab, setActiveResourceTab] = useState("technical")
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isLoading) {
+    return <InterviewPrepSkeleton />
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

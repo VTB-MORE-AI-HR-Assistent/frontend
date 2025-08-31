@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import { CandidatesPageSkeleton } from "@/components/skeletons/candidates-skeleton"
 import { 
   Search, 
   Filter, 
@@ -187,6 +188,7 @@ const mockCandidates = [
 ]
 
 export default function CandidatesPage() {
+  const [isLoading, setIsLoading] = useState(true)
   const [candidates, setCandidates] = useState(mockCandidates)
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -195,6 +197,14 @@ export default function CandidatesPage() {
   const [filterPosition, setFilterPosition] = useState("all")
   const [sortBy, setSortBy] = useState("date")
   const [viewMode, setViewMode] = useState<"list" | "grid" | "pipeline">("list")
+
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Filter and search logic
   const filteredCandidates = candidates.filter(candidate => {
@@ -303,6 +313,10 @@ export default function CandidatesPage() {
         {score}% Match
       </Badge>
     )
+  }
+
+  if (isLoading) {
+    return <CandidatesPageSkeleton />
   }
 
   return (

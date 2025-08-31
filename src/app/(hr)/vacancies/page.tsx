@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
+import { VacanciesPageSkeleton } from "@/components/skeletons/vacancies-skeleton"
 import { 
   Plus, 
   MoreVertical, 
@@ -196,6 +197,7 @@ const mockVacancies = [
 ]
 
 export default function VacanciesPage() {
+  const [isLoading, setIsLoading] = useState(true)
   const [vacancies] = useState(mockVacancies)
   const [selectedVacancies, setSelectedVacancies] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "table">("table")
@@ -210,6 +212,14 @@ export default function VacanciesPage() {
     salaryMax: 1000000,
     priority: []
   })
+
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Filter logic with advanced filters
   const filteredVacancies = useMemo(() => {
@@ -327,6 +337,10 @@ export default function VacanciesPage() {
     if (min) return `From ${formatter.format(min)} ${currency || 'RUB'}`
     if (max) return `Up to ${formatter.format(max)} ${currency || 'RUB'}`
     return "Not specified"
+  }
+
+  if (isLoading) {
+    return <VacanciesPageSkeleton />
   }
 
   return (

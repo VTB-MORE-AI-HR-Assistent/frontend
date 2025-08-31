@@ -1,10 +1,12 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton"
 import { 
   Brain,
   Clock,
@@ -28,6 +30,16 @@ import {
 } from "lucide-react"
 
 export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
   // Mock data - in real app would come from backend
   const quickStats = {
     openPositions: 12,
@@ -106,6 +118,10 @@ export default function DashboardPage() {
     { id: 4, title: "QA Automation Engineer", candidates: 18, new: 3, urgent: true }
   ]
 
+  if (isLoading) {
+    return <DashboardSkeleton />
+  }
+
   return (
     <div className="flex-1 space-y-6 p-4 pt-6 pb-20 md:pb-6 md:p-8">
       {/* Welcome Header */}
@@ -124,52 +140,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{quickStats.openPositions}</div>
-            <p className="text-xs text-muted-foreground">3 urgent to fill</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Candidates</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{quickStats.totalCandidates}</div>
-            <p className="text-xs text-muted-foreground">+23 this week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Interviews</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{quickStats.interviewsToday}</div>
-            <p className="text-xs text-muted-foreground">Next at 10:00 AM</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{quickStats.pendingReviews}</div>
-            <p className="text-xs text-muted-foreground">AI processed</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
