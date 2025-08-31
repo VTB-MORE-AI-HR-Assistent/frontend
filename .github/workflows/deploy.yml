@@ -34,20 +34,9 @@ jobs:
           if [ -z "${SERVER_PATH}" ]; then
             echo "::error::SERVER_PATH not set"; exit 1; fi
 
-      - name: Upload project to server (SSH key)
-        if: env.SERVER_SSH_KEY != ''
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ env.SERVER_HOST }}
-          username: ${{ env.SERVER_USER }}
-          key: ${{ env.SERVER_SSH_KEY }}
-          port: ${{ env.SERVER_PORT }}
-          source: "."
-          target: ${{ env.SERVER_PATH }}
-          overwrite: true
-
+      # Prefer password if provided (more tolerant); fallback to key
       - name: Upload project to server (password)
-        if: env.SERVER_SSH_KEY == '' && env.SSH_PASSWORD != ''
+        if: env.SSH_PASSWORD != ''
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.SERVER_HOST }}
@@ -58,13 +47,25 @@ jobs:
           target: ${{ env.SERVER_PATH }}
           overwrite: true
 
-      - name: Build and restart container on server (SSH key)
-        if: env.SERVER_SSH_KEY != ''
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Upload project to server (SSH key)
+        if: env.SSH_PASSWORD == '' && env.SERVER_SSH_KEY != ''
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ env.SERVER_USER }}
           key: ${{ env.SERVER_SSH_KEY }}
+          port: ${{ env.SERVER_PORT }}
+          source: "."
+          target: ${{ env.SERVER_PATH }}
+          overwrite: true
+
+      - name: Build and restart container on server (password)
+        if: env.SSH_PASSWORD != ''
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          password: ${{ env.SSH_PASSWORD }}
           port: ${{ env.SERVER_PORT }}
           script_stop: true
           script: |
@@ -93,13 +94,13 @@ jobs:
 
             echo "Deployment completed."
 
-      - name: Build and restart container on server (password)
-        if: env.SERVER_SSH_KEY == '' && env.SSH_PASSWORD != ''
+      - name: Build and restart container on server (SSH key)
+        if: env.SSH_PASSWORD == '' && env.SERVER_SSH_KEY != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ env.SERVER_USER }}
-          password: ${{ env.SSH_PASSWORD }}
+          key: ${{ env.SERVER_SSH_KEY }}
           port: ${{ env.SERVER_PORT }}
           script_stop: true
           script: |
