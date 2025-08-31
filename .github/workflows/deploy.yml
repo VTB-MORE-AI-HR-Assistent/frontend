@@ -17,22 +17,81 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Upload project to server
+      - name: Verify SSH secrets
+        run: |
+          echo "Verifying SSH secrets..."
+          if [ -z "${{ secrets.SSH_HOST }}" ] || [ -z "${{ secrets.SSH_USER }}" ]; then
+            echo "::error::SSH_HOST or SSH_USER not set"; exit 1; fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && [ -z "${{ secrets.SSH_PASSWORD }}" ]; then
+            echo "::error::Provide SSH_PRIVATE_KEY or SSH_PASSWORD secret"; exit 1; fi
+
+      - name: Upload project to server (SSH key)
+        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
           source: "."
           target: "~/vtb-frontend"
           overwrite: true
 
-      - name: Build and restart container on server
+      - name: Upload project to server (password)
+        if: ${{ secrets.SSH_PRIVATE_KEY == '' && secrets.SSH_PASSWORD != '' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "."
+          target: "~/vtb-frontend"
+          overwrite: true
+
+      - name: Build and restart container on server (SSH key)
+        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script_stop: true
+          script: |
+            set -e
+            cd ~/vtb-frontend
+
+            echo "Building Docker image..."
+            DOCKER_BUILDKIT=1 docker build -t vtb-frontend:latest .
+
+            echo "Stopping previous container if exists..."
+            if [ "$(docker ps -q -f name=^vtb-frontend$)" ]; then
+              docker stop vtb-frontend || true
+            fi
+            if [ "$(docker ps -aq -f name=^vtb-frontend$)" ]; then
+              docker rm vtb-frontend || true
+            fi
+
+            echo "Starting new container..."
+            docker run -d \
+              --name vtb-frontend \
+              -p 3000:3000 \
+              -e NODE_ENV=production \
+              -e HOSTNAME=0.0.0.0 \
+              --restart unless-stopped \
+              vtb-frontend:latest
+
+            echo "Deployment completed."
+
+      - name: Build and restart container on server (password)
+        if: ${{ secrets.SSH_PRIVATE_KEY == '' && secrets.SSH_PASSWORD != '' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || '22' }}
           script_stop: true
           script: |
             set -e
