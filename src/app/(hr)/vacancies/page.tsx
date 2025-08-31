@@ -1,10 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import Link from "next/link"
 import { 
-  Search, 
-  Filter, 
   Plus, 
   MoreVertical, 
   Eye, 
@@ -13,7 +11,6 @@ import {
   Copy,
   Archive,
   Download,
-  ChevronDown,
   Calendar,
   Users,
   Building,
@@ -23,7 +20,6 @@ import {
   AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Card,
   CardContent,
@@ -39,13 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -56,17 +45,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { VacancyFilters, type VacancyFilters as FiltersType } from "@/components/vacancies/vacancy-filters"
 
 // Mock data for vacancies
 const mockVacancies = [
   {
     id: "1",
     title: "Senior Frontend Developer",
-    department: "IT",
+    department: "Engineering",
     location: "Moscow",
     type: "Full-time",
-    experience: "5+ years",
-    salary: "250,000 - 350,000 RUB",
+    experience: "5-10 years",
+    salaryMin: 250000,
+    salaryMax: 350000,
+    currency: "RUB",
     status: "active",
     priority: "high",
     created: "2024-01-15",
@@ -82,7 +74,9 @@ const mockVacancies = [
     location: "St. Petersburg",
     type: "Full-time",
     experience: "3-5 years",
-    salary: "200,000 - 280,000 RUB",
+    salaryMin: 200000,
+    salaryMax: 280000,
+    currency: "RUB",
     status: "active",
     priority: "medium",
     created: "2024-01-10",
@@ -94,11 +88,13 @@ const mockVacancies = [
   {
     id: "3",
     title: "Backend Developer",
-    department: "IT",
+    department: "Engineering",
     location: "Moscow",
     type: "Full-time",
-    experience: "3+ years",
-    salary: "220,000 - 300,000 RUB",
+    experience: "3-5 years",
+    salaryMin: 220000,
+    salaryMax: 300000,
+    currency: "RUB",
     status: "active",
     priority: "high",
     created: "2024-01-12",
@@ -113,9 +109,11 @@ const mockVacancies = [
     department: "Design",
     location: "Remote",
     type: "Full-time",
-    experience: "2-4 years",
-    salary: "180,000 - 250,000 RUB",
-    status: "paused",
+    experience: "1-2 years",
+    salaryMin: 180000,
+    salaryMax: 250000,
+    currency: "RUB",
+    status: "closed",
     priority: "low",
     created: "2024-01-08",
     deadline: "2024-02-08",
@@ -126,11 +124,13 @@ const mockVacancies = [
   {
     id: "5",
     title: "Data Analyst",
-    department: "Analytics",
+    department: "Product",
     location: "Moscow",
     type: "Full-time",
-    experience: "2+ years",
-    salary: "150,000 - 200,000 RUB",
+    experience: "1-2 years",
+    salaryMin: 150000,
+    salaryMax: 200000,
+    currency: "RUB",
     status: "active",
     priority: "medium",
     created: "2024-01-14",
@@ -142,11 +142,13 @@ const mockVacancies = [
   {
     id: "6",
     title: "DevOps Engineer",
-    department: "IT",
+    department: "Engineering",
     location: "Moscow",
     type: "Full-time",
-    experience: "4+ years",
-    salary: "280,000 - 380,000 RUB",
+    experience: "3-5 years",
+    salaryMin: 280000,
+    salaryMax: 380000,
+    currency: "RUB",
     status: "draft",
     priority: "high",
     created: "2024-01-16",
@@ -154,50 +156,122 @@ const mockVacancies = [
     candidates: 0,
     interviews: 0,
     description: "Looking for a DevOps engineer to improve our infrastructure..."
+  },
+  {
+    id: "7",
+    title: "Marketing Manager",
+    department: "Marketing",
+    location: "Remote",
+    type: "Full-time",
+    experience: "5-10 years",
+    salaryMin: 200000,
+    salaryMax: 300000,
+    currency: "RUB",
+    status: "published",
+    priority: "medium",
+    created: "2024-01-18",
+    deadline: "2024-02-28",
+    candidates: 15,
+    interviews: 2,
+    description: "Lead our marketing initiatives and brand strategy..."
+  },
+  {
+    id: "8",
+    title: "QA Engineer",
+    department: "Engineering",
+    location: "Hybrid",
+    type: "Contract",
+    experience: "1-2 years",
+    salaryMin: 120000,
+    salaryMax: 180000,
+    currency: "RUB",
+    status: "active",
+    priority: "low",
+    created: "2024-01-20",
+    deadline: "2024-03-01",
+    candidates: 18,
+    interviews: 3,
+    description: "Ensure quality of our software products through comprehensive testing..."
   }
 ]
 
 export default function VacanciesPage() {
-  const [vacancies, setVacancies] = useState(mockVacancies)
+  const [vacancies] = useState(mockVacancies)
   const [selectedVacancies, setSelectedVacancies] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterDepartment, setFilterDepartment] = useState("all")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterPriority, setFilterPriority] = useState("all")
-  const [sortBy, setSortBy] = useState("created")
   const [viewMode, setViewMode] = useState<"grid" | "table">("table")
-
-  // Filter and search logic
-  const filteredVacancies = vacancies.filter(vacancy => {
-    const matchesSearch = vacancy.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vacancy.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vacancy.location.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesDepartment = filterDepartment === "all" || vacancy.department === filterDepartment
-    const matchesStatus = filterStatus === "all" || vacancy.status === filterStatus
-    const matchesPriority = filterPriority === "all" || vacancy.priority === filterPriority
-    
-    return matchesSearch && matchesDepartment && matchesStatus && matchesPriority
+  const [filters, setFilters] = useState<FiltersType>({
+    search: "",
+    status: [],
+    department: [],
+    location: [],
+    type: [],
+    experience: [],
+    salaryMin: 0,
+    salaryMax: 1000000,
+    priority: []
   })
 
-  // Sort logic
-  const sortedVacancies = [...filteredVacancies].sort((a, b) => {
-    switch (sortBy) {
-      case "title":
-        return a.title.localeCompare(b.title)
-      case "created":
-        return new Date(b.created).getTime() - new Date(a.created).getTime()
-      case "deadline":
-        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-      case "candidates":
-        return b.candidates - a.candidates
-      default:
-        return 0
-    }
-  })
+  // Filter logic with advanced filters
+  const filteredVacancies = useMemo(() => {
+    return vacancies.filter(vacancy => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase()
+        const matchesSearch = 
+          vacancy.title.toLowerCase().includes(searchLower) ||
+          vacancy.department.toLowerCase().includes(searchLower) ||
+          vacancy.location.toLowerCase().includes(searchLower) ||
+          vacancy.description.toLowerCase().includes(searchLower)
+        if (!matchesSearch) return false
+      }
+
+      // Status filter
+      if (filters.status.length > 0 && !filters.status.includes(vacancy.status)) {
+        return false
+      }
+
+      // Department filter
+      if (filters.department.length > 0 && !filters.department.includes(vacancy.department)) {
+        return false
+      }
+
+      // Location filter
+      if (filters.location.length > 0 && !filters.location.includes(vacancy.location)) {
+        return false
+      }
+
+      // Type filter
+      if (filters.type.length > 0 && !filters.type.includes(vacancy.type)) {
+        return false
+      }
+
+      // Experience filter
+      if (filters.experience.length > 0 && !filters.experience.includes(vacancy.experience)) {
+        return false
+      }
+
+      // Salary filter
+      if (filters.salaryMin > 0 || filters.salaryMax < 1000000) {
+        const vacancyMaxSalary = vacancy.salaryMax || 0
+        const vacancyMinSalary = vacancy.salaryMin || 0
+        
+        if (vacancyMaxSalary < filters.salaryMin || vacancyMinSalary > filters.salaryMax) {
+          return false
+        }
+      }
+
+      // Priority filter
+      if (filters.priority.length > 0 && !filters.priority.includes(vacancy.priority)) {
+        return false
+      }
+
+      return true
+    })
+  }, [vacancies, filters])
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedVacancies(sortedVacancies.map(v => v.id))
+      setSelectedVacancies(filteredVacancies.map(v => v.id))
     } else {
       setSelectedVacancies([])
     }
@@ -213,20 +287,13 @@ export default function VacanciesPage() {
 
   const handleBulkAction = (action: string) => {
     console.log(`Bulk action: ${action} for vacancies:`, selectedVacancies)
-    // Implement bulk actions here
     setSelectedVacancies([])
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-      active: "default",
-      paused: "secondary",
-      draft: "outline",
-      closed: "destructive"
-    }
     const colors: Record<string, string> = {
       active: "bg-green-100 text-green-800 border-green-200",
-      paused: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      published: "bg-blue-100 text-blue-800 border-blue-200",
       draft: "bg-gray-100 text-gray-800 border-gray-200",
       closed: "bg-red-100 text-red-800 border-red-200"
     }
@@ -239,15 +306,27 @@ export default function VacanciesPage() {
 
   const getPriorityBadge = (priority: string) => {
     const colors: Record<string, string> = {
-      high: "bg-red-100 text-red-800 border-red-200",
-      medium: "bg-amber-100 text-amber-800 border-amber-200",
-      low: "bg-blue-100 text-blue-800 border-blue-200"
+      urgent: "bg-red-100 text-red-800 border-red-200",
+      high: "bg-orange-100 text-orange-800 border-orange-200",
+      medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      low: "bg-slate-100 text-slate-800 border-slate-200"
     }
     return (
       <Badge className={colors[priority] || ""}>
         {priority.charAt(0).toUpperCase() + priority.slice(1)}
       </Badge>
     )
+  }
+
+  const formatSalary = (min?: number, max?: number, currency?: string) => {
+    if (!min && !max) return "Not specified"
+    const formatter = new Intl.NumberFormat('ru-RU')
+    if (min && max) {
+      return `${formatter.format(min)} - ${formatter.format(max)} ${currency || 'RUB'}`
+    }
+    if (min) return `From ${formatter.format(min)} ${currency || 'RUB'}`
+    if (max) return `Up to ${formatter.format(max)} ${currency || 'RUB'}`
+    return "Not specified"
   }
 
   return (
@@ -313,101 +392,40 @@ export default function VacanciesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vacancies.filter(v => v.priority === "high").length}
+              {vacancies.filter(v => v.priority === "high" || v.priority === "urgent").length}
             </div>
             <p className="text-xs text-muted-foreground">High priority</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      {/* Advanced Filters */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search vacancies..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger className="w-[150px]">
-                  <Building className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  <SelectItem value="IT">IT</SelectItem>
-                  <SelectItem value="Product">Product</SelectItem>
-                  <SelectItem value="Design">Design</SelectItem>
-                  <SelectItem value="Analytics">Analytics</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created">Date Created</SelectItem>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
-                  <SelectItem value="candidates">Candidates</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "table" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("table")}
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </Button>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </Button>
-              </div>
+          <div className="flex items-center justify-between">
+            <VacancyFilters 
+              onFiltersChange={setFilters} 
+              totalResults={filteredVacancies.length}
+            />
+            <div className="flex gap-2 ml-4">
+              <Button
+                variant={viewMode === "table" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("table")}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -457,7 +475,7 @@ export default function VacanciesPage() {
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedVacancies.length === sortedVacancies.length && sortedVacancies.length > 0}
+                      checked={selectedVacancies.length === filteredVacancies.length && filteredVacancies.length > 0}
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -466,157 +484,86 @@ export default function VacanciesPage() {
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
+                  <TableHead>Salary</TableHead>
                   <TableHead>Candidates</TableHead>
                   <TableHead>Deadline</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedVacancies.map((vacancy) => (
-                  <TableRow key={vacancy.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedVacancies.includes(vacancy.id)}
-                        onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/vacancies/${vacancy.id}`} className="hover:underline">
-                        <div>
-                          <div className="font-medium">{vacancy.title}</div>
-                          <div className="text-sm text-muted-foreground">{vacancy.type} • {vacancy.experience}</div>
-                        </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell>{vacancy.department}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                        {vacancy.location}
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(vacancy.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(vacancy.priority)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{vacancy.candidates}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">
-                          {new Date(vacancy.deadline).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/vacancies/${vacancy.id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/vacancies/${vacancy.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Archive className="mr-2 h-4 w-4" />
-                            Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {filteredVacancies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                      No vacancies found matching your filters
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
-              {sortedVacancies.map((vacancy) => (
-                <Card key={vacancy.id} className="relative">
-                  <div className="absolute top-4 right-4">
-                    <Checkbox
-                      checked={selectedVacancies.includes(vacancy.id)}
-                      onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
-                    />
-                  </div>
-                  <CardHeader>
-                    <Link href={`/vacancies/${vacancy.id}`}>
-                      <CardTitle className="hover:underline">{vacancy.title}</CardTitle>
-                    </Link>
-                    <CardDescription>{vacancy.department} • {vacancy.location}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        {getStatusBadge(vacancy.status)}
-                        {getPriorityBadge(vacancy.priority)}
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Type:</span>
-                          <span>{vacancy.type}</span>
+                ) : (
+                  filteredVacancies.map((vacancy) => (
+                    <TableRow key={vacancy.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedVacancies.includes(vacancy.id)}
+                          onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Link href={`/vacancies/${vacancy.id}`} className="hover:underline">
+                          <div>
+                            <div className="font-medium">{vacancy.title}</div>
+                            <div className="text-sm text-muted-foreground">{vacancy.type} • {vacancy.experience}</div>
+                          </div>
+                        </Link>
+                      </TableCell>
+                      <TableCell>{vacancy.department}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
+                          {vacancy.location}
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Experience:</span>
-                          <span>{vacancy.experience}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Salary:</span>
-                          <span>{vacancy.salary}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between pt-3 border-t">
-                        <div className="flex items-center gap-1">
+                      </TableCell>
+                      <TableCell>{getStatusBadge(vacancy.status)}</TableCell>
+                      <TableCell>{getPriorityBadge(vacancy.priority)}</TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{vacancy.candidates} candidates</span>
+                          <span>{vacancy.candidates}</span>
                         </div>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{vacancy.interviews} interviews</span>
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">
+                            {new Date(vacancy.deadline).toLocaleDateString()}
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex gap-2 pt-3">
-                        <Link href={`/vacancies/${vacancy.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            View
-                          </Button>
-                        </Link>
-                        <Link href={`/vacancies/${vacancy.id}/edit`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            Edit
-                          </Button>
-                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
+                            <Button variant="ghost" size="icon">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <Link href={`/vacancies/${vacancy.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/vacancies/${vacancy.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Copy className="mr-2 h-4 w-4" />
                               Duplicate
@@ -625,17 +572,108 @@ export default function VacanciesPage() {
                               <Archive className="mr-2 h-4 w-4" />
                               Archive
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-red-600">
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
+              {filteredVacancies.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No vacancies found matching your filters
+                </div>
+              ) : (
+                filteredVacancies.map((vacancy) => (
+                  <Card key={vacancy.id} className="relative">
+                    <div className="absolute top-4 right-4">
+                      <Checkbox
+                        checked={selectedVacancies.includes(vacancy.id)}
+                        onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardHeader>
+                      <Link href={`/vacancies/${vacancy.id}`}>
+                        <CardTitle className="hover:underline">{vacancy.title}</CardTitle>
+                      </Link>
+                      <CardDescription>{vacancy.department} • {vacancy.location}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          {getStatusBadge(vacancy.status)}
+                          {getPriorityBadge(vacancy.priority)}
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Type:</span>
+                            <span>{vacancy.type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Experience:</span>
+                            <span>{vacancy.experience}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Salary:</span>
+                            <span className="text-xs">{formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between pt-3 border-t">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{vacancy.candidates} candidates</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{vacancy.interviews} interviews</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-3">
+                          <Link href={`/vacancies/${vacancy.id}`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full">
+                              View
+                            </Button>
+                          </Link>
+                          <Link href={`/vacancies/${vacancy.id}/edit`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full">
+                              Edit
+                            </Button>
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           )}
         </CardContent>

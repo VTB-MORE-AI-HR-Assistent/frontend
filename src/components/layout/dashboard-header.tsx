@@ -9,12 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import {
   Bell,
-  Search,
   User,
   Settings,
   LogOut,
@@ -22,6 +20,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { MobileNav } from "./mobile-nav"
+import { GlobalSearch } from "@/components/global-search"
 
 export function DashboardHeader() {
   const { user, logout } = useAuth()
@@ -34,24 +33,21 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white">
-      <div className="flex h-16 items-center gap-4 px-4 md:px-6">
-        {/* Mobile Menu */}
-        <MobileNav />
+      <div className="flex h-16 items-center px-4 md:px-6">
+        {/* Left Section - Mobile Menu */}
+        <div className="flex items-center">
+          <MobileNav />
+        </div>
 
-        {/* Search Bar */}
-        <div className="flex-1 flex items-center gap-4">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search candidates, vacancies..."
-              className="pl-10 h-9"
-            />
+        {/* Center Section - Search (takes remaining space and centers) */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="w-full max-w-md">
+            <GlobalSearch />
           </div>
         </div>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-2">
+        {/* Right Section - Actions */}
+        <div className="flex items-center gap-2 ml-auto">
           {/* Help */}
           <Button variant="ghost" size="icon">
             <HelpCircle className="h-5 w-5" />
