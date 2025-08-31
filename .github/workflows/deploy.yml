@@ -38,7 +38,7 @@ jobs:
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
           
       - name: Upload Docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: vtb-hr-app.tar.gz
@@ -53,7 +53,7 @@ jobs:
     
     steps:
       - name: Download Docker image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
           
