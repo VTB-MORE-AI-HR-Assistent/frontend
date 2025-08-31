@@ -1,62 +1,73 @@
 name: Deploy Frontend
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
     branches: ["main", "master", "dev"]
+    types: [completed]
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   deploy:
     name: Build and Deploy on Remote Server
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository at passed commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Verify SSH secrets
         run: |
           echo "Verifying SSH secrets..."
-          if [ -z "${{ secrets.SSH_HOST }}" ] || [ -z "${{ secrets.SSH_USER }}" ]; then
+          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ]; then
             echo "::error::SSH_HOST or SSH_USER not set"; exit 1; fi
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && [ -z "${{ secrets.SSH_PASSWORD }}" ]; then
+          if [ -z "${SSH_PRIVATE_KEY}" ] && [ -z "${SSH_PASSWORD}" ]; then
             echo "::error::Provide SSH_PRIVATE_KEY or SSH_PASSWORD secret"; exit 1; fi
 
       - name: Upload project to server (SSH key)
-        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
+        if: env.SSH_PRIVATE_KEY != ''
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          port: ${{ env.SSH_PORT }}
           source: "."
           target: "~/vtb-frontend"
           overwrite: true
 
       - name: Upload project to server (password)
-        if: ${{ secrets.SSH_PRIVATE_KEY == '' && secrets.SSH_PASSWORD != '' }}
+        if: env.SSH_PRIVATE_KEY == '' && env.SSH_PASSWORD != ''
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          password: ${{ env.SSH_PASSWORD }}
+          port: ${{ env.SSH_PORT }}
           source: "."
           target: "~/vtb-frontend"
           overwrite: true
 
       - name: Build and restart container on server (SSH key)
-        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
+        if: env.SSH_PRIVATE_KEY != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          port: ${{ env.SSH_PORT }}
           script_stop: true
           script: |
             set -e
@@ -85,13 +96,13 @@ jobs:
             echo "Deployment completed."
 
       - name: Build and restart container on server (password)
-        if: ${{ secrets.SSH_PRIVATE_KEY == '' && secrets.SSH_PASSWORD != '' }}
+        if: env.SSH_PRIVATE_KEY == '' && env.SSH_PASSWORD != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          password: ${{ env.SSH_PASSWORD }}
+          port: ${{ env.SSH_PORT }}
           script_stop: true
           script: |
             set -e
