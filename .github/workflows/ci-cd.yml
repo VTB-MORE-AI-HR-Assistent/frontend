@@ -117,6 +117,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false # Don't push to any registry
+          load: true # Load the image into Docker daemon for testing
           tags: vtb-frontend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
