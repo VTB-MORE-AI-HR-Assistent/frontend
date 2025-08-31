@@ -17,7 +17,6 @@ import {
   Building,
   MapPin,
   Briefcase,
-  Clock,
   AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -423,14 +422,13 @@ export default function VacanciesPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Salary</TableHead>
                   <TableHead>Candidates</TableHead>
-                  <TableHead>Deadline</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredVacancies.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No vacancies found matching your filters
                     </TableCell>
                   </TableRow>
@@ -467,14 +465,6 @@ export default function VacanciesPage() {
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           <span>{vacancy.candidates}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">
-                            {new Date(vacancy.deadline).toLocaleDateString()}
-                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
