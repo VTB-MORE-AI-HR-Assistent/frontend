@@ -20,20 +20,34 @@ export function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Skeleton className="h-5 w-5 mr-3" />
-              <div>
-                <Skeleton className="h-5 w-28 mb-1" />
-                <Skeleton className="h-3 w-36" />
+      {/* AI Recruitment Banner Skeleton */}
+      <Card className="relative overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-5 w-32" />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <Skeleton className="h-4 w-64 mb-3" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-24 rounded" />
+                <Skeleton className="h-5 w-24 rounded" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-2">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="h-1 w-4" />
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="h-1 w-4" />
+                <Skeleton className="h-12 w-12 rounded-full" />
+              </div>
+              <Skeleton className="h-10 w-24 rounded" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

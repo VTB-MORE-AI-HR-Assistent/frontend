@@ -1,12 +1,23 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useDropzone } from "react-dropzone"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton"
+import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { 
   Brain,
   Clock,
@@ -22,11 +33,55 @@ import {
   ArrowRight,
   Plus,
   Search,
-  Sparkles
+  Sparkles,
+  Upload,
+  Link as LinkIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Zap,
+  Loader2,
+  X
 } from "lucide-react"
+
+type PipelineStep = "vacancy" | "upload" | "analysis" | "notification" | "scheduling" | "complete"
+
+interface Candidate {
+  id: string
+  name: string
+  email: string
+  phone: string
+  matchScore: number
+  skills: string[]
+  experience: string
+  status: "analyzing" | "qualified" | "notified" | "scheduled" | "rejected"
+  cvUrl?: string
+  availability?: TimeSlot[]
+}
+
+interface TimeSlot {
+  date: string
+  time: string
+  available: boolean
+}
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [currentStep, setCurrentStep] = useState<PipelineStep>("vacancy")
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [vacancyData, setVacancyData] = useState({
+    title: "",
+    description: "",
+    department: "",
+    location: "",
+    type: "Full-time"
+  })
+  const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
+  const [candidates, setCandidates] = useState<Candidate[]>([])
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+  const [analysisProgress, setAnalysisProgress] = useState(0)
+  const [showScheduler, setShowScheduler] = useState(false)
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<{[key: string]: string}>({})
 
   // Simulate data loading
   useEffect(() => {
@@ -133,6 +188,109 @@ export default function DashboardPage() {
     { id: 4, title: "QA Automation Engineer", uploadedCVs: 18, new: 3, status: "paused" }
   ]
 
+  // Mock time slots for scheduling
+  const availableTimeSlots = [
+    { date: "2025-01-15", time: "10:00 AM", available: true },
+    { date: "2025-01-15", time: "2:00 PM", available: true },
+    { date: "2025-01-16", time: "11:00 AM", available: true },
+    { date: "2025-01-16", time: "3:00 PM", available: true },
+    { date: "2025-01-17", time: "10:00 AM", available: true },
+    { date: "2025-01-17", time: "4:00 PM", available: true },
+  ]
+
+  const onDropCVs = useCallback((acceptedFiles: File[]) => {
+    setUploadedCVs(prev => [...prev, ...acceptedFiles])
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onDropCVs,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    },
+    multiple: true
+  })
+
+  const submitVacancy = () => {
+    setCurrentStep("upload")
+  }
+
+  const startAnalysis = async () => {
+    setCurrentStep("analysis")
+    setIsProcessing(true)
+    setAnalysisProgress(0)
+
+    // Simulate AI analysis
+    const interval = setInterval(() => {
+      setAnalysisProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 500)
+
+    // Generate mock candidates after "analysis"
+    setTimeout(() => {
+      const mockCandidates: Candidate[] = uploadedCVs.slice(0, 5).map((file, index) => ({
+        id: `candidate-${index}`,
+        name: ["Maria Petrova", "Alexander Smirnov", "Elena Kozlova", "Ivan Petrov", "Natalia Volkova"][index],
+        email: ["maria@email.com", "alex@email.com", "elena@email.com", "ivan@email.com", "natalia@email.com"][index],
+        phone: "+7 (999) 123-45-67",
+        matchScore: Math.floor(Math.random() * 30) + 70,
+        skills: ["React", "TypeScript", "Node.js", "Python", "MongoDB"],
+        experience: `${Math.floor(Math.random() * 5) + 3} years`,
+        status: "analyzing",
+        cvUrl: file.name
+      }))
+      
+      // Sort by match score and mark top 3
+      mockCandidates.sort((a, b) => b.matchScore - a.matchScore)
+      mockCandidates.forEach((c, i) => {
+        c.status = i < 3 ? "qualified" : "rejected"
+      })
+      
+      setCandidates(mockCandidates)
+      setSelectedCandidates(mockCandidates.slice(0, 3).map(c => c.id))
+      setIsProcessing(false)
+      setCurrentStep("notification")
+    }, 5500)
+  }
+
+  const sendNotifications = () => {
+    setIsProcessing(true)
+    
+    // Simulate sending notifications
+    setTimeout(() => {
+      setCandidates(prev => prev.map(c => 
+        selectedCandidates.includes(c.id) 
+          ? { ...c, status: "notified" as const }
+          : c
+      ))
+      setIsProcessing(false)
+      setCurrentStep("scheduling")
+      setShowScheduler(true)
+    }, 2000)
+  }
+
+  const confirmSchedule = () => {
+    setCandidates(prev => prev.map(c => 
+      selectedCandidates.includes(c.id) 
+        ? { ...c, status: "scheduled" as const }
+        : c
+    ))
+    setCurrentStep("complete")
+  }
+
+  const getStepNumber = (step: PipelineStep) => {
+    const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "notification", "scheduling", "complete"]
+    return steps.indexOf(step) + 1
+  }
+
+  const currentStepNumber = getStepNumber(currentStep)
+
   if (isLoading) {
     return <DashboardSkeleton />
   }
@@ -146,7 +304,7 @@ export default function DashboardPage() {
             Welcome back, John
           </h1>
           <p className="text-muted-foreground">
-            Here's what's happening with your recruitment today
+            Here&apos;s what&apos;s happening with your recruitment today
           </p>
         </div>
         <div className="text-right">
@@ -155,44 +313,559 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link href="/vacancies/new">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Plus className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">Add Vacancy</p>
-                <p className="text-xs text-muted-foreground">Create new job posting</p>
+      {/* AI Recruitment Banner */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Card className="relative overflow-hidden cursor-pointer hover:shadow-lg transition-all group">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] opacity-5"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-10 w-10 rounded-full bg-[#1B4F8C] flex items-center justify-center">
+                      <Brain className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Start Hiring with AI</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upload vacancy → AI screens CVs → Schedule top candidates
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      <Clock className="h-3 w-3 mr-1" />
+                      5 min process
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      85% time saved
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* Animated Process Flow */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-[#1B4F8C]" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400 animate-pulse" />
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Brain className="h-6 w-6 text-[#1B4F8C]" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse delay-75"></div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400 animate-pulse delay-150" />
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Calendar className="h-6 w-6 text-[#1B4F8C]" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse delay-300"></div>
+                    </div>
+                  </div>
+                  <Button className="bg-[#1B4F8C] hover:bg-[#163c6e] group-hover:scale-105 transition-transform">
+                    Start Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </Link>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>AI-Powered Candidate Screening</DialogTitle>
+              <DialogDescription>
+                Upload a job vacancy and CVs - AI will find the best candidates and help schedule interviews
+              </DialogDescription>
+            </DialogHeader>
 
-        <Link href="/candidates/upload">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <FileText className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">Upload Resume</p>
-                <p className="text-xs text-muted-foreground">Import candidate profiles</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+            {/* Progress Steps */}
+            <div className="flex items-center justify-between mb-6">
+              {["Upload Vacancy", "Upload CVs", "AI Analysis", "Notify", "Schedule"].map((step, index) => (
+                <div key={step} className="flex items-center">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                    index + 1 <= currentStepNumber 
+                      ? "bg-blue-500 border-blue-500 text-white" 
+                      : "border-gray-300 text-gray-500"
+                  }`}>
+                    {index + 1 <= currentStepNumber - 1 ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : (
+                      <span className="text-sm">{index + 1}</span>
+                    )}
+                  </div>
+                  {index < 4 && (
+                    <div className={`w-16 h-0.5 ${
+                      index + 1 < currentStepNumber ? "bg-blue-500" : "bg-gray-300"
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
 
-        <Link href="/candidates">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center p-6">
-              <Search className="h-5 w-5 mr-3 text-[#1B4F8C]" />
-              <div>
-                <p className="font-medium">Search Candidates</p>
-                <p className="text-xs text-muted-foreground">Browse database</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+            {/* Step Content */}
+            <div className="space-y-6">
+              {/* Step 1: Vacancy Upload */}
+              {currentStep === "vacancy" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 1: Upload Vacancy</h3>
+                  <Tabs defaultValue="manual" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                      <TabsTrigger value="file">Upload File</TabsTrigger>
+                      <TabsTrigger value="link">From URL</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="manual" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Job Title</Label>
+                          <Input 
+                            placeholder="e.g., Senior Frontend Developer"
+                            value={vacancyData.title}
+                            onChange={(e) => setVacancyData({...vacancyData, title: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Department</Label>
+                          <Select 
+                            value={vacancyData.department}
+                            onValueChange={(v) => setVacancyData({...vacancyData, department: v})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select department" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="engineering">Engineering</SelectItem>
+                              <SelectItem value="product">Product</SelectItem>
+                              <SelectItem value="design">Design</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Location</Label>
+                          <Input 
+                            placeholder="e.g., Moscow, Russia"
+                            value={vacancyData.location}
+                            onChange={(e) => setVacancyData({...vacancyData, location: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Type</Label>
+                          <Select 
+                            value={vacancyData.type}
+                            onValueChange={(v) => setVacancyData({...vacancyData, type: v})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Full-time">Full-time</SelectItem>
+                              <SelectItem value="Part-time">Part-time</SelectItem>
+                              <SelectItem value="Remote">Remote</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Textarea 
+                          placeholder="Job description..."
+                          rows={4}
+                          value={vacancyData.description}
+                          onChange={(e) => setVacancyData({...vacancyData, description: e.target.value})}
+                        />
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="file" className="space-y-4">
+                      <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                        <p className="font-medium">Drop your vacancy file here</p>
+                        <p className="text-sm text-muted-foreground">or click to browse</p>
+                        <Button variant="outline" className="mt-4">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Select File
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="link" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Job Posting URL</Label>
+                        <div className="flex gap-2">
+                          <Input placeholder="https://example.com/job/12345" />
+                          <Button>
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            Import
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {["HeadHunter", "LinkedIn", "Indeed"].map(site => (
+                          <div key={site} className="p-2 border rounded text-center text-sm">
+                            {site}
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                  
+                  <div className="flex justify-end">
+                    <Button onClick={submitVacancy} disabled={!vacancyData.title}>
+                      Next: Upload CVs
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: CV Upload */}
+              {currentStep === "upload" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 2: Upload Candidate CVs</h3>
+                  
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                      isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <input {...getInputProps()} />
+                    <Upload className={`mx-auto h-12 w-12 mb-3 ${
+                      isDragActive ? "text-blue-500" : "text-gray-400"
+                    }`} />
+                    <p className="font-medium text-gray-900 mb-1">
+                      Drop CV files here
+                    </p>
+                    <p className="text-sm text-blue-600">or click to browse</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      PDF, DOC, DOCX • Multiple files supported
+                    </p>
+                  </div>
+
+                  {uploadedCVs.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Uploaded CVs ({uploadedCVs.length})</Label>
+                      <div className="max-h-48 overflow-y-auto space-y-2">
+                        {uploadedCVs.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 border rounded">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({Math.round(file.size / 1024)}KB)
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setUploadedCVs(prev => prev.filter((_, i) => i !== index))}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Alert>
+                    <Brain className="h-4 w-4" />
+                    <AlertTitle>AI Analysis Ready</AlertTitle>
+                    <AlertDescription>
+                      {uploadedCVs.length > 0 
+                        ? `${uploadedCVs.length} CVs will be analyzed for "${vacancyData.title}"`
+                        : "Upload CVs to start AI screening"
+                      }
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => setCurrentStep("vacancy")}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={startAnalysis}
+                      disabled={uploadedCVs.length === 0}
+                    >
+                      Start AI Analysis
+                      <Sparkles className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: AI Analysis */}
+              {currentStep === "analysis" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 3: AI Analysis in Progress</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Analyzing {uploadedCVs.length} CVs</span>
+                      <span className="text-sm font-medium">{analysisProgress}%</span>
+                    </div>
+                    <Progress value={analysisProgress} className="h-2" />
+                    
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {uploadedCVs.length}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Total CVs</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold text-green-600">
+                            {Math.floor(analysisProgress / 100 * uploadedCVs.length)}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Analyzed</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold text-purple-600">
+                            {analysisProgress >= 100 ? "3" : "..."}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Qualified</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {isProcessing && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Notification */}
+              {currentStep === "notification" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 4: Notify Top Candidates</h3>
+                  
+                  <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-900">Analysis Complete</AlertTitle>
+                    <AlertDescription className="text-green-800">
+                      AI has identified the top 3 candidates based on match score
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-3">
+                    {candidates.filter(c => c.status === "qualified").map((candidate, index) => (
+                      <Card key={candidate.id} className="border-blue-200">
+                        <CardContent className="pt-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4">
+                              <Avatar>
+                                <AvatarFallback>
+                                  {candidate.name.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold">{candidate.name}</h4>
+                                  <Badge variant="outline" className="gap-1">
+                                    #{index + 1} Match
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="h-3 w-3" />
+                                    {candidate.email}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {candidate.phone}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    <span className="font-semibold">{candidate.matchScore}%</span>
+                                  </div>
+                                  <Separator orientation="vertical" className="h-4" />
+                                  <span className="text-sm">{candidate.experience}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedCandidates.includes(candidate.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedCandidates([...selectedCandidates, candidate.id])
+                                  } else {
+                                    setSelectedCandidates(selectedCandidates.filter(id => id !== candidate.id))
+                                  }
+                                }}
+                                className="h-4 w-4"
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => setCurrentStep("upload")}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={sendNotifications}
+                      disabled={selectedCandidates.length === 0 || isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Interview Invitations
+                          <Mail className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Scheduling */}
+              {currentStep === "scheduling" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 5: Schedule Interviews</h3>
+                  
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    <AlertTitle className="text-blue-900">Invitations Sent</AlertTitle>
+                    <AlertDescription className="text-blue-800">
+                      Candidates have been notified. Select interview time slots below.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-4">
+                    {candidates.filter(c => c.status === "notified").map((candidate) => (
+                      <Card key={candidate.id}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarFallback>
+                                  {candidate.name.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="font-semibold">{candidate.name}</h4>
+                                <p className="text-sm text-muted-foreground">{candidate.email}</p>
+                              </div>
+                            </div>
+                            <Badge className="bg-green-100 text-green-800">
+                              Available for Interview
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <Label className="mb-3 block">Select Interview Time</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {availableTimeSlots.map((slot, index) => (
+                              <Button
+                                key={index}
+                                variant={selectedTimeSlots[candidate.id] === `${slot.date}-${slot.time}` ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => setSelectedTimeSlots({
+                                  ...selectedTimeSlots,
+                                  [candidate.id]: `${slot.date}-${slot.time}`
+                                })}
+                              >
+                                <Calendar className="mr-1 h-3 w-3" />
+                                {new Date(slot.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                <Clock className="ml-2 mr-1 h-3 w-3" />
+                                {slot.time}
+                              </Button>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => setCurrentStep("notification")}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={confirmSchedule}
+                      disabled={Object.keys(selectedTimeSlots).length !== selectedCandidates.length}
+                    >
+                      Confirm Schedule
+                      <CheckCircle className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Complete */}
+              {currentStep === "complete" && (
+                <div className="space-y-4 text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Process Complete!</h3>
+                  <p className="text-muted-foreground">
+                    Interviews have been scheduled with top candidates
+                  </p>
+                  
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold">{uploadedCVs.length}</div>
+                        <p className="text-xs text-muted-foreground">CVs Analyzed</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold">{selectedCandidates.length}</div>
+                        <p className="text-xs text-muted-foreground">Interviews Scheduled</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-2xl font-bold">85%</div>
+                        <p className="text-xs text-muted-foreground">Time Saved</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => {
+                      setCurrentStep("vacancy")
+                      setUploadedCVs([])
+                      setCandidates([])
+                      setSelectedCandidates([])
+                      setSelectedTimeSlots({})
+                    }}
+                    className="mt-4"
+                  >
+                    Start New Process
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+      </Dialog>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -200,7 +873,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Today's Schedule</span>
+              <span>Today&apos;s Schedule</span>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
