@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { 
@@ -24,6 +24,8 @@ import {
   Target,
   Award,
   CheckCircle,
+  Upload,
+  Star,
   XCircle,
   AlertCircle,
   ChevronRight,
@@ -52,25 +54,106 @@ import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 
+// Mock data for uploaded CVs
+interface UploadedCV {
+  id: string
+  candidateName: string
+  email: string
+  phone: string
+  position: string
+  experience: string
+  skills: string[]
+  matchScore: number
+  uploadedAt: string
+  uploadedBy: string
+  status: "new" | "reviewing" | "shortlisted" | "interview" | "rejected" | "hired"
+  cvUrl?: string
+}
+
+const mockUploadedCVs: UploadedCV[] = [
+  {
+    id: "cv1",
+    candidateName: "Maria Petrova",
+    email: "maria.petrova@email.com",
+    phone: "+7 (999) 123-45-67",
+    position: "Senior Frontend Developer",
+    experience: "7 years",
+    skills: ["React", "TypeScript", "Next.js", "Redux", "CSS"],
+    matchScore: 95,
+    uploadedAt: "2024-01-20T10:30:00",
+    uploadedBy: "John HR",
+    status: "interview"
+  },
+  {
+    id: "cv2",
+    candidateName: "Alexander Smirnov",
+    email: "alex.smirnov@email.com",
+    phone: "+7 (999) 234-56-78",
+    position: "Frontend Developer",
+    experience: "5 years",
+    skills: ["React", "JavaScript", "Vue.js", "CSS", "Webpack"],
+    matchScore: 87,
+    uploadedAt: "2024-01-19T14:20:00",
+    uploadedBy: "John HR",
+    status: "reviewing"
+  },
+  {
+    id: "cv3",
+    candidateName: "Elena Kozlova",
+    email: "elena.k@email.com",
+    phone: "+7 (999) 345-67-89",
+    position: "React Developer",
+    experience: "6 years",
+    skills: ["React", "TypeScript", "Node.js", "GraphQL", "Testing"],
+    matchScore: 92,
+    uploadedAt: "2024-01-18T09:15:00",
+    uploadedBy: "John HR",
+    status: "shortlisted"
+  },
+  {
+    id: "cv4",
+    candidateName: "Ivan Petrov",
+    email: "ivan.petrov@email.com",
+    phone: "+7 (999) 456-78-90",
+    position: "Full Stack Developer",
+    experience: "4 years",
+    skills: ["React", "Node.js", "MongoDB", "Docker", "AWS"],
+    matchScore: 78,
+    uploadedAt: "2024-01-17T16:45:00",
+    uploadedBy: "John HR",
+    status: "new"
+  },
+  {
+    id: "cv5",
+    candidateName: "Natalia Volkova",
+    email: "natalia.v@email.com",
+    phone: "+7 (999) 567-89-01",
+    position: "Frontend Engineer",
+    experience: "8 years",
+    skills: ["React", "TypeScript", "Next.js", "Testing", "CI/CD"],
+    matchScore: 89,
+    uploadedAt: "2024-01-16T11:30:00",
+    uploadedBy: "John HR",
+    status: "interview"
+  }
+]
+
 // Mock data for a single vacancy
 const mockVacancy = {
   id: "1",
   title: "Senior Frontend Developer",
-  department: "IT",
   location: "Moscow",
   type: "Full-time",
   experience: "5+ years",
   salary: "250,000 - 350,000 RUB",
   status: "active",
-  priority: "high",
   created: "2024-01-15",
   updated: "2024-01-20",
-  deadline: "2024-02-15",
   startDate: "2024-03-01",
-  candidates: 45,
+  uploadedCVs: 45,
   interviews: 8,
-  offers: 2,
-  hired: 0,
+  shortlisted: 12,
+  rejected: 15,
   description: `We are looking for an experienced Frontend Developer to join our innovative team at VTB Bank. You will be responsible for developing and maintaining high-quality web applications that serve millions of users.
 
 As a Senior Frontend Developer, you will work closely with our product and design teams to deliver exceptional user experiences. You'll have the opportunity to work with modern technologies and contribute to the digital transformation of one of Russia's leading banks.`,
@@ -119,32 +202,31 @@ As a Senior Frontend Developer, you will work closely with our product and desig
     avatar: null
   },
   stages: [
-    { name: "Application Review", count: 45, percentage: 100 },
-    { name: "Phone Screening", count: 28, percentage: 62 },
-    { name: "Technical Interview", count: 12, percentage: 27 },
-    { name: "Final Interview", count: 4, percentage: 9 },
-    { name: "Offer", count: 2, percentage: 4 }
-  ],
-  recentCandidates: [
-    { id: "1", name: "Ivan Sokolov", applied: "2 hours ago", status: "new", rating: 4.5 },
-    { id: "2", name: "Elena Mikhailova", applied: "5 hours ago", status: "screening", rating: 4.8 },
-    { id: "3", name: "Dmitry Volkov", applied: "1 day ago", status: "interview", rating: 4.2 },
-    { id: "4", name: "Olga Kuznetsova", applied: "2 days ago", status: "rejected", rating: 3.5 },
-    { id: "5", name: "Sergey Popov", applied: "3 days ago", status: "interview", rating: 4.6 }
+    { name: "CVs Uploaded", count: 45, percentage: 100 },
+    { name: "Under Review", count: 28, percentage: 62 },
+    { name: "Shortlisted", count: 12, percentage: 27 },
+    { name: "Interview Scheduled", count: 8, percentage: 18 },
+    { name: "Hired", count: 0, percentage: 0 }
   ],
   activities: [
-    { id: "1", action: "Candidate applied", user: "Ivan Sokolov", time: "2 hours ago", type: "application" },
-    { id: "2", action: "Interview scheduled", user: "Maria Ivanova", time: "5 hours ago", type: "interview" },
-    { id: "3", action: "Vacancy updated", user: "Alexander Petrov", time: "1 day ago", type: "update" },
-    { id: "4", action: "Candidate rejected", user: "Maria Ivanova", time: "2 days ago", type: "rejection" },
-    { id: "5", action: "Vacancy published", user: "Alexander Petrov", time: "5 days ago", type: "publish" }
+    { id: "1", action: "uploaded 5 CVs", user: "John HR", time: "2 hours ago", type: "upload" },
+    { id: "2", action: "shortlisted Maria Petrova", user: "John HR", time: "5 hours ago", type: "shortlist" },
+    { id: "3", action: "scheduled interview with Elena Kozlova", user: "John HR", time: "1 day ago", type: "interview" },
+    { id: "4", action: "rejected Ivan Petrov", user: "John HR", time: "2 days ago", type: "rejection" },
+    { id: "5", action: "uploaded 3 CVs", user: "John HR", time: "3 days ago", type: "upload" }
   ]
 }
 
 export default function VacancyDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const [cvs, setCvs] = useState<UploadedCV[]>(mockUploadedCVs)
+  const [filterStatus, setFilterStatus] = useState<string>("all")
   const vacancy = mockVacancy // In real app, fetch based on params.id
+
+  const filteredCVs = filterStatus === "all" 
+    ? cvs 
+    : cvs.filter(cv => cv.status === filterStatus)
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -160,26 +242,15 @@ export default function VacancyDetailPage() {
     )
   }
 
-  const getPriorityBadge = (priority: string) => {
-    const colors: Record<string, string> = {
-      high: "bg-red-100 text-red-800 border-red-200",
-      medium: "bg-amber-100 text-amber-800 border-amber-200",
-      low: "bg-blue-100 text-blue-800 border-blue-200"
-    }
-    return (
-      <Badge className={colors[priority] || ""}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
-      </Badge>
-    )
-  }
 
   const getCandidateStatusBadge = (status: string) => {
     const config: Record<string, { color: string; icon: React.ReactNode }> = {
       new: { color: "bg-blue-100 text-blue-800", icon: <AlertCircle className="h-3 w-3" /> },
-      screening: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3" /> },
+      reviewing: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3" /> },
+      shortlisted: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3" /> },
       interview: { color: "bg-purple-100 text-purple-800", icon: <Calendar className="h-3 w-3" /> },
-      offer: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3" /> },
-      rejected: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3" /> }
+      rejected: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3" /> },
+      hired: { color: "bg-emerald-100 text-emerald-800", icon: <Award className="h-3 w-3" /> }
     }
     const { color, icon } = config[status] || config.new
     return (
@@ -192,8 +263,10 @@ export default function VacancyDetailPage() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case "application":
-        return <FileText className="h-4 w-4" />
+      case "upload":
+        return <Upload className="h-4 w-4" />
+      case "shortlist":
+        return <CheckCircle className="h-4 w-4" />
       case "interview":
         return <Calendar className="h-4 w-4" />
       case "update":
@@ -222,25 +295,27 @@ export default function VacancyDetailPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{vacancy.title}</h1>
             <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-              <Building className="h-4 w-4" />
-              <span>{vacancy.department}</span>
-              <span>•</span>
               <MapPin className="h-4 w-4" />
               <span>{vacancy.location}</span>
+              <span>•</span>
+              <Briefcase className="h-4 w-4" />
+              <span>{vacancy.type}</span>
               <span>•</span>
               <span>ID: #{vacancy.id}</span>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-          <Link href={`/vacancies/${vacancy.id}/edit`}>
+          <Link href="/candidates/upload">
             <Button className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload CVs
+            </Button>
+          </Link>
+          <Link href={`/vacancies/${vacancy.id}/edit`}>
+            <Button variant="outline">
               <Edit className="mr-2 h-4 w-4" />
-              Edit Vacancy
+              Edit
             </Button>
           </Link>
           <DropdownMenu>
@@ -274,30 +349,38 @@ export default function VacancyDetailPage() {
         </div>
       </div>
 
-      {/* Status and Priority */}
+      {/* Status */}
       <div className="flex gap-2">
         {getStatusBadge(vacancy.status)}
-        {getPriorityBadge(vacancy.priority)}
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Applications</CardTitle>
+            <CardTitle className="text-sm font-medium">Uploaded CVs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vacancy.candidates}</div>
-            <p className="text-xs text-muted-foreground">Total received</p>
+            <div className="text-2xl font-bold">{vacancy.uploadedCVs}</div>
+            <p className="text-xs text-muted-foreground">Total uploaded</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">In Review</CardTitle>
+            <CardTitle className="text-sm font-medium">Under Review</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28</div>
-            <p className="text-xs text-muted-foreground">Being screened</p>
+            <div className="text-2xl font-bold">{cvs.filter(cv => cv.status === "reviewing").length}</div>
+            <p className="text-xs text-muted-foreground">Being reviewed</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Shortlisted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{vacancy.shortlisted}</div>
+            <p className="text-xs text-muted-foreground">Selected</p>
           </CardContent>
         </Card>
         <Card>
@@ -311,32 +394,148 @@ export default function VacancyDetailPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Offers</CardTitle>
+            <CardTitle className="text-sm font-medium">Average Match</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vacancy.offers}</div>
-            <p className="text-xs text-muted-foreground">Extended</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Hired</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vacancy.hired}</div>
-            <p className="text-xs text-muted-foreground">Positions filled</p>
+            <div className="text-2xl font-bold">
+              {Math.round(cvs.reduce((acc, cv) => acc + cv.matchScore, 0) / cvs.length)}%
+            </div>
+            <p className="text-xs text-muted-foreground">AI Score</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="cvs" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="candidates">Candidates</TabsTrigger>
+          <TabsTrigger value="cvs">Uploaded CVs ({cvs.length})</TabsTrigger>
+          <TabsTrigger value="overview">Vacancy Details</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
+
+        {/* CVs Tab */}
+        <TabsContent value="cvs" className="space-y-4">
+          {/* Filter Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant={filterStatus === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("all")}
+            >
+              All ({cvs.length})
+            </Button>
+            <Button
+              variant={filterStatus === "new" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("new")}
+            >
+              New ({cvs.filter(cv => cv.status === "new").length})
+            </Button>
+            <Button
+              variant={filterStatus === "reviewing" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("reviewing")}
+            >
+              Reviewing ({cvs.filter(cv => cv.status === "reviewing").length})
+            </Button>
+            <Button
+              variant={filterStatus === "shortlisted" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("shortlisted")}
+            >
+              Shortlisted ({cvs.filter(cv => cv.status === "shortlisted").length})
+            </Button>
+            <Button
+              variant={filterStatus === "interview" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("interview")}
+            >
+              Interview ({cvs.filter(cv => cv.status === "interview").length})
+            </Button>
+            <Button
+              variant={filterStatus === "rejected" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterStatus("rejected")}
+            >
+              Rejected ({cvs.filter(cv => cv.status === "rejected").length})
+            </Button>
+          </div>
+
+          {/* CVs List */}
+          <div className="space-y-3">
+            {filteredCVs.map((cv) => (
+              <Card key={cv.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback>
+                          {cv.candidateName.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{cv.candidateName}</h3>
+                          {getCandidateStatusBadge(cv.status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{cv.position} • {cv.experience}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {cv.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {cv.phone}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {cv.skills.slice(0, 5).map((skill, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="text-right">
+                        <div className="flex items-center gap-1">
+                          <Star className={`h-5 w-5 ${cv.matchScore >= 90 ? 'text-green-500' : cv.matchScore >= 80 ? 'text-blue-500' : 'text-gray-400'} fill-current`} />
+                          <p className="text-2xl font-bold">{cv.matchScore}%</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Match Score</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="mr-2 h-3 w-3" />
+                          View CV
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Download className="mr-2 h-3 w-3" />
+                          Download
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground text-right">
+                        <p>Uploaded {new Date(cv.uploadedAt).toLocaleDateString()}</p>
+                        <p>by {cv.uploadedBy}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredCVs.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No CVs found with the selected filter</p>
+                <Button onClick={() => setFilterStatus("all")}>Show All CVs</Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
@@ -436,16 +635,6 @@ export default function VacancyDetailPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      Deadline
-                    </span>
-                    <span className="text-sm font-medium">
-                      {new Date(vacancy.deadline).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
                       Start Date
                     </span>
                     <span className="text-sm font-medium">
@@ -533,71 +722,12 @@ export default function VacancyDetailPage() {
                       {Math.floor((new Date().getTime() - new Date(vacancy.created).getTime()) / (1000 * 60 * 60 * 24))} days
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Days Until Deadline</span>
-                    <span className="text-orange-600">
-                      {Math.floor((new Date(vacancy.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
-                    </span>
-                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="candidates" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Candidates</CardTitle>
-              <CardDescription>Latest applicants for this position</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {vacancy.recentCandidates.map((candidate) => (
-                  <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarFallback>
-                          {candidate.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{candidate.name}</div>
-                        <div className="text-sm text-muted-foreground">Applied {candidate.applied}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`h-4 w-4 ${i < Math.floor(candidate.rating) ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                          </svg>
-                        ))}
-                        <span className="ml-1 text-sm">{candidate.rating}</span>
-                      </div>
-                      {getCandidateStatusBadge(candidate.status)}
-                      <Button variant="outline" size="sm">
-                        View Profile
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 text-center">
-                <Link href={`/candidates?vacancy=${vacancy.id}`}>
-                  <Button variant="outline">
-                    View All {vacancy.candidates} Candidates
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="pipeline" className="space-y-4">
           <Card>
@@ -656,9 +786,10 @@ export default function VacancyDetailPage() {
                 {vacancy.activities.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-4">
                     <div className={`p-2 rounded-full ${
-                      activity.type === 'application' ? 'bg-blue-100' :
+                      activity.type === 'upload' ? 'bg-blue-100' :
+                      activity.type === 'shortlist' ? 'bg-green-100' :
                       activity.type === 'interview' ? 'bg-purple-100' :
-                      activity.type === 'update' ? 'bg-green-100' :
+                      activity.type === 'update' ? 'bg-yellow-100' :
                       activity.type === 'rejection' ? 'bg-red-100' :
                       'bg-gray-100'
                     }`}>

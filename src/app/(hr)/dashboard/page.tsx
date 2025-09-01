@@ -127,10 +127,10 @@ export default function DashboardPage() {
   ]
 
   const topVacancies = [
-    { id: 1, title: "Senior React Developer", candidates: 45, new: 12, urgent: true },
-    { id: 2, title: "Product Manager", candidates: 23, new: 5, urgent: false },
-    { id: 3, title: "DevOps Engineer", candidates: 31, new: 8, urgent: false },
-    { id: 4, title: "QA Automation Engineer", candidates: 18, new: 3, urgent: true }
+    { id: 1, title: "Senior React Developer", uploadedCVs: 45, new: 12, status: "active" },
+    { id: 2, title: "Product Manager", uploadedCVs: 23, new: 5, status: "active" },
+    { id: 3, title: "DevOps Engineer", uploadedCVs: 31, new: 8, status: "active" },
+    { id: 4, title: "QA Automation Engineer", uploadedCVs: 18, new: 3, status: "paused" }
   ]
 
   if (isLoading) {
@@ -325,19 +325,21 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium leading-tight">{vacancy.title}</p>
-                      {vacancy.urgent && (
-                        <Badge variant="destructive" className="text-xs py-0 px-1.5 h-5">
-                          Urgent
+                      {vacancy.status === "paused" && (
+                        <Badge variant="secondary" className="text-xs py-0 px-1.5 h-5">
+                          Paused
                         </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground leading-tight">
-                      {vacancy.candidates} candidates · {vacancy.new} new
+                      {vacancy.uploadedCVs} CVs uploaded · {vacancy.new} new
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <Link href={`/vacancies/${vacancy.id}`}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>

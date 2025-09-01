@@ -1,29 +1,21 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useCallback } from "react"
 import Link from "next/link"
-import { CandidatesPageSkeleton } from "@/components/skeletons/candidates-skeleton"
+import { useDropzone } from "react-dropzone"
 import { 
   Search, 
-  Filter, 
   Download,
-  Mail,
-  UserPlus,
-  MoreVertical, 
-  Eye, 
-  Star,
-  Calendar,
-  MapPin,
-  Briefcase,
-  GraduationCap,
-  CheckCircle,
-  XCircle,
-  Clock,
-  ChevronDown,
+  Eye,
+  Upload,
   FileText,
-  Phone,
-  Grid3x3,
-  List
+  X,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Calendar,
+  Star,
+  Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,14 +27,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Table,
   TableBody,
@@ -59,685 +42,551 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AddCandidateDialog } from "@/components/candidates/add-candidate-dialog"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Progress } from "@/components/ui/progress"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
 
-// Mock data for candidates
-const mockCandidates = [
+// Mock vacancies data
+const mockVacancies = [
+  { id: "none", title: "No Vacancy (General Pool)" },
+  { id: "1", title: "Senior Frontend Developer" },
+  { id: "2", title: "Product Manager" },
+  { id: "3", title: "Backend Developer" },
+  { id: "4", title: "UX/UI Designer" },
+  { id: "5", title: "Data Analyst" },
+  { id: "6", title: "DevOps Engineer" }
+]
+
+// Mock CVs data
+const mockCVs = [
   {
     id: "1",
-    name: "Ivan Sokolov",
-    email: "ivan.sokolov@example.com",
-    phone: "+7 (495) 123-45-67",
+    candidateName: "Maria Petrova",
+    email: "maria.petrova@email.com",
+    phone: "+7 (999) 123-45-67",
     position: "Senior Frontend Developer",
-    department: "IT",
-    experience: "5+ years",
-    skills: ["React", "TypeScript", "Next.js", "Node.js"],
-    education: "MSU, Computer Science",
-    location: "Moscow",
+    experience: "7 years",
+    skills: ["React", "TypeScript", "Next.js", "Redux"],
+    matchScore: 95,
+    uploadedAt: "2024-01-20T10:30:00",
     status: "interview",
-    stage: "Technical Interview",
-    matchScore: 92,
-    appliedDate: "2024-01-10",
-    lastActivity: "2 hours ago",
-    vacancy: "Senior Frontend Developer",
-    notes: 3,
-    avatar: null
+    vacancyId: "1",
+    vacancyTitle: "Senior Frontend Developer",
+    cvUrl: "cv_maria_petrova.pdf"
   },
   {
     id: "2",
-    name: "Elena Mikhailova",
-    email: "elena.mikhailova@example.com",
-    phone: "+7 (495) 123-45-68",
+    candidateName: "Alexander Smirnov",
+    email: "alex.smirnov@email.com",
+    phone: "+7 (999) 234-56-78",
     position: "Product Manager",
-    department: "Product",
-    experience: "3-5 years",
+    experience: "5 years",
     skills: ["Product Strategy", "Agile", "Analytics", "User Research"],
-    education: "HSE, Business Administration",
-    location: "St. Petersburg",
-    status: "screening",
-    stage: "Phone Screening",
-    matchScore: 85,
-    appliedDate: "2024-01-12",
-    lastActivity: "1 day ago",
-    vacancy: "Product Manager",
-    notes: 2,
-    avatar: null
+    matchScore: 87,
+    uploadedAt: "2024-01-19T14:20:00",
+    status: "reviewing",
+    vacancyId: "2",
+    vacancyTitle: "Product Manager",
+    cvUrl: "cv_alexander_smirnov.pdf"
   },
   {
     id: "3",
-    name: "Dmitry Volkov",
-    email: "dmitry.volkov@example.com",
-    phone: "+7 (495) 123-45-69",
+    candidateName: "Elena Kozlova",
+    email: "elena.k@email.com",
+    phone: "+7 (999) 345-67-89",
     position: "Backend Developer",
-    department: "IT",
-    experience: "3+ years",
-    skills: ["Java", "Spring", "PostgreSQL", "Docker"],
-    education: "MIPT, Software Engineering",
-    location: "Moscow",
-    status: "new",
-    stage: "Application Review",
-    matchScore: 78,
-    appliedDate: "2024-01-14",
-    lastActivity: "3 hours ago",
-    vacancy: "Backend Developer",
-    notes: 0,
-    avatar: null
+    experience: "6 years",
+    skills: ["Node.js", "Python", "MongoDB", "Docker"],
+    matchScore: 92,
+    uploadedAt: "2024-01-18T09:15:00",
+    status: "shortlisted",
+    vacancyId: "3",
+    vacancyTitle: "Backend Developer",
+    cvUrl: "cv_elena_kozlova.pdf"
   },
   {
     id: "4",
-    name: "Olga Kuznetsova",
-    email: "olga.kuznetsova@example.com",
-    phone: "+7 (495) 123-45-70",
-    position: "UX/UI Designer",
-    department: "Design",
-    experience: "2-4 years",
-    skills: ["Figma", "Sketch", "Adobe XD", "Prototyping"],
-    education: "British Higher School of Design",
-    location: "Moscow",
-    status: "offer",
-    stage: "Offer Extended",
-    matchScore: 88,
-    appliedDate: "2024-01-05",
-    lastActivity: "5 hours ago",
-    vacancy: "UX/UI Designer",
-    notes: 5,
-    avatar: null
+    candidateName: "Ivan Petrov",
+    email: "ivan.petrov@email.com",
+    phone: "+7 (999) 456-78-90",
+    position: "Full Stack Developer",
+    experience: "4 years",
+    skills: ["React", "Node.js", "MongoDB", "AWS"],
+    matchScore: 78,
+    uploadedAt: "2024-01-17T16:45:00",
+    status: "new",
+    vacancyId: "none",
+    vacancyTitle: "No Vacancy (General Pool)",
+    cvUrl: "cv_ivan_petrov.pdf"
   },
   {
     id: "5",
-    name: "Sergey Popov",
-    email: "sergey.popov@example.com",
-    phone: "+7 (495) 123-45-71",
-    position: "Data Analyst",
-    department: "Analytics",
-    experience: "2+ years",
-    skills: ["Python", "SQL", "Tableau", "Machine Learning"],
-    education: "ITMO, Data Science",
-    location: "Remote",
-    status: "rejected",
-    stage: "Not Selected",
-    matchScore: 65,
-    appliedDate: "2024-01-08",
-    lastActivity: "2 days ago",
-    vacancy: "Data Analyst",
-    notes: 1,
-    avatar: null
-  },
-  {
-    id: "6",
-    name: "Maria Ivanova",
-    email: "maria.ivanova@example.com",
-    phone: "+7 (495) 123-45-72",
-    position: "DevOps Engineer",
-    department: "IT",
-    experience: "4+ years",
-    skills: ["Kubernetes", "AWS", "CI/CD", "Terraform"],
-    education: "Bauman University, Computer Engineering",
-    location: "Moscow",
+    candidateName: "Natalia Volkova",
+    email: "natalia.v@email.com",
+    phone: "+7 (999) 567-89-01",
+    position: "UX/UI Designer",
+    experience: "3 years",
+    skills: ["Figma", "Sketch", "Adobe XD", "Prototyping"],
+    matchScore: 85,
+    uploadedAt: "2024-01-16T11:30:00",
     status: "interview",
-    stage: "Final Interview",
-    matchScore: 95,
-    appliedDate: "2024-01-11",
-    lastActivity: "30 minutes ago",
-    vacancy: "DevOps Engineer",
-    notes: 4,
-    avatar: null
+    vacancyId: "4",
+    vacancyTitle: "UX/UI Designer",
+    cvUrl: "cv_natalia_volkova.pdf"
   }
 ]
 
+interface UploadedFile {
+  id: string
+  file: File
+  name: string
+  size: number
+  status: "processing" | "completed" | "error"
+  candidateName?: string
+  matchScore?: number
+  error?: string
+}
+
 export default function CandidatesPage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [candidates, setCandidates] = useState(mockCandidates)
-  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+  const [cvs, setCvs] = useState(mockCVs)
+  const [selectedVacancy, setSelectedVacancy] = useState<string>("all")
+  const [uploadVacancy, setUploadVacancy] = useState<string>("none")
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterDepartment, setFilterDepartment] = useState("all")
-  const [filterPosition, setFilterPosition] = useState("all")
-  const [sortBy, setSortBy] = useState("date")
-  const [viewMode, setViewMode] = useState<"list" | "grid" | "pipeline">("list")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("newest")
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1200)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Filter and search logic
-  const filteredCandidates = candidates.filter(candidate => {
+  // Filter CVs based on selected vacancy and other filters
+  const filteredCVs = cvs.filter(cv => {
+    const matchesVacancy = selectedVacancy === "all" || cv.vacancyId === selectedVacancy
     const matchesSearch = 
-      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+      cv.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cv.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cv.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cv.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesStatus = statusFilter === "all" || cv.status === statusFilter
     
-    const matchesStatus = filterStatus === "all" || candidate.status === filterStatus
-    const matchesDepartment = filterDepartment === "all" || candidate.department === filterDepartment
-    const matchesPosition = filterPosition === "all" || candidate.position.includes(filterPosition)
-    
-    return matchesSearch && matchesStatus && matchesDepartment && matchesPosition
+    return matchesVacancy && matchesSearch && matchesStatus
   })
 
-  // Sort logic
-  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
+  // Sort CVs
+  const sortedCVs = [...filteredCVs].sort((a, b) => {
     switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name)
-      case "date":
-        return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
-      case "score":
+      case "newest":
+        return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+      case "oldest":
+        return new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime()
+      case "match":
         return b.matchScore - a.matchScore
-      case "status":
-        return a.status.localeCompare(b.status)
+      case "name":
+        return a.candidateName.localeCompare(b.candidateName)
       default:
         return 0
     }
   })
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCandidates(sortedCandidates.map(c => c.id))
-    } else {
-      setSelectedCandidates([])
-    }
-  }
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file,
+      name: file.name,
+      size: file.size,
+      status: "processing" as const
+    }))
 
-  const handleSelectCandidate = (candidateId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCandidates([...selectedCandidates, candidateId])
-    } else {
-      setSelectedCandidates(selectedCandidates.filter(id => id !== candidateId))
-    }
-  }
+    setUploadedFiles(prev => [...prev, ...newFiles])
+    setIsProcessing(true)
 
-  const handleBulkAction = (action: string) => {
-    console.log(`Bulk action: ${action} for candidates:`, selectedCandidates)
-    // Implement bulk actions here
-    setSelectedCandidates([])
-  }
+    // Simulate file processing
+    newFiles.forEach((file, index) => {
+      setTimeout(() => {
+        setUploadedFiles(prev => prev.map(f => {
+          if (f.id === file.id) {
+            const isSuccess = Math.random() > 0.1
+            if (isSuccess) {
+              // Add to CVs list
+              const newCV = {
+                id: Math.random().toString(36).substr(2, 9),
+                candidateName: `Candidate ${Math.floor(Math.random() * 1000)}`,
+                email: `candidate${Math.floor(Math.random() * 1000)}@email.com`,
+                phone: `+7 (999) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 90) + 10}-${Math.floor(Math.random() * 90) + 10}`,
+                position: ["Frontend Developer", "Backend Developer", "Product Manager", "Designer"][Math.floor(Math.random() * 4)],
+                experience: `${Math.floor(Math.random() * 10) + 1} years`,
+                skills: ["React", "TypeScript", "Node.js", "Python"].slice(0, Math.floor(Math.random() * 4) + 1),
+                matchScore: Math.floor(Math.random() * 30) + 70,
+                uploadedAt: new Date().toISOString(),
+                status: "new" as const,
+                vacancyId: uploadVacancy,
+                vacancyTitle: mockVacancies.find(v => v.id === uploadVacancy)?.title || "No Vacancy",
+                cvUrl: file.name
+              }
+              setCvs(prev => [newCV, ...prev])
+              
+              return {
+                ...f,
+                status: "completed",
+                candidateName: newCV.candidateName,
+                matchScore: newCV.matchScore
+              }
+            } else {
+              return {
+                ...f,
+                status: "error",
+                error: "Failed to parse CV. Please ensure it's a valid PDF or DOCX file."
+              }
+            }
+          }
+          return f
+        }))
 
-  const handleAddCandidate = (newCandidate: Partial<typeof candidates[0]>) => {
-    setCandidates([newCandidate as typeof candidates[0], ...candidates])
-    console.log("New candidate added:", newCandidate)
+        // Check if all files are processed
+        if (index === newFiles.length - 1) {
+          setTimeout(() => {
+            setIsProcessing(false)
+            setUploadedFiles([])
+          }, 2000)
+        }
+      }, 1500 + index * 500)
+    })
+  }, [uploadVacancy])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    },
+    multiple: true
+  })
+
+  const removeUploadedFile = (id: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== id))
   }
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      new: { 
-        color: "bg-blue-100 text-blue-800 border-blue-200", 
-        icon: <Clock className="h-3 w-3" />,
-        label: "New"
-      },
-      screening: { 
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200", 
-        icon: <FileText className="h-3 w-3" />,
-        label: "Screening"
-      },
-      interview: { 
-        color: "bg-purple-100 text-purple-800 border-purple-200", 
-        icon: <Calendar className="h-3 w-3" />,
-        label: "Interview"
-      },
-      offer: { 
-        color: "bg-green-100 text-green-800 border-green-200", 
-        icon: <CheckCircle className="h-3 w-3" />,
-        label: "Offer"
-      },
-      rejected: { 
-        color: "bg-red-100 text-red-800 border-red-200", 
-        icon: <XCircle className="h-3 w-3" />,
-        label: "Rejected"
-      }
+    const config: Record<string, { color: string; icon: React.ReactNode }> = {
+      new: { color: "bg-blue-100 text-blue-800", icon: <AlertCircle className="h-3 w-3" /> },
+      reviewing: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3" /> },
+      shortlisted: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3" /> },
+      interview: { color: "bg-purple-100 text-purple-800", icon: <Calendar className="h-3 w-3" /> },
+      rejected: { color: "bg-red-100 text-red-800", icon: <X className="h-3 w-3" /> },
+      hired: { color: "bg-emerald-100 text-emerald-800", icon: <CheckCircle className="h-3 w-3" /> }
     }
-    const { color, icon, label } = config[status] || config.new
+    const { color, icon } = config[status] || config.new
     return (
       <Badge className={`${color} flex items-center gap-1`}>
         {icon}
-        {label}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     )
   }
 
-  const getMatchScoreBadge = (score: number) => {
-    let color = "bg-gray-100 text-gray-800"
-    if (score >= 90) color = "bg-green-100 text-green-800"
-    else if (score >= 75) color = "bg-blue-100 text-blue-800"
-    else if (score >= 60) color = "bg-yellow-100 text-yellow-800"
-    else color = "bg-red-100 text-red-800"
-    
-    return (
-      <Badge className={color}>
-        {score}% Match
-      </Badge>
-    )
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
   }
 
-  if (isLoading) {
-    return <CandidatesPageSkeleton />
-  }
+  // Stats calculations
+  const totalCVs = selectedVacancy === "all" ? cvs.length : filteredCVs.length
+  const newCVs = filteredCVs.filter(cv => cv.status === "new").length
+  const reviewingCVs = filteredCVs.filter(cv => cv.status === "reviewing").length
+  const interviewCVs = filteredCVs.filter(cv => cv.status === "interview").length
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Candidates</h1>
-          <p className="text-muted-foreground">
-            Manage and track all candidate applications
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <AddCandidateDialog onAdd={handleAddCandidate} />
-        </div>
-      </div>
+    <div className="p-6 bg-gray-50/50 min-h-[calc(100vh-64px)]">
+      <div className="flex gap-6">
+        {/* Left Panel - Upload Section */}
+        <Card className="w-[400px] flex-shrink-0">
+          <CardHeader>
+            <CardTitle>Quick Upload</CardTitle>
+            <CardDescription>Drag & drop or click to browse</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col">
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Candidates</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{candidates.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Review</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {candidates.filter(c => c.status === "screening").length}
+            {/* Vacancy Selection */}
+            <div className="mb-4">
+              <Label htmlFor="upload-vacancy" className="text-sm font-medium mb-2 block">
+                Assign to Vacancy (Optional)
+              </Label>
+              <Select value={uploadVacancy} onValueChange={setUploadVacancy}>
+                <SelectTrigger id="upload-vacancy">
+                  <SelectValue placeholder="Select vacancy" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockVacancies.map((vacancy) => (
+                    <SelectItem key={vacancy.id} value={vacancy.id}>
+                      {vacancy.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave as "No Vacancy" to add CVs to general pool
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">Being screened</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Interviewing</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {candidates.filter(c => c.status === "interview").length}
-            </div>
-            <p className="text-xs text-muted-foreground">In interview process</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Offers Extended</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {candidates.filter(c => c.status === "offer").length}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting response</p>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* View Mode Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'grid')}>
-        <TabsList>
-          <TabsTrigger value="list">
-            <List className="h-4 w-4 mr-2" />
-            List View
-          </TabsTrigger>
-          <TabsTrigger value="grid">
-            <Grid3x3 className="h-4 w-4 mr-2" />
-            Grid View
-          </TabsTrigger>
-          <TabsTrigger value="pipeline">
-            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-            </svg>
-            Pipeline View
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-4">
-          {/* Filters and Search */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search candidates by name, email, skills..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="screening">Screening</SelectItem>
-                      <SelectItem value="interview">Interview</SelectItem>
-                      <SelectItem value="offer">Offer</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      <SelectItem value="IT">IT</SelectItem>
-                      <SelectItem value="Product">Product</SelectItem>
-                      <SelectItem value="Design">Design</SelectItem>
-                      <SelectItem value="Analytics">Analytics</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">Applied Date</SelectItem>
-                      <SelectItem value="name">Name</SelectItem>
-                      <SelectItem value="score">Match Score</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Upload Drop Zone */}
+            <div className="mb-4">
+              <Label className="text-sm font-medium mb-2 block">Upload CV File</Label>
+              <div
+                {...getRootProps()}
+                className={cn(
+                  "border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer",
+                  isDragActive 
+                    ? "border-blue-500 bg-blue-50 scale-[1.02]" 
+                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                )}
+              >
+                <input {...getInputProps()} />
+                <Upload className={cn(
+                  "mx-auto h-12 w-12 mb-3",
+                  isDragActive ? "text-blue-500" : "text-gray-400"
+                )} />
+                <p className="font-medium text-gray-900 mb-1">
+                  Drop your CV here
+                </p>
+                <p className="text-sm text-blue-600">
+                  or click to browse
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  PDF, Word documents, and text files • Up to 10MB
+                </p>
               </div>
-            </CardHeader>
+            </div>
 
-            {/* Bulk Actions */}
-            {selectedCandidates.length > 0 && (
-              <div className="px-6 py-3 bg-blue-50 border-t border-b">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-blue-800">
-                    {selectedCandidates.length} candidate(s) selected
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBulkAction("email")}
-                    >
-                      <Mail className="h-4 w-4 mr-1" />
-                      Send Email
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBulkAction("status")}
-                    >
-                      Update Status
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBulkAction("export")}
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Export
-                    </Button>
-                  </div>
+            <Button 
+              className="w-full mb-6" 
+              disabled={isProcessing}
+              onClick={() => document.querySelector('input[type="file"]')?.click()}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Upload CV
+            </Button>
+
+            {/* Processing Files */}
+            {uploadedFiles.length > 0 && (
+              <div className="mb-6">
+                <Label className="text-sm font-medium mb-2 block">Processing Files</Label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-2 border rounded-lg bg-gray-50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                        {file.status === "completed" && file.candidateName && (
+                          <p className="text-xs text-green-600">✓ {file.candidateName}</p>
+                        )}
+                        {file.status === "error" && (
+                          <p className="text-xs text-red-600">{file.error}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {file.status === "processing" && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                        )}
+                        {file.status === "completed" && (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        )}
+                        {file.status === "error" && (
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeUploadedFile(file.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                {isProcessing && (
+                  <Progress value={66} className="h-1 mt-2" />
+                )}
               </div>
             )}
+          </CardContent>
+        </Card>
 
-            <CardContent className="p-0">
-              <Table>
+        {/* Right Panel - CVs Table */}
+        <Card className="flex-1">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>My CVs</CardTitle>
+                <CardDescription>{filteredCVs.length} total</CardDescription>
+              </div>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Filters */}
+            <div className="flex gap-3 mb-6">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search CVs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All Vacancies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Vacancies</SelectItem>
+                  {mockVacancies.map((vacancy) => (
+                    <SelectItem key={vacancy.id} value={vacancy.id}>
+                      {vacancy.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="reviewing">Reviewing</SelectItem>
+                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                  <SelectItem value="interview">Interview</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="hired">Hired</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Newest" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="match">Match Score</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Table */}
+            {sortedCVs.length === 0 ? (
+              <div className="text-center py-16 border rounded-lg bg-gray-50">
+                <FileText className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Welcome! Let's get started</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Upload your first CV to see the magic of AI-powered CV formatting
+                </p>
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white"
+                  onClick={() => document.querySelector('input[type="file"]')?.click()}
+                >
+                  <Upload className="mr-2 h-5 w-5" />
+                  Upload Your First CV
+                </Button>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Supports PDF, Word documents, and text files up to 10MB
+                </p>
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedCandidates.length === sortedCandidates.length && sortedCandidates.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
                     <TableHead>Candidate</TableHead>
                     <TableHead>Position</TableHead>
+                    <TableHead>Vacancy</TableHead>
+                    <TableHead className="text-center">Match Score</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Match Score</TableHead>
-                    <TableHead>Applied</TableHead>
-                    <TableHead>Last Activity</TableHead>
+                    <TableHead>Uploaded</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedCandidates.map((candidate) => (
-                    <TableRow key={candidate.id}>
+                  {sortedCVs.map((cv) => (
+                    <TableRow key={cv.id}>
                       <TableCell>
-                        <Checkbox
-                          checked={selectedCandidates.includes(candidate.id)}
-                          onCheckedChange={(checked) => handleSelectCandidate(candidate.id, checked as boolean)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/candidates/${candidate.id}`} className="hover:underline">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>
-                                {candidate.name.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{candidate.name}</div>
-                              <div className="text-sm text-muted-foreground">{candidate.email}</div>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="text-xs">
+                              {cv.candidateName.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{cv.candidateName}</div>
+                            <div className="text-sm text-muted-foreground">{cv.email}</div>
                           </div>
-                        </Link>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{candidate.position}</div>
-                          <div className="text-sm text-muted-foreground">{candidate.department}</div>
+                          <div className="font-medium">{cv.position}</div>
+                          <div className="text-sm text-muted-foreground">{cv.experience}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
-                          {getStatusBadge(candidate.status)}
-                          <div className="text-xs text-muted-foreground">{candidate.stage}</div>
+                        {cv.vacancyId !== "none" ? (
+                          <Link href={`/vacancies/${cv.vacancyId}`} className="text-blue-600 hover:underline">
+                            {cv.vacancyTitle}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">{cv.vacancyTitle}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Star className={cn(
+                            "h-4 w-4 fill-current",
+                            cv.matchScore >= 90 ? "text-green-500" :
+                            cv.matchScore >= 80 ? "text-blue-500" :
+                            cv.matchScore >= 70 ? "text-yellow-500" :
+                            "text-gray-400"
+                          )} />
+                          <span className="font-semibold">{cv.matchScore}%</span>
                         </div>
                       </TableCell>
-                      <TableCell>{getMatchScoreBadge(candidate.matchScore)}</TableCell>
+                      <TableCell>{getStatusBadge(cv.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(candidate.appliedDate).toLocaleDateString()}
+                          {new Date(cv.uploadedAt).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-muted-foreground">
-                          {candidate.lastActivity}
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/candidates/${candidate.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Profile
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Send Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Calendar className="mr-2 h-4 w-4" />
-                              Schedule Interview
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Add Note
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Reject
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="grid" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search candidates..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {sortedCandidates.map((candidate) => (
-                  <Card key={candidate.id} className="relative">
-                    <div className="absolute top-4 right-4">
-                      <Checkbox
-                        checked={selectedCandidates.includes(candidate.id)}
-                        onCheckedChange={(checked) => handleSelectCandidate(candidate.id, checked as boolean)}
-                      />
-                    </div>
-                    <CardHeader>
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarFallback>
-                            {candidate.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <Link href={`/candidates/${candidate.id}`}>
-                            <CardTitle className="text-lg hover:underline">
-                              {candidate.name}
-                            </CardTitle>
-                          </Link>
-                          <CardDescription>{candidate.position}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex gap-2">
-                        {getStatusBadge(candidate.status)}
-                        {getMatchScoreBadge(candidate.matchScore)}
-                      </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="h-4 w-4 text-muted-foreground" />
-                          <span>{candidate.experience}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{candidate.location}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                          <span className="truncate">{candidate.education}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1">
-                        {candidate.skills.slice(0, 3).map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {candidate.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{candidate.skills.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2 pt-3">
-                        <Link href={`/candidates/${candidate.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            View Profile
-                          </Button>
-                        </Link>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Send Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Calendar className="mr-2 h-4 w-4" />
-                              Schedule Interview
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Add Note
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pipeline">
-          <div className="text-center py-8">
-            <Link href="/candidates/pipeline">
-              <Button className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white">
-                Open Pipeline View
-              </Button>
-            </Link>
-          </div>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+  </div>
   )
 }

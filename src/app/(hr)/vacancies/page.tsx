@@ -63,7 +63,7 @@ const mockVacancies = [
     priority: "high",
     created: "2024-01-15",
     deadline: "2024-02-15",
-    candidates: 45,
+    uploadedCVs: 45,
     interviews: 8,
     description: "We are looking for an experienced Frontend Developer to join our team..."
   },
@@ -81,7 +81,7 @@ const mockVacancies = [
     priority: "medium",
     created: "2024-01-10",
     deadline: "2024-02-10",
-    candidates: 32,
+    uploadedCVs: 32,
     interviews: 5,
     description: "Seeking a talented Product Manager to lead our digital banking initiatives..."
   },
@@ -99,7 +99,7 @@ const mockVacancies = [
     priority: "high",
     created: "2024-01-12",
     deadline: "2024-02-20",
-    candidates: 38,
+    uploadedCVs: 38,
     interviews: 6,
     description: "Join our backend team to build scalable banking solutions..."
   },
@@ -117,7 +117,7 @@ const mockVacancies = [
     priority: "low",
     created: "2024-01-08",
     deadline: "2024-02-08",
-    candidates: 28,
+    uploadedCVs: 28,
     interviews: 4,
     description: "Looking for a creative designer to enhance our digital products..."
   },
@@ -135,7 +135,7 @@ const mockVacancies = [
     priority: "medium",
     created: "2024-01-14",
     deadline: "2024-02-14",
-    candidates: 22,
+    uploadedCVs: 22,
     interviews: 3,
     description: "We need a data analyst to help drive data-driven decisions..."
   },
@@ -153,7 +153,7 @@ const mockVacancies = [
     priority: "high",
     created: "2024-01-16",
     deadline: "2024-02-25",
-    candidates: 0,
+    uploadedCVs: 0,
     interviews: 0,
     description: "Looking for a DevOps engineer to improve our infrastructure..."
   },
@@ -171,7 +171,7 @@ const mockVacancies = [
     priority: "medium",
     created: "2024-01-18",
     deadline: "2024-02-28",
-    candidates: 15,
+    uploadedCVs: 15,
     interviews: 2,
     description: "Lead our marketing initiatives and brand strategy..."
   },
@@ -189,7 +189,7 @@ const mockVacancies = [
     priority: "low",
     created: "2024-01-20",
     deadline: "2024-03-01",
-    candidates: 18,
+    uploadedCVs: 18,
     interviews: 3,
     description: "Ensure quality of our software products through comprehensive testing..."
   }
@@ -421,7 +421,7 @@ export default function VacanciesPage() {
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Salary</TableHead>
-                  <TableHead>Candidates</TableHead>
+                  <TableHead>Uploaded CVs</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -464,7 +464,7 @@ export default function VacanciesPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>{vacancy.candidates}</span>
+                          <span>{vacancy.uploadedCVs}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -553,7 +553,7 @@ export default function VacanciesPage() {
                         <div className="flex justify-between pt-3 border-t">
                           <div className="flex items-center gap-1">
                             <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{vacancy.candidates} candidates</span>
+                            <span className="text-sm">{vacancy.uploadedCVs} CVs</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
