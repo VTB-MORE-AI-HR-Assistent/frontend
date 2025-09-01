@@ -301,9 +301,9 @@ export default function CandidatesPage() {
 
   return (
     <div className="p-6 bg-gray-50/50 min-h-[calc(100vh-64px)]">
-      <div className="flex gap-6">
+      <div className="flex gap-6 h-[calc(100vh-112px)]">
         {/* Left Panel - Upload Section */}
-        <Card className="w-[400px] flex-shrink-0">
+        <Card className="w-[400px] flex-shrink-0 h-fit">
           <CardHeader>
             <CardTitle>Quick Upload</CardTitle>
             <CardDescription>Drag & drop or click to browse</CardDescription>
@@ -414,11 +414,61 @@ export default function CandidatesPage() {
                 )}
               </div>
             )}
+
+            {/* Quick Stats Section */}
+            <div className="mt-6 pt-6 border-t space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Quick Stats</h3>
+                <p className="text-xs text-muted-foreground">Your CV processing overview</p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total CVs</span>
+                  <span className="text-lg font-bold">{totalCVs}</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-muted-foreground">Shortlisted</span>
+                    </div>
+                    <span className="text-sm font-semibold">{filteredCVs.filter(cv => cv.status === "shortlisted").length}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-yellow-500" />
+                      <span className="text-sm text-muted-foreground">Under Review</span>
+                    </div>
+                    <span className="text-sm font-semibold">{reviewingCVs}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-purple-500" />
+                      <span className="text-sm text-muted-foreground">In Interview</span>
+                    </div>
+                    <span className="text-sm font-semibold">{interviewCVs}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Last Activity</span>
+                  <span className="text-sm">{sortedCVs.length > 0 ? "Today" : "No activity yet"}</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Right Panel - CVs Table */}
-        <Card className="flex-1">
+        <Card className="flex-1 h-full overflow-hidden flex flex-col">
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
@@ -431,7 +481,7 @@ export default function CandidatesPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-auto">
             {/* Filters */}
             <div className="flex gap-3 mb-6">
               <div className="flex-1">
