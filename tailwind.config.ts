@@ -57,10 +57,53 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shimmer: {
+          "100%": {
+            transform: "translateX(100%)",
+          },
+        },
+        progress: {
+          "0%": {
+            width: "0%",
+            transform: "translateX(0)",
+          },
+          "50%": {
+            width: "100%",
+            transform: "translateX(0)",
+          },
+          "100%": {
+            width: "100%",
+            transform: "translateX(100%)",
+          },
+        },
+        wave: {
+          "0%, 60%, 100%": {
+            transform: "translateY(0) scale(1)",
+            opacity: "1",
+          },
+          "30%": {
+            transform: "translateY(-15px) scale(1.2)",
+            opacity: "0.8",
+          },
+        },
+        "fade-in": {
+          from: {
+            opacity: "0",
+            transform: "translateY(10px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s infinite",
+        progress: "progress 2s ease-in-out infinite",
+        wave: "wave 1.4s ease-in-out infinite",
+        "fade-in": "fade-in 0.5s ease-out",
       },
     },
   },

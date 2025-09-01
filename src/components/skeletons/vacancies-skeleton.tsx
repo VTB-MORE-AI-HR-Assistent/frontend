@@ -17,22 +17,6 @@ export function VacanciesPageSkeleton() {
         <Skeleton className="h-10 w-36" />
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-1" />
-              <Skeleton className="h-3 w-20" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Filters and Table */}
       <Card>
         <CardHeader>
@@ -55,8 +39,8 @@ export function VacanciesPageSkeleton() {
             {/* Table header */}
             <div className="flex items-center p-4 border-b bg-muted/50">
               <Skeleton className="h-4 w-4 mr-4" />
-              {[120, 100, 80, 60, 60, 80, 100, 80, 40].map((width, i) => (
-                <Skeleton key={i} className={`h-4 w-${width} mr-4`} style={{ width: `${width}px` }} />
+              {[120, 100, 80, 60, 80, 100, 40].map((width, i) => (
+                <Skeleton key={i} className={`h-4 mr-4`} style={{ width: `${width}px` }} />
               ))}
             </div>
             {/* Table rows */}
@@ -71,8 +55,6 @@ export function VacanciesPageSkeleton() {
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-14 rounded-full" />
-                  <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-8 w-8 ml-auto" />
