@@ -69,12 +69,34 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<PipelineStep>("vacancy")
   const [isProcessing, setIsProcessing] = useState(false)
-  const [vacancyData, setVacancyData] = useState({
+  const [vacancyData, setVacancyData] = useState<{
+    title: string;
+    description: string;
+    department: string;
+    location: string;
+    type: string;
+    experience: string;
+    priority: string;
+    salaryMin: string;
+    salaryMax: string;
+    currency: string;
+    deadline: string;
+    startDate: string;
+    uploadedFile: File | null;
+  }>({
     title: "",
     description: "",
     department: "",
     location: "",
-    type: "Full-time"
+    type: "Full-time",
+    experience: "",
+    priority: "medium",
+    salaryMin: "",
+    salaryMax: "",
+    currency: "RUB",
+    deadline: "",
+    startDate: "",
+    uploadedFile: null
   })
   const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
   const [candidates, setCandidates] = useState<Candidate[]>([])
@@ -202,7 +224,14 @@ export default function DashboardPage() {
     setUploadedCVs(prev => [...prev, ...acceptedFiles])
   }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const onDropVacancy = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setVacancyData(prev => ({ ...prev, uploadedFile: acceptedFiles[0] }))
+    }
+  }, [])
+
+  // Dropzone for CVs
+  const { getRootProps: getCVRootProps, getInputProps: getCVInputProps, isDragActive: isCVDragActive } = useDropzone({
     onDrop: onDropCVs,
     accept: {
       'application/pdf': ['.pdf'],
@@ -210,6 +239,18 @@ export default function DashboardPage() {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
     },
     multiple: true
+  })
+
+  // Dropzone for Vacancy
+  const { getRootProps: getVacancyRootProps, getInputProps: getVacancyInputProps, isDragActive: isVacancyDragActive } = useDropzone({
+    onDrop: onDropVacancy,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
+    },
+    multiple: false
   })
 
   const submitVacancy = () => {
@@ -419,61 +460,168 @@ export default function DashboardPage() {
                       <TabsTrigger value="link">From URL</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="manual" className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Job Title</Label>
-                          <Input 
-                            placeholder="e.g., Senior Frontend Developer"
-                            value={vacancyData.title}
-                            onChange={(e) => setVacancyData({...vacancyData, title: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Department</Label>
-                          <Select 
-                            value={vacancyData.department}
-                            onValueChange={(v) => setVacancyData({...vacancyData, department: v})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="engineering">Engineering</SelectItem>
-                              <SelectItem value="product">Product</SelectItem>
-                              <SelectItem value="design">Design</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Location</Label>
-                          <Input 
-                            placeholder="e.g., Moscow, Russia"
-                            value={vacancyData.location}
-                            onChange={(e) => setVacancyData({...vacancyData, location: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Type</Label>
-                          <Select 
-                            value={vacancyData.type}
-                            onValueChange={(v) => setVacancyData({...vacancyData, type: v})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Full-time">Full-time</SelectItem>
-                              <SelectItem value="Part-time">Part-time</SelectItem>
-                              <SelectItem value="Remote">Remote</SelectItem>
-                            </SelectContent>
-                          </Select>
+                    <TabsContent value="manual" className="space-y-4 max-h-[500px] overflow-y-auto">
+                      {/* Basic Information */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-sm text-muted-foreground">Basic Information</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Job Title <span className="text-red-500">*</span></Label>
+                            <Input 
+                              placeholder="e.g., Senior Frontend Developer"
+                              value={vacancyData.title}
+                              onChange={(e) => setVacancyData({...vacancyData, title: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Department <span className="text-red-500">*</span></Label>
+                            <Select 
+                              value={vacancyData.department}
+                              onValueChange={(v) => setVacancyData({...vacancyData, department: v})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select department" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="IT">IT</SelectItem>
+                                <SelectItem value="Product">Product</SelectItem>
+                                <SelectItem value="Design">Design</SelectItem>
+                                <SelectItem value="Analytics">Analytics</SelectItem>
+                                <SelectItem value="Sales">Sales</SelectItem>
+                                <SelectItem value="Marketing">Marketing</SelectItem>
+                                <SelectItem value="HR">HR</SelectItem>
+                                <SelectItem value="Finance">Finance</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Location <span className="text-red-500">*</span></Label>
+                            <Input 
+                              placeholder="e.g., Moscow, Remote"
+                              value={vacancyData.location}
+                              onChange={(e) => setVacancyData({...vacancyData, location: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Employment Type</Label>
+                            <Select 
+                              value={vacancyData.type}
+                              onValueChange={(v) => setVacancyData({...vacancyData, type: v})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Full-time">Full-time</SelectItem>
+                                <SelectItem value="Part-time">Part-time</SelectItem>
+                                <SelectItem value="Contract">Contract</SelectItem>
+                                <SelectItem value="Internship">Internship</SelectItem>
+                                <SelectItem value="Freelance">Freelance</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Experience Level <span className="text-red-500">*</span></Label>
+                            <Input 
+                              placeholder="e.g., 3-5 years"
+                              value={vacancyData.experience || ''}
+                              onChange={(e) => setVacancyData({...vacancyData, experience: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Priority Level</Label>
+                            <Select 
+                              value={vacancyData.priority || 'medium'}
+                              onValueChange={(v) => setVacancyData({...vacancyData, priority: v})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
+
+                      <Separator />
+
+                      {/* Compensation */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-sm text-muted-foreground">Compensation</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label>Min Salary</Label>
+                            <Input 
+                              type="number"
+                              placeholder="150000"
+                              value={vacancyData.salaryMin || ''}
+                              onChange={(e) => setVacancyData({...vacancyData, salaryMin: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Max Salary</Label>
+                            <Input 
+                              type="number"
+                              placeholder="250000"
+                              value={vacancyData.salaryMax || ''}
+                              onChange={(e) => setVacancyData({...vacancyData, salaryMax: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Currency</Label>
+                            <Select 
+                              value={vacancyData.currency || 'RUB'}
+                              onValueChange={(v) => setVacancyData({...vacancyData, currency: v})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="RUB">RUB</SelectItem>
+                                <SelectItem value="USD">USD</SelectItem>
+                                <SelectItem value="EUR">EUR</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Timeline */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-sm text-muted-foreground">Timeline</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Application Deadline <span className="text-red-500">*</span></Label>
+                            <Input 
+                              type="date"
+                              value={vacancyData.deadline || ''}
+                              onChange={(e) => setVacancyData({...vacancyData, deadline: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Expected Start Date</Label>
+                            <Input 
+                              type="date"
+                              value={vacancyData.startDate || ''}
+                              onChange={(e) => setVacancyData({...vacancyData, startDate: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Description */}
                       <div className="space-y-2">
-                        <Label>Description</Label>
+                        <Label>Job Description <span className="text-red-500">*</span></Label>
                         <Textarea 
-                          placeholder="Job description..."
+                          placeholder="Detailed description of the position..."
                           rows={4}
                           value={vacancyData.description}
                           onChange={(e) => setVacancyData({...vacancyData, description: e.target.value})}
@@ -482,14 +630,46 @@ export default function DashboardPage() {
                     </TabsContent>
                     
                     <TabsContent value="file" className="space-y-4">
-                      <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                        <p className="font-medium">Drop your vacancy file here</p>
-                        <p className="text-sm text-muted-foreground">or click to browse</p>
-                        <Button variant="outline" className="mt-4">
-                          <Upload className="mr-2 h-4 w-4" />
-                          Select File
-                        </Button>
+                      <div className="space-y-4">
+                        <div
+                          {...getVacancyRootProps()}
+                          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                            isVacancyDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+                          }`}
+                        >
+                          <input {...getVacancyInputProps()} />
+                          <Upload className={`mx-auto h-12 w-12 mb-3 ${
+                            isVacancyDragActive ? "text-blue-500" : "text-gray-400"
+                          }`} />
+                          <p className="font-medium text-gray-900 mb-1">
+                            {isVacancyDragActive ? "Drop the vacancy file here" : "Drop your vacancy file here"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">or click to browse</p>
+                          <Button variant="outline" className="mt-4" type="button">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Select File
+                          </Button>
+                        </div>
+                        
+                        {vacancyData.uploadedFile && (
+                          <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-medium">{vacancyData.uploadedFile.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({Math.round(vacancyData.uploadedFile.size / 1024)}KB)
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setVacancyData({...vacancyData, uploadedFile: null})}
+                              type="button"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                     
@@ -529,14 +709,14 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-semibold">Step 2: Upload Candidate CVs</h3>
                   
                   <div
-                    {...getRootProps()}
+                    {...getCVRootProps()}
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
-                      isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+                      isCVDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
-                    <input {...getInputProps()} />
+                    <input {...getCVInputProps()} />
                     <Upload className={`mx-auto h-12 w-12 mb-3 ${
-                      isDragActive ? "text-blue-500" : "text-gray-400"
+                      isCVDragActive ? "text-blue-500" : "text-gray-400"
                     }`} />
                     <p className="font-medium text-gray-900 mb-1">
                       Drop CV files here
