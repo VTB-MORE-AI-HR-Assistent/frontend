@@ -17,7 +17,16 @@ import {
   Building,
   MapPin,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  UserPlus,
+  FileText,
+  MessageSquare,
+  X,
+  CheckCircle,
+  Clock,
+  TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,19 +44,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { VacancyFilters, type VacancyFilters as FiltersType } from "@/components/vacancies/vacancy-filters"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-// Mock data for vacancies
+// Mock data for vacancies with candidates and custom questions
 const mockVacancies = [
   {
     id: "1",
@@ -63,9 +86,19 @@ const mockVacancies = [
     priority: "high",
     created: "2024-01-15",
     deadline: "2024-02-15",
-    uploadedCVs: 45,
-    interviews: 8,
-    description: "We are looking for an experienced Frontend Developer to join our team..."
+    description: "We are looking for an experienced Frontend Developer to join our team...",
+    candidates: [
+      { id: "c1", name: "Maria Petrova", position: "Frontend Dev", matchScore: 95, status: "interview", uploadDate: "2024-01-20" },
+      { id: "c2", name: "Ivan Sidorov", position: "React Developer", matchScore: 88, status: "new", uploadDate: "2024-01-21" },
+      { id: "c3", name: "Elena Kozlova", position: "UI Developer", matchScore: 82, status: "review", uploadDate: "2024-01-19" },
+      { id: "c4", name: "Dmitry Volkov", position: "Frontend Engineer", matchScore: 79, status: "new", uploadDate: "2024-01-22" },
+      { id: "c5", name: "Anna Mikhailova", position: "Web Developer", matchScore: 75, status: "rejected", uploadDate: "2024-01-18" },
+    ],
+    customQuestions: [
+      { id: "q1", question: "Describe your experience with React performance optimization", type: "technical", required: true },
+      { id: "q2", question: "How do you handle state management in large applications?", type: "technical", required: true },
+      { id: "q3", question: "Tell us about a challenging project you've worked on", type: "behavioral", required: false },
+    ]
   },
   {
     id: "2",
@@ -81,9 +114,16 @@ const mockVacancies = [
     priority: "medium",
     created: "2024-01-10",
     deadline: "2024-02-10",
-    uploadedCVs: 32,
-    interviews: 5,
-    description: "Seeking a talented Product Manager to lead our digital banking initiatives..."
+    description: "Seeking a talented Product Manager to lead our digital banking initiatives...",
+    candidates: [
+      { id: "c6", name: "Alexander Smirnov", position: "Senior PM", matchScore: 91, status: "interview", uploadDate: "2024-01-15" },
+      { id: "c7", name: "Natalia Ivanova", position: "Product Manager", matchScore: 85, status: "review", uploadDate: "2024-01-16" },
+      { id: "c8", name: "Sergey Popov", position: "PM", matchScore: 78, status: "new", uploadDate: "2024-01-17" },
+    ],
+    customQuestions: [
+      { id: "q4", question: "How do you prioritize features in a product roadmap?", type: "behavioral", required: true },
+      { id: "q5", question: "Describe your experience with agile methodologies", type: "experience", required: true },
+    ]
   },
   {
     id: "3",
@@ -99,193 +139,93 @@ const mockVacancies = [
     priority: "high",
     created: "2024-01-12",
     deadline: "2024-02-20",
-    uploadedCVs: 38,
-    interviews: 6,
-    description: "Join our backend team to build scalable banking solutions..."
+    description: "Join our backend team to build scalable banking solutions...",
+    candidates: [
+      { id: "c9", name: "Pavel Fedorov", position: "Backend Engineer", matchScore: 93, status: "interview", uploadDate: "2024-01-14" },
+      { id: "c10", name: "Olga Sokolova", position: "Python Developer", matchScore: 87, status: "review", uploadDate: "2024-01-15" },
+      { id: "c11", name: "Viktor Petrov", position: "Java Developer", matchScore: 84, status: "new", uploadDate: "2024-01-16" },
+      { id: "c12", name: "Marina Lebedeva", position: "Backend Dev", matchScore: 76, status: "new", uploadDate: "2024-01-17" },
+    ],
+    customQuestions: [
+      { id: "q6", question: "Explain your approach to microservices architecture", type: "technical", required: true },
+      { id: "q7", question: "How do you ensure API security?", type: "technical", required: true },
+    ]
   },
-  {
-    id: "4",
-    title: "UX/UI Designer",
-    department: "Design",
-    location: "Remote",
-    type: "Full-time",
-    experience: "1-2 years",
-    salaryMin: 180000,
-    salaryMax: 250000,
-    currency: "RUB",
-    status: "closed",
-    priority: "low",
-    created: "2024-01-08",
-    deadline: "2024-02-08",
-    uploadedCVs: 28,
-    interviews: 4,
-    description: "Looking for a creative designer to enhance our digital products..."
-  },
-  {
-    id: "5",
-    title: "Data Analyst",
-    department: "Product",
-    location: "Moscow",
-    type: "Full-time",
-    experience: "1-2 years",
-    salaryMin: 150000,
-    salaryMax: 200000,
-    currency: "RUB",
-    status: "active",
-    priority: "medium",
-    created: "2024-01-14",
-    deadline: "2024-02-14",
-    uploadedCVs: 22,
-    interviews: 3,
-    description: "We need a data analyst to help drive data-driven decisions..."
-  },
-  {
-    id: "6",
-    title: "DevOps Engineer",
-    department: "Engineering",
-    location: "Moscow",
-    type: "Full-time",
-    experience: "3-5 years",
-    salaryMin: 280000,
-    salaryMax: 380000,
-    currency: "RUB",
-    status: "draft",
-    priority: "high",
-    created: "2024-01-16",
-    deadline: "2024-02-25",
-    uploadedCVs: 0,
-    interviews: 0,
-    description: "Looking for a DevOps engineer to improve our infrastructure..."
-  },
-  {
-    id: "7",
-    title: "Marketing Manager",
-    department: "Marketing",
-    location: "Remote",
-    type: "Full-time",
-    experience: "5-10 years",
-    salaryMin: 200000,
-    salaryMax: 300000,
-    currency: "RUB",
-    status: "published",
-    priority: "medium",
-    created: "2024-01-18",
-    deadline: "2024-02-28",
-    uploadedCVs: 15,
-    interviews: 2,
-    description: "Lead our marketing initiatives and brand strategy..."
-  },
-  {
-    id: "8",
-    title: "QA Engineer",
-    department: "Engineering",
-    location: "Hybrid",
-    type: "Contract",
-    experience: "1-2 years",
-    salaryMin: 120000,
-    salaryMax: 180000,
-    currency: "RUB",
-    status: "active",
-    priority: "low",
-    created: "2024-01-20",
-    deadline: "2024-03-01",
-    uploadedCVs: 18,
-    interviews: 3,
-    description: "Ensure quality of our software products through comprehensive testing..."
-  }
-]
+];
 
 export default function VacanciesPage() {
   const [isLoading, setIsLoading] = useState(true)
-  const [vacancies] = useState(mockVacancies)
-  const [selectedVacancies, setSelectedVacancies] = useState<string[]>([])
-  const [viewMode, setViewMode] = useState<"grid" | "table">("table")
-  const [filters, setFilters] = useState<FiltersType>({
-    search: "",
-    status: [],
-    location: [],
-    type: [],
-    experience: [],
-    salaryMin: 0,
-    salaryMax: 1000000
-  })
+  const [vacancies, setVacancies] = useState(mockVacancies)
+  const [expandedVacancies, setExpandedVacancies] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
+  const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
+  const [selectedVacancyForQuestion, setSelectedVacancyForQuestion] = useState<string | null>(null)
 
   // Simulate data loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 1200)
+    }, 800)
     return () => clearTimeout(timer)
   }, [])
 
-  // Filter logic with advanced filters
+  // Filter logic
   const filteredVacancies = useMemo(() => {
     return vacancies.filter(vacancy => {
-      // Search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
-        const matchesSearch = 
-          vacancy.title.toLowerCase().includes(searchLower) ||
-          vacancy.location.toLowerCase().includes(searchLower) ||
-          vacancy.description.toLowerCase().includes(searchLower)
-        if (!matchesSearch) return false
-      }
+      const matchesSearch = vacancy.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           vacancy.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           vacancy.location.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesStatus = filterStatus === "all" || vacancy.status === filterStatus
+      return matchesSearch && matchesStatus
+    })
+  }, [vacancies, searchQuery, filterStatus])
 
-      // Status filter
-      if (filters.status.length > 0 && !filters.status.includes(vacancy.status)) {
-        return false
-      }
+  const toggleVacancyExpansion = (vacancyId: string) => {
+    setExpandedVacancies(prev => 
+      prev.includes(vacancyId) 
+        ? prev.filter(id => id !== vacancyId)
+        : [...prev, vacancyId]
+    )
+  }
 
-
-      // Location filter
-      if (filters.location.length > 0 && !filters.location.includes(vacancy.location)) {
-        return false
-      }
-
-      // Type filter
-      if (filters.type.length > 0 && !filters.type.includes(vacancy.type)) {
-        return false
-      }
-
-      // Experience filter
-      if (filters.experience.length > 0 && !filters.experience.includes(vacancy.experience)) {
-        return false
-      }
-
-      // Salary filter
-      if (filters.salaryMin > 0 || filters.salaryMax < 1000000) {
-        const vacancyMaxSalary = vacancy.salaryMax || 0
-        const vacancyMinSalary = vacancy.salaryMin || 0
-        
-        if (vacancyMaxSalary < filters.salaryMin || vacancyMinSalary > filters.salaryMax) {
-          return false
+  const handleRemoveCandidate = (vacancyId: string, candidateId: string) => {
+    setVacancies(prev => prev.map(vacancy => {
+      if (vacancy.id === vacancyId) {
+        return {
+          ...vacancy,
+          candidates: vacancy.candidates.filter(c => c.id !== candidateId)
         }
       }
-
-
-      return true
-    })
-  }, [vacancies, filters])
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedVacancies(filteredVacancies.map(v => v.id))
-    } else {
-      setSelectedVacancies([])
-    }
+      return vacancy
+    }))
   }
 
-  const handleSelectVacancy = (vacancyId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedVacancies([...selectedVacancies, vacancyId])
-    } else {
-      setSelectedVacancies(selectedVacancies.filter(id => id !== vacancyId))
-    }
+  const handleAddQuestion = (vacancyId: string, question: any) => {
+    setVacancies(prev => prev.map(vacancy => {
+      if (vacancy.id === vacancyId) {
+        return {
+          ...vacancy,
+          customQuestions: [...vacancy.customQuestions, { ...question, id: `q${Date.now()}` }]
+        }
+      }
+      return vacancy
+    }))
+    setIsAddQuestionOpen(false)
+    setSelectedVacancyForQuestion(null)
   }
 
-  const handleBulkAction = (action: string) => {
-    console.log(`Bulk action: ${action} for vacancies:`, selectedVacancies)
-    setSelectedVacancies([])
+  const handleRemoveQuestion = (vacancyId: string, questionId: string) => {
+    setVacancies(prev => prev.map(vacancy => {
+      if (vacancy.id === vacancyId) {
+        return {
+          ...vacancy,
+          customQuestions: vacancy.customQuestions.filter(q => q.id !== questionId)
+        }
+      }
+      return vacancy
+    }))
   }
 
   const getStatusBadge = (status: string) => {
@@ -296,12 +236,32 @@ export default function VacanciesPage() {
       closed: "bg-red-100 text-red-800 border-red-200"
     }
     return (
-      <Badge className={colors[status] || ""}>
+      <Badge className={`text-xs ${colors[status] || ""}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     )
   }
 
+  const getCandidateStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      interview: "bg-blue-100 text-blue-800",
+      review: "bg-yellow-100 text-yellow-800",
+      new: "bg-green-100 text-green-800",
+      rejected: "bg-red-100 text-red-800"
+    }
+    return (
+      <Badge className={`text-[10px] ${colors[status] || ""}`}>
+        {status}
+      </Badge>
+    )
+  }
+
+  const getMatchScoreColor = (score: number) => {
+    if (score >= 90) return "text-green-600"
+    if (score >= 80) return "text-blue-600"
+    if (score >= 70) return "text-yellow-600"
+    return "text-gray-600"
+  }
 
   const formatSalary = (min?: number, max?: number, currency?: string) => {
     if (!min && !max) return "Not specified"
@@ -309,8 +269,6 @@ export default function VacanciesPage() {
     if (min && max) {
       return `${formatter.format(min)} - ${formatter.format(max)} ${currency || 'RUB'}`
     }
-    if (min) return `From ${formatter.format(min)} ${currency || 'RUB'}`
-    if (max) return `Up to ${formatter.format(max)} ${currency || 'RUB'}`
     return "Not specified"
   }
 
@@ -319,16 +277,16 @@ export default function VacanciesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 pt-6 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vacancies</h1>
-          <p className="text-muted-foreground">
-            Manage your job openings and recruitment pipeline
+          <h1 className="text-2xl font-bold tracking-tight">Vacancies</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage vacancies, candidates, and interview questions
           </p>
         </div>
-        <Link href="/vacancies/new">
+        <Link href="/dashboard">
           <Button className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white">
             <Plus className="mr-2 h-4 w-4" />
             Create Vacancy
@@ -336,272 +294,389 @@ export default function VacanciesPage() {
         </Link>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Input
+          placeholder="Search vacancies..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Advanced Filters */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <VacancyFilters 
-              onFiltersChange={setFilters} 
-              totalResults={filteredVacancies.length}
-            />
-            <div className="flex gap-2 ml-4">
-              <Button
-                variant={viewMode === "table" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("table")}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        {/* Bulk Actions */}
-        {selectedVacancies.length > 0 && (
-          <div className="px-6 py-3 bg-blue-50 border-t border-b">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-800">
-                {selectedVacancies.length} vacancy(ies) selected
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkAction("archive")}
-                >
-                  <Archive className="h-4 w-4 mr-1" />
-                  Archive
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkAction("export")}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Export
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 hover:text-red-700"
-                  onClick={() => handleBulkAction("delete")}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CardContent className="p-0">
-          {viewMode === "table" ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedVacancies.length === filteredVacancies.length && filteredVacancies.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Salary</TableHead>
-                  <TableHead>Uploaded CVs</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVacancies.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No vacancies found matching your filters
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredVacancies.map((vacancy) => (
-                    <TableRow key={vacancy.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedVacancies.includes(vacancy.id)}
-                          onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/vacancies/${vacancy.id}`} className="hover:underline">
-                          <div>
-                            <div className="font-medium">{vacancy.title}</div>
-                            <div className="text-sm text-muted-foreground">{vacancy.type} • {vacancy.experience}</div>
-                          </div>
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                          {vacancy.location}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(vacancy.status)}</TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>{vacancy.uploadedCVs}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/vacancies/${vacancy.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/vacancies/${vacancy.id}/edit`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Archive className="mr-2 h-4 w-4" />
-                              Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
-              {filteredVacancies.length === 0 ? (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  No vacancies found matching your filters
-                </div>
-              ) : (
-                filteredVacancies.map((vacancy) => (
-                  <Card key={vacancy.id} className="relative">
-                    <div className="absolute top-4 right-4">
-                      <Checkbox
-                        checked={selectedVacancies.includes(vacancy.id)}
-                        onCheckedChange={(checked) => handleSelectVacancy(vacancy.id, checked as boolean)}
-                      />
+      {/* Vacancies List */}
+      <div className="space-y-4">
+        {filteredVacancies.length === 0 ? (
+          <Card className="p-8 text-center text-muted-foreground">
+            No vacancies found matching your filters
+          </Card>
+        ) : (
+          filteredVacancies.map((vacancy) => (
+            <Card key={vacancy.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-0 h-6 w-6"
+                        onClick={() => toggleVacancyExpansion(vacancy.id)}
+                      >
+                        {expandedVacancies.includes(vacancy.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <CardTitle className="text-lg">{vacancy.title}</CardTitle>
+                      {getStatusBadge(vacancy.status)}
+                      <Badge variant="outline" className="text-xs">
+                        {vacancy.priority} priority
+                      </Badge>
                     </div>
-                    <CardHeader>
-                      <Link href={`/vacancies/${vacancy.id}`}>
-                        <CardTitle className="hover:underline">{vacancy.title}</CardTitle>
-                      </Link>
-                      <CardDescription>{vacancy.location}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          {getStatusBadge(vacancy.status)}
+                    <CardDescription className="mt-1 text-xs flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <Building className="h-3 w-3" />
+                        {vacancy.department}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {vacancy.location}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="h-3 w-3" />
+                        {vacancy.type}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {vacancy.experience}
+                      </span>
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right mr-4">
+                      <p className="text-sm font-medium">{vacancy.candidates.length} candidates</p>
+                      <p className="text-xs text-muted-foreground">
+                        Avg. match: {Math.round(vacancy.candidates.reduce((sum, c) => sum + c.matchScore, 0) / vacancy.candidates.length)}%
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Vacancy
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Add Candidates
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Archive className="mr-2 h-4 w-4" />
+                          Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <span>Deadline: {vacancy.deadline}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Salary: {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
+                  </div>
+                </div>
+              </CardHeader>
+
+              {/* Expanded Content */}
+              {expandedVacancies.includes(vacancy.id) && (
+                <CardContent className="pt-0">
+                  <Tabs defaultValue="candidates" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="candidates">
+                        Candidates ({vacancy.candidates.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="questions">
+                        Custom Questions ({vacancy.customQuestions.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="overview">
+                        Overview
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Candidates Tab */}
+                    <TabsContent value="candidates" className="mt-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-sm font-medium">Matched Candidates</h3>
+                          <Button size="sm" variant="outline">
+                            <UserPlus className="mr-2 h-3 w-3" />
+                            Add Candidates
+                          </Button>
                         </div>
-                        <div className="text-sm space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Type:</span>
-                            <span>{vacancy.type}</span>
+                        
+                        <ScrollArea className="h-[300px] pr-4">
+                          <div className="space-y-2">
+                            {vacancy.candidates.length === 0 ? (
+                              <div className="text-center py-8 text-muted-foreground text-sm">
+                                No candidates uploaded yet
+                              </div>
+                            ) : (
+                              vacancy.candidates.map((candidate) => (
+                                <div key={candidate.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
+                                  <div className="flex items-center gap-3">
+                                    <Checkbox 
+                                      checked={selectedCandidates.includes(candidate.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setSelectedCandidates([...selectedCandidates, candidate.id])
+                                        } else {
+                                          setSelectedCandidates(selectedCandidates.filter(id => id !== candidate.id))
+                                        }
+                                      }}
+                                    />
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarFallback className="text-xs">
+                                        {candidate.name.split(' ').map(n => n[0]).join('')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <p className="text-sm font-medium">{candidate.name}</p>
+                                      <p className="text-xs text-muted-foreground">{candidate.position}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                      <p className={`text-sm font-bold ${getMatchScoreColor(candidate.matchScore)}`}>
+                                        {candidate.matchScore}% match
+                                      </p>
+                                      <p className="text-[10px] text-muted-foreground">
+                                        Uploaded {candidate.uploadDate}
+                                      </p>
+                                    </div>
+                                    {getCandidateStatusBadge(candidate.status)}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveCandidate(vacancy.id, candidate.id)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Experience:</span>
-                            <span>{vacancy.experience}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Salary:</span>
-                            <span className="text-xs">{formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}</span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between pt-3 border-t">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{vacancy.uploadedCVs} CVs</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{vacancy.interviews} interviews</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 pt-3">
-                          <Link href={`/vacancies/${vacancy.id}`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full">
-                              View
-                            </Button>
-                          </Link>
-                          <Link href={`/vacancies/${vacancy.id}/edit`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full">
-                              Edit
-                            </Button>
-                          </Link>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <MoreVertical className="h-4 w-4" />
+                        </ScrollArea>
+
+                        {selectedCandidates.length > 0 && (
+                          <div className="flex justify-between items-center pt-3 border-t">
+                            <span className="text-xs text-muted-foreground">
+                              {selectedCandidates.length} selected
+                            </span>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline">
+                                Schedule Interviews
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Archive className="mr-2 h-4 w-4" />
-                                Archive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              <Button size="sm" variant="outline" className="text-red-600">
+                                Remove Selected
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    {/* Custom Questions Tab */}
+                    <TabsContent value="questions" className="mt-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-sm font-medium">Interview Questions</h3>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedVacancyForQuestion(vacancy.id)
+                              setIsAddQuestionOpen(true)
+                            }}
+                          >
+                            <Plus className="mr-2 h-3 w-3" />
+                            Add Question
+                          </Button>
+                        </div>
+                        
+                        <ScrollArea className="h-[300px] pr-4">
+                          <div className="space-y-2">
+                            {vacancy.customQuestions.length === 0 ? (
+                              <div className="text-center py-8 text-muted-foreground text-sm">
+                                No custom questions added yet
+                              </div>
+                            ) : (
+                              vacancy.customQuestions.map((question, index) => (
+                                <div key={question.id} className="p-3 rounded-lg border">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-medium text-muted-foreground">
+                                          Q{index + 1}
+                                        </span>
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {question.type}
+                                        </Badge>
+                                        {question.required && (
+                                          <Badge className="text-[10px] bg-red-100 text-red-800">
+                                            Required
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm">{question.question}</p>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveQuestion(vacancy.id, question.id)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    </TabsContent>
+
+                    {/* Overview Tab */}
+                    <TabsContent value="overview" className="mt-4">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-sm font-medium mb-2">Description</h3>
+                          <p className="text-sm text-muted-foreground">{vacancy.description}</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Department</h4>
+                            <p className="text-sm">{vacancy.department}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Location</h4>
+                            <p className="text-sm">{vacancy.location}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Employment Type</h4>
+                            <p className="text-sm">{vacancy.type}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Experience</h4>
+                            <p className="text-sm">{vacancy.experience}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Salary Range</h4>
+                            <p className="text-sm">{formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Deadline</h4>
+                            <p className="text-sm">{vacancy.deadline}</p>
+                          </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
               )}
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Add Question Dialog */}
+      <Dialog open={isAddQuestionOpen} onOpenChange={setIsAddQuestionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Custom Question</DialogTitle>
+            <DialogDescription>
+              Add a custom interview question for this vacancy
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="question">Question</Label>
+              <Textarea
+                id="question"
+                placeholder="Enter your question..."
+                className="mt-1"
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div>
+              <Label htmlFor="type">Question Type</Label>
+              <Select defaultValue="technical">
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="behavioral">Behavioral</SelectItem>
+                  <SelectItem value="experience">Experience</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="required" />
+              <Label htmlFor="required">Required question</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddQuestionOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              if (selectedVacancyForQuestion) {
+                handleAddQuestion(selectedVacancyForQuestion, {
+                  question: "New question",
+                  type: "technical",
+                  required: true
+                })
+              }
+            }}>
+              Add Question
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
