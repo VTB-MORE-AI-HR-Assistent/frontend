@@ -24,6 +24,7 @@ import {
   Users, 
   Briefcase,
   ChevronRight,
+  ChevronLeft,
   Calendar,
   FileText,
   TrendingUp,
@@ -190,27 +191,47 @@ export default function DashboardPage() {
     }
   ]
 
-  const todayTasks = [
+  // AI Interview Schedule - These are interviews being conducted by AI
+  const aiInterviews = [
     {
       id: 1,
       time: "10:00 AM",
-      title: "Interview with Ivan Petrov",
-      role: "Frontend Developer",
-      type: "Technical Interview"
+      candidateName: "Ivan Petrov",
+      position: "Frontend Developer",
+      interviewType: "Technical",
+      status: "scheduled",
+      duration: "45 min",
+      matchScore: 92
     },
     {
       id: 2,
-      time: "2:00 PM",
-      title: "Review AI matches",
-      role: "Data Scientist position",
-      type: "15 new candidates"
+      time: "11:00 AM",
+      candidateName: "Maria Kozlova",
+      position: "Backend Developer",
+      interviewType: "Behavioral",
+      status: "in-progress",
+      duration: "30 min",
+      matchScore: 88
     },
     {
       id: 3,
+      time: "2:30 PM",
+      candidateName: "Alexander Smirnov",
+      position: "Data Scientist",
+      interviewType: "Technical",
+      status: "scheduled",
+      duration: "60 min",
+      matchScore: 95
+    },
+    {
+      id: 4,
       time: "4:00 PM",
-      title: "Team sync",
-      role: "Weekly hiring review",
-      type: "Meeting"
+      candidateName: "Elena Volkova",
+      position: "Frontend Developer",
+      interviewType: "Experience",
+      status: "scheduled",
+      duration: "45 min",
+      matchScore: 85
     }
   ]
 
@@ -392,7 +413,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-4 pt-6 pb-20 md:pb-6 md:p-8">
+    <div className="flex flex-col h-screen p-4 pt-6 md:p-8 space-y-6">
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1457,63 +1478,183 @@ export default function DashboardPage() {
           </DialogContent>
       </Dialog>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Today's Schedule */}
+      {/* Main Content Grid - Fill remaining height */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 flex-1">
+        {/* AI Interview Schedule */}
         <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Today&apos;s Schedule</span>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>AI Interviews Today</span>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-xs text-muted-foreground">Live</span>
+              </div>
             </CardTitle>
+            <CardDescription className="text-xs">
+              {aiInterviews.length} interviews scheduled • 1 in progress
+            </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-2.5 flex-1">
-              {todayTasks.map((task) => (
-                <div key={task.id} className="flex items-start space-x-2">
-                  <div className="text-xs font-medium text-muted-foreground w-14 pt-0">
-                    {task.time}
+          <CardContent className="flex-1 flex flex-col pt-2">
+            <div className="space-y-1.5 flex-1 overflow-y-auto">
+              {aiInterviews.slice(0, 3).map((interview) => (
+                <div key={interview.id} className={`flex items-start space-x-2 p-1.5 rounded-lg transition-all ${
+                  interview.status === 'in-progress' ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="text-xs font-medium text-muted-foreground w-12 pt-0.5">
+                    {interview.time}
                   </div>
-                  <div className="flex-1 space-y-0.5">
-                    <p className="text-sm font-medium leading-tight">{task.title}</p>
-                    <p className="text-xs text-muted-foreground leading-tight">{task.role}</p>
-                    <Badge variant="outline" className="text-xs py-0 px-1.5 h-5">
-                      {task.type}
-                    </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium leading-tight truncate">{interview.candidateName}</p>
+                      {interview.status === 'in-progress' && (
+                        <Badge className="text-[10px] py-0 px-1 h-3.5 bg-blue-500">
+                          LIVE
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-tight truncate">{interview.position}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5">
+                        {interview.interviewType}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5">
+                        {interview.duration}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5 text-green-600 border-green-200">
+                        {interview.matchScore}%
+                      </Badge>
+                    </div>
                   </div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-3 h-8" size="sm">
-              View full calendar
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full mt-3 h-8" size="sm">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  View full calendar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>AI Interview Calendar</DialogTitle>
+                  <DialogDescription>
+                    All scheduled AI interviews across all positions
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {/* Calendar Component */}
+                <div className="mt-4">
+                  {/* Week View */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold">Week of {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</h3>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Today
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Time Grid */}
+                    <div className="grid grid-cols-8 gap-0 border-t">
+                      {/* Time Column */}
+                      <div className="border-r">
+                        <div className="h-8 border-b text-xs text-muted-foreground p-1">Time</div>
+                        {['9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:00', '5:00'].map(time => (
+                          <div key={time} className="h-16 border-b text-xs text-muted-foreground p-1">
+                            {time}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Days */}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, dayIndex) => (
+                        <div key={day} className="border-r">
+                          <div className="h-8 border-b text-xs font-medium p-1 text-center">
+                            {day}
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(Date.now() + dayIndex * 24 * 60 * 60 * 1000).getDate()}
+                            </div>
+                          </div>
+                          
+                          {/* Time Slots */}
+                          {[9, 10, 11, 12, 13, 14, 15, 16, 17].map(hour => (
+                            <div key={hour} className="h-16 border-b relative">
+                              {/* Sample Interview Blocks */}
+                              {dayIndex === 0 && hour === 10 && (
+                                <div className="absolute inset-x-1 top-1 bottom-8 bg-blue-100 border border-blue-300 rounded p-1 cursor-pointer hover:bg-blue-200">
+                                  <div className="text-[10px] font-medium">Ivan Petrov</div>
+                                  <div className="text-[9px] text-muted-foreground">Frontend Dev</div>
+                                </div>
+                              )}
+                              {dayIndex === 2 && hour === 14 && (
+                                <div className="absolute inset-x-1 top-1 bottom-8 bg-green-100 border border-green-300 rounded p-1 cursor-pointer hover:bg-green-200">
+                                  <div className="text-[10px] font-medium">Maria K.</div>
+                                  <div className="text-[9px] text-muted-foreground">Backend</div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 mt-4 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="h-3 w-3 bg-blue-100 border border-blue-300 rounded"></div>
+                        <span>Technical</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="h-3 w-3 bg-green-100 border border-green-300 rounded"></div>
+                        <span>Behavioral</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="h-3 w-3 bg-purple-100 border border-purple-300 rounded"></div>
+                        <span>Experience</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
         {/* Top Match Candidates */}
         <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-between text-base">
               <span>Top Match Candidates</span>
               <Sparkles className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               AI-matched candidates with highest compatibility
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-2 flex-1">
-              {topMatchCandidates.map((candidate) => (
+          <CardContent className="flex-1 flex flex-col pt-2">
+            <div className="space-y-1.5 flex-1 overflow-y-auto">
+              {topMatchCandidates.slice(0, 4).map((candidate) => (
                 <div key={candidate.id} className="group relative">
-                  <div className="flex items-start gap-2.5 p-2 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-2 p-1.5 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
                     {/* Avatar */}
                     <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-xs">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-[10px]">
                         {candidate.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       {/* Match Score Badge */}
                       <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full shadow-sm">
-                        <div className={`text-[10px] font-bold px-1 py-0 rounded-full ${
+                        <div className={`text-[9px] font-bold px-0.5 rounded-full ${
                           candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
                           candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-700'
@@ -1526,31 +1667,25 @@ export default function DashboardPage() {
                     {/* Candidate Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate leading-tight">{candidate.name}</p>
-                          <p className="text-xs text-muted-foreground leading-tight">{candidate.position}</p>
+                          <p className="text-xs text-muted-foreground leading-tight truncate">{candidate.position}</p>
                         </div>
                         {candidate.status === "new" && (
-                          <Badge className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0">New</Badge>
+                          <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1 py-0 h-3.5">New</Badge>
                         )}
                         {candidate.status === "reviewing" && (
-                          <Badge className="bg-yellow-100 text-yellow-700 text-xs px-1.5 py-0">Reviewing</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700 text-[10px] px-1 py-0 h-3.5">Review</Badge>
                         )}
                         {candidate.status === "interview" && (
-                          <Badge className="bg-green-100 text-green-700 text-xs px-1.5 py-0">Interview</Badge>
+                          <Badge className="bg-green-100 text-green-700 text-[10px] px-1 py-0 h-3.5">Interview</Badge>
                         )}
-                      </div>
-                      
-                      {/* Vacancy Match */}
-                      <div className="flex items-center gap-0.5 mt-0.5">
-                        <Briefcase className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground leading-tight">{candidate.vacancy}</span>
                       </div>
                       
                       {/* Skills */}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {candidate.skills.slice(0, 3).map((skill, i) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0 rounded text-[10px] font-medium bg-gray-100 text-gray-700 h-4">
+                      <div className="flex flex-wrap gap-0.5 mt-0.5">
+                        {candidate.skills.slice(0, 2).map((skill, i) => (
+                          <span key={i} className="inline-flex items-center px-1 py-0 rounded text-[9px] font-medium bg-gray-100 text-gray-700 h-3.5">
                             {skill}
                           </span>
                         ))}
@@ -1558,8 +1693,8 @@ export default function DashboardPage() {
                     </div>
                     
                     {/* Action Button */}
-                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -1575,32 +1710,32 @@ export default function DashboardPage() {
 
         {/* Top Vacancies */}
         <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader className="pb-3 pt-4">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-base">
               <span>Active Vacancies</span>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col pt-0">
-            <div className="space-y-2 flex-1">
+          <CardContent className="flex-1 flex flex-col pt-2">
+            <div className="space-y-1.5 flex-1 overflow-y-auto">
               {topVacancies.map((vacancy) => (
-                <div key={vacancy.id} className="flex items-center justify-between py-1">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium leading-tight">{vacancy.title}</p>
+                <div key={vacancy.id} className="flex items-center justify-between py-1.5 hover:bg-gray-50 rounded px-1 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium leading-tight truncate">{vacancy.title}</p>
                       {vacancy.status === "paused" && (
-                        <Badge variant="secondary" className="text-xs py-0 px-1.5 h-5">
+                        <Badge variant="secondary" className="text-[10px] py-0 px-1 h-3.5">
                           Paused
                         </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground leading-tight">
-                      {vacancy.uploadedCVs} CVs uploaded · {vacancy.new} new
+                      {vacancy.uploadedCVs} CVs · {vacancy.new} new
                     </p>
                   </div>
                   <Link href={`/vacancies/${vacancy.id}`}>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <ChevronRight className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                      <ChevronRight className="h-3 w-3" />
                     </Button>
                   </Link>
                 </div>
