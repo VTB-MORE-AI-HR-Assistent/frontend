@@ -43,10 +43,11 @@ import {
   Loader2,
   X,
   BookOpen,
-  Edit
+  Edit,
+  Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "analysis" | "notification" | "interview-config" | "scheduling" | "complete"
+type PipelineStep = "vacancy" | "upload" | "interview-config" | "analysis" | "notification" | "scheduling" | "complete"
 
 interface Candidate {
   id: string
@@ -109,9 +110,11 @@ export default function DashboardPage() {
   })
   
   // Question selection state
-  const [questionSelectionMode, setQuestionSelectionMode] = useState<"auto" | "manual" | "custom">("auto")
+  const [questionSelectionMode, setQuestionSelectionMode] = useState<"auto" | "role" | "custom">("auto")
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([])
-  const [customQuestions, setCustomQuestions] = useState<string>("")
+  const [customQuestions, setCustomQuestions] = useState<string[]>([])
+  const [currentQuestion, setCurrentQuestion] = useState<string>("")
 
   // Simulate data loading
   useEffect(() => {
@@ -274,25 +277,57 @@ export default function DashboardPage() {
 
     // Generate mock candidates after "analysis"
     setTimeout(() => {
-      const mockCandidates: Candidate[] = uploadedCVs.slice(0, 5).map((file, index) => ({
-        id: `candidate-${index}`,
-        name: ["Maria Petrova", "Alexander Smirnov", "Elena Kozlova", "Ivan Petrov", "Natalia Volkova"][index],
-        email: ["maria@email.com", "alex@email.com", "elena@email.com", "ivan@email.com", "natalia@email.com"][index],
-        phone: "+7 (999) 123-45-67",
-        matchScore: Math.floor(Math.random() * 30) + 70,
-        skills: ["React", "TypeScript", "Node.js", "Python", "MongoDB"],
-        experience: `${Math.floor(Math.random() * 5) + 3} years`,
-        status: "analyzing",
-        cvUrl: file.name
-      }))
+      const candidateNames = [
+        "Maria Petrova", "Alexander Smirnov", "Elena Kozlova", 
+        "Ivan Petrov", "Natalia Volkova", "Sergey Ivanov",
+        "Olga Fedorova", "Dmitry Sokolov", "Anna Mikhailova", "Pavel Novikov"
+      ]
       
-      // Sort by match score and mark top 3
+      const candidateEmails = [
+        "maria@email.com", "alex@email.com", "elena@email.com",
+        "ivan@email.com", "natalia@email.com", "sergey@email.com",
+        "olga@email.com", "dmitry@email.com", "anna@email.com", "pavel@email.com"
+      ]
+      
+      // Generate 8-10 candidates with varied match scores
+      const numCandidates = Math.min(uploadedCVs.length, 10)
+      const mockCandidates: Candidate[] = Array.from({ length: numCandidates }, (_, index) => {
+        // Create varied match scores: some high (80-95%), some medium (60-79%), some low (40-59%)
+        let matchScore: number
+        if (index < 3) {
+          // Top candidates
+          matchScore = Math.floor(Math.random() * 15) + 80 // 80-95%
+        } else if (index < 6) {
+          // Medium candidates
+          matchScore = Math.floor(Math.random() * 20) + 60 // 60-79%
+        } else {
+          // Lower candidates
+          matchScore = Math.floor(Math.random() * 20) + 40 // 40-59%
+        }
+        
+        return {
+          id: `candidate-${index}`,
+          name: candidateNames[index] || `Candidate ${index + 1}`,
+          email: candidateEmails[index] || `candidate${index + 1}@email.com`,
+          phone: "+7 (999) 123-45-67",
+          matchScore,
+          skills: ["React", "TypeScript", "Node.js", "Python", "MongoDB"],
+          experience: `${Math.floor(Math.random() * 5) + 3} years`,
+          status: "analyzing",
+          cvUrl: uploadedCVs[index]?.name || `cv-${index + 1}.pdf`
+        }
+      })
+      
+      // Sort by match score but keep all candidates
       mockCandidates.sort((a, b) => b.matchScore - a.matchScore)
-      mockCandidates.forEach((c, i) => {
-        c.status = i < 3 ? "qualified" : "rejected"
+      
+      // All candidates are available for selection, not pre-marked
+      mockCandidates.forEach(c => {
+        c.status = "analyzing"
       })
       
       setCandidates(mockCandidates)
+      // Pre-select top 3 candidates by default
       setSelectedCandidates(mockCandidates.slice(0, 3).map(c => c.id))
       setIsProcessing(false)
       setCurrentStep("notification")
@@ -310,7 +345,7 @@ export default function DashboardPage() {
           : c
       ))
       setIsProcessing(false)
-      setCurrentStep("interview-config")
+      setCurrentStep("scheduling")
     }, 2000)
   }
 
@@ -444,27 +479,51 @@ export default function DashboardPage() {
             </DialogHeader>
 
             {/* Progress Steps */}
-            <div className="flex items-center justify-between mb-6">
-              {["Upload Vacancy", "Upload CVs", "AI Analysis", "Notify", "Schedule"].map((step, index) => (
-                <div key={step} className="flex items-center">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                    index + 1 <= currentStepNumber 
-                      ? "bg-blue-500 border-blue-500 text-white" 
-                      : "border-gray-300 text-gray-500"
-                  }`}>
-                    {index + 1 <= currentStepNumber - 1 ? (
-                      <CheckCircle className="h-5 w-5" />
-                    ) : (
-                      <span className="text-sm">{index + 1}</span>
-                    )}
-                  </div>
-                  {index < 4 && (
-                    <div className={`w-16 h-0.5 ${
-                      index + 1 < currentStepNumber ? "bg-blue-500" : "bg-gray-300"
-                    }`} />
-                  )}
+            <div className="mb-8">
+              <div className="relative">
+                {/* Timeline Line */}
+                <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+                
+                {/* Progress Line */}
+                <div 
+                  className="absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500"
+                  style={{ width: `${((currentStepNumber - 1) / 6) * 100}%` }}
+                ></div>
+                
+                {/* Steps */}
+                <div className="relative flex items-center justify-between">
+                  {[
+                    { label: "Vacancy", icon: "📋" },
+                    { label: "Upload CVs", icon: "📄" },
+                    { label: "Configure AI", icon: "⚙️" },
+                    { label: "AI Analysis", icon: "🤖" },
+                    { label: "Select", icon: "✅" },
+                    { label: "Schedule", icon: "📅" },
+                    { label: "Complete", icon: "🎯" }
+                  ].map((step, index) => (
+                    <div key={step.label} className="flex flex-col items-center">
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
+                        index + 1 <= currentStepNumber 
+                          ? index + 1 === currentStepNumber
+                            ? "bg-blue-500 border-blue-500 text-white scale-110 shadow-lg"
+                            : "bg-green-500 border-green-500 text-white"
+                          : "bg-white border-gray-300 text-gray-400"
+                      }`}>
+                        {index + 1 < currentStepNumber ? (
+                          <CheckCircle className="h-6 w-6" />
+                        ) : (
+                          <span className="text-xs font-semibold">{index + 1}</span>
+                        )}
+                      </div>
+                      <span className={`mt-2 text-xs font-medium whitespace-nowrap ${
+                        index + 1 <= currentStepNumber ? "text-gray-900" : "text-gray-400"
+                      }`}>
+                        {step.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
 
             {/* Step Content */}
@@ -791,20 +850,20 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={startAnalysis}
+                      onClick={() => setCurrentStep("interview-config")}
                       disabled={uploadedCVs.length === 0}
                     >
-                      Start AI Analysis
-                      <Sparkles className="ml-2 h-4 w-4" />
+                      Configure Interview
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Step 3: AI Analysis */}
+              {/* Step 4: AI Analysis */}
               {currentStep === "analysis" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 3: AI Analysis in Progress</h3>
+                  <h3 className="text-lg font-semibold">Step 4: AI Analysis in Progress</h3>
                   
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -849,35 +908,345 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Step 4: Notification */}
+              {/* Step 3: Interview Configuration */}
+              {currentStep === "interview-config" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 3: Configure AI Interview</h3>
+
+                  {/* Visual Question Distribution with Diagram */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Question Distribution</CardTitle>
+                      <CardDescription className="text-xs">Configure how AI will distribute interview questions</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Visual Folder/Box Representation */}
+                      <div className="grid grid-cols-3 gap-3 py-2">
+                        {/* Technical Box */}
+                        <div className="text-center space-y-2">
+                          <div className="relative mx-auto w-20 h-20 bg-blue-50 rounded-lg flex flex-col items-center justify-center border-2 border-blue-200 hover:border-blue-400 transition-colors cursor-pointer">
+                            <Code className="h-5 w-5 text-blue-600 mb-1" />
+                            <span className="text-lg font-bold text-blue-600">{questionDistribution.technical}%</span>
+                          </div>
+                          <div>
+                            <Label className="text-xs font-medium">Technical</Label>
+                            <p className="text-[10px] text-muted-foreground">Code & Skills</p>
+                          </div>
+                        </div>
+                        
+                        {/* Behavioral Box */}
+                        <div className="text-center space-y-2">
+                          <div className="relative mx-auto w-20 h-20 bg-green-50 rounded-lg flex flex-col items-center justify-center border-2 border-green-200 hover:border-green-400 transition-colors cursor-pointer">
+                            <Users className="h-5 w-5 text-green-600 mb-1" />
+                            <span className="text-lg font-bold text-green-600">{questionDistribution.behavioral}%</span>
+                          </div>
+                          <div>
+                            <Label className="text-xs font-medium">Behavioral</Label>
+                            <p className="text-[10px] text-muted-foreground">Soft Skills</p>
+                          </div>
+                        </div>
+                        
+                        {/* Experience Box */}
+                        <div className="text-center space-y-2">
+                          <div className="relative mx-auto w-20 h-20 bg-purple-50 rounded-lg flex flex-col items-center justify-center border-2 border-purple-200 hover:border-purple-400 transition-colors cursor-pointer">
+                            <Briefcase className="h-5 w-5 text-purple-600 mb-1" />
+                            <span className="text-lg font-bold text-purple-600">{questionDistribution.experience}%</span>
+                          </div>
+                          <div>
+                            <Label className="text-xs font-medium">Experience</Label>
+                            <p className="text-[10px] text-muted-foreground">Past Work</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact Sliders */}
+                      <div className="space-y-2 pt-2 border-t">
+                        {/* Technical */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 w-24">
+                            <Code className="h-3 w-3 text-blue-600" />
+                            <Label className="text-xs">Technical</Label>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={questionDistribution.technical}
+                            onChange={(e) => handleQuestionDistributionChange('technical', parseInt(e.target.value))}
+                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                          />
+                          <span className="text-xs font-semibold text-blue-600 w-10 text-right">{questionDistribution.technical}%</span>
+                        </div>
+
+                        {/* Behavioral */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 w-24">
+                            <Users className="h-3 w-3 text-green-600" />
+                            <Label className="text-xs">Behavioral</Label>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={questionDistribution.behavioral}
+                            onChange={(e) => handleQuestionDistributionChange('behavioral', parseInt(e.target.value))}
+                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                          />
+                          <span className="text-xs font-semibold text-green-600 w-10 text-right">{questionDistribution.behavioral}%</span>
+                        </div>
+
+                        {/* Experience */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 w-24">
+                            <Briefcase className="h-3 w-3 text-purple-600" />
+                            <Label className="text-xs">Experience</Label>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={questionDistribution.experience}
+                            onChange={(e) => handleQuestionDistributionChange('experience', parseInt(e.target.value))}
+                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                          />
+                          <span className="text-xs font-semibold text-purple-600 w-10 text-right">{questionDistribution.experience}%</span>
+                        </div>
+                      </div>
+
+                      {/* Total with Visual Indicator */}
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Total Distribution</span>
+                          <div className="flex items-center gap-1">
+                            <span className={`text-sm font-bold ${
+                              (questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }`}>
+                              {questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience}%
+                            </span>
+                            {(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100 
+                              ? <CheckCircle className="h-3 w-3 text-green-600" />
+                              : <AlertCircle className="h-3 w-3 text-red-600" />
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Simplified Question Selection */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Question Selection</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Role Selection Dropdown */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">Role Template</Label>
+                        <Select 
+                          value={selectedRole || "auto"} 
+                          onValueChange={(value) => {
+                            if (value === "auto") {
+                              setSelectedRole(null)
+                              setQuestionSelectionMode("auto")
+                            } else {
+                              setSelectedRole(value)
+                              setQuestionSelectionMode("role")
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Choose a role or use automatic selection" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">
+                              <div className="flex items-center gap-2">
+                                <Brain className="h-3 w-3" />
+                                <span>Automatic AI Generation</span>
+                              </div>
+                            </SelectItem>
+                            <Separator className="my-1" />
+                            <SelectItem value="junior-java">Junior Java Developer</SelectItem>
+                            <SelectItem value="middle-java">Middle Java Developer</SelectItem>
+                            <SelectItem value="senior-java">Senior Java Developer</SelectItem>
+                            <SelectItem value="junior-react">Junior React Developer</SelectItem>
+                            <SelectItem value="middle-react">Middle React Developer</SelectItem>
+                            <SelectItem value="senior-golang">Senior GoLang Developer</SelectItem>
+                            <SelectItem value="middle-frontend">Middle Frontend Developer</SelectItem>
+                            <SelectItem value="senior-backend">Senior Backend Developer</SelectItem>
+                            <SelectItem value="lead-fullstack">Lead Full Stack Developer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Custom Questions */}
+                      <div className="border-t pt-3 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground">Custom Questions (Optional)</Label>
+                          {customQuestions.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {customQuestions.length} added
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {/* Input with Add Button */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Type a question and click Add"
+                            value={currentQuestion}
+                            onChange={(e) => setCurrentQuestion(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter' && currentQuestion.trim()) {
+                                e.preventDefault()
+                                setCustomQuestions([...customQuestions, currentQuestion.trim()])
+                                setCurrentQuestion("")
+                              }
+                            }}
+                            className="flex-1 h-8 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              if (currentQuestion.trim()) {
+                                setCustomQuestions([...customQuestions, currentQuestion.trim()])
+                                setCurrentQuestion("")
+                              }
+                            }}
+                            disabled={!currentQuestion.trim()}
+                            className="h-8"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+
+                        {/* Questions List */}
+                        {customQuestions.length > 0 && (
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {customQuestions.map((question, index) => (
+                              <div key={index} className="flex items-start gap-2 group">
+                                <span className="text-xs text-muted-foreground mt-0.5">{index + 1}.</span>
+                                <span className="flex-1 text-xs">{question}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setCustomQuestions(customQuestions.filter((_, i) => i !== index))
+                                  }}
+                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="h-3 w-3 text-muted-foreground hover:text-red-500" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Compact Summary */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                        <div className="flex items-center gap-4">
+                          <span className="flex items-center gap-1">
+                            {selectedRole ? (
+                              <><BookOpen className="h-3 w-3" /> {selectedRole}</>
+                            ) : (
+                              <><Brain className="h-3 w-3" /> AI Auto</>
+                            )}
+                          </span>
+                          <span>•</span>
+                          <span>{questionDistribution.technical}% T / {questionDistribution.behavioral}% B / {questionDistribution.experience}% E</span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-6 text-xs"
+                          onClick={() => {
+                            setSelectedRole(null)
+                            setQuestionSelectionMode("auto")
+                            setCustomQuestions([])
+                            setCurrentQuestion("")
+                          }}
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => setCurrentStep("upload")}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={startAnalysis}
+                      disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
+                    >
+                      Start AI Analysis
+                      <Sparkles className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Notification */}
               {currentStep === "notification" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 4: Notify Top Candidates</h3>
+                  <h3 className="text-lg font-semibold">Step 5: Select & Notify Candidates</h3>
                   
-                  <Alert className="border-green-200 bg-green-50">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="text-green-900">Analysis Complete</AlertTitle>
-                    <AlertDescription className="text-green-800">
-                      AI has identified the top 3 candidates based on match score
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <Brain className="h-4 w-4 text-blue-600" />
+                    <AlertTitle className="text-blue-900">AI Analysis Complete</AlertTitle>
+                    <AlertDescription className="text-blue-800">
+                      Select candidates to invite for interviews based on match scores
                     </AlertDescription>
                   </Alert>
 
                   <div className="space-y-3">
-                    {candidates.filter(c => c.status === "qualified").map((candidate, index) => (
-                      <Card key={candidate.id} className="border-blue-200">
+                    {candidates.map((candidate, index) => (
+                      <Card key={candidate.id} className={`transition-all ${
+                        selectedCandidates.includes(candidate.id) 
+                          ? 'border-blue-500 bg-blue-50/50' 
+                          : candidate.matchScore >= 80 
+                            ? 'border-green-200' 
+                            : candidate.matchScore >= 60 
+                              ? 'border-yellow-200'
+                              : 'border-gray-200'
+                      }`}>
                         <CardContent className="pt-6">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-4">
                               <Avatar>
-                                <AvatarFallback>
+                                <AvatarFallback className={
+                                  candidate.matchScore >= 80 
+                                    ? 'bg-green-100 text-green-700'
+                                    : candidate.matchScore >= 60
+                                      ? 'bg-yellow-100 text-yellow-700'
+                                      : 'bg-gray-100 text-gray-700'
+                                }>
                                   {candidate.name.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <h4 className="font-semibold">{candidate.name}</h4>
-                                  <Badge variant="outline" className="gap-1">
-                                    #{index + 1} Match
+                                  <Badge 
+                                    variant={
+                                      candidate.matchScore >= 80 
+                                        ? "default" 
+                                        : candidate.matchScore >= 60 
+                                          ? "secondary"
+                                          : "outline"
+                                    } 
+                                    className="gap-1"
+                                  >
+                                    {candidate.matchScore >= 80 && "🏆 "}
+                                    {candidate.matchScore}% Match
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -921,7 +1290,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("upload")}>
+                    <Button variant="outline" onClick={() => setCurrentStep("analysis")}>
                       Back
                     </Button>
                     <Button 
@@ -944,300 +1313,8 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Step 5: Interview Configuration */}
-              {currentStep === "interview-config" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 5: Configure AI Interview</h3>
-                  
-                  <Alert className="border-blue-200 bg-blue-50">
-                    <Brain className="h-4 w-4 text-blue-600" />
-                    <AlertTitle className="text-blue-900">Customize Interview Focus</AlertTitle>
-                    <AlertDescription className="text-blue-800">
-                      Set the distribution of question types for the AI interviewer to ensure comprehensive candidate assessment.
-                    </AlertDescription>
-                  </Alert>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Question Distribution</CardTitle>
-                      <CardDescription>
-                        Adjust the percentage of each question type. Total must equal 100%.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Technical Questions */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">Technical Questions</Label>
-                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.technical}%</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Programming skills, frameworks, tools, and technical problem-solving
-                        </p>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={questionDistribution.technical}
-                          onChange={(e) => handleQuestionDistributionChange('technical', parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>0%</span>
-                          <span>100%</span>
-                        </div>
-                      </div>
-
-                      {/* Behavioral Questions */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">Behavioral Questions</Label>
-                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.behavioral}%</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Soft skills, teamwork, communication, and problem-solving approach
-                        </p>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={questionDistribution.behavioral}
-                          onChange={(e) => handleQuestionDistributionChange('behavioral', parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>0%</span>
-                          <span>100%</span>
-                        </div>
-                      </div>
-
-                      {/* Experience Questions */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">Experience Questions</Label>
-                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.experience}%</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Previous work experience, projects, achievements, and career progression
-                        </p>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={questionDistribution.experience}
-                          onChange={(e) => handleQuestionDistributionChange('experience', parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>0%</span>
-                          <span>100%</span>
-                        </div>
-                      </div>
-
-                      {/* Total Indicator */}
-                      <div className="pt-4 border-t">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Total Distribution</span>
-                          <span className={`text-lg font-bold ${
-                            (questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }`}>
-                            {questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience}%
-                          </span>
-                        </div>
-                        {(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100 && (
-                          <p className="text-sm text-red-600 mt-1">
-                            Distribution must equal 100%
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Visual Distribution */}
-                      <div className="pt-4">
-                        <Label className="text-sm font-medium mb-2 block">Visual Distribution</Label>
-                        <div className="flex h-8 rounded-lg overflow-hidden">
-                          {questionDistribution.technical > 0 && (
-                            <div 
-                              style={{ width: `${questionDistribution.technical}%` }}
-                              className="bg-blue-500 flex items-center justify-center text-xs text-white font-medium"
-                            >
-                              {questionDistribution.technical > 10 && `${questionDistribution.technical}%`}
-                            </div>
-                          )}
-                          {questionDistribution.behavioral > 0 && (
-                            <div 
-                              style={{ width: `${questionDistribution.behavioral}%` }}
-                              className="bg-green-500 flex items-center justify-center text-xs text-white font-medium"
-                            >
-                              {questionDistribution.behavioral > 10 && `${questionDistribution.behavioral}%`}
-                            </div>
-                          )}
-                          {questionDistribution.experience > 0 && (
-                            <div 
-                              style={{ width: `${questionDistribution.experience}%` }}
-                              className="bg-purple-500 flex items-center justify-center text-xs text-white font-medium"
-                            >
-                              {questionDistribution.experience > 10 && `${questionDistribution.experience}%`}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex justify-between mt-2">
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                            <span className="text-xs">Technical</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-green-500 rounded"></div>
-                            <span className="text-xs">Behavioral</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                            <span className="text-xs">Experience</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Question Selection Mode */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Question Selection</CardTitle>
-                      <CardDescription>
-                        Choose how AI should select interview questions
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <Tabs value={questionSelectionMode} onValueChange={(value: any) => setQuestionSelectionMode(value)}>
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="auto">Automatic</TabsTrigger>
-                          <TabsTrigger value="manual">From Question Bank</TabsTrigger>
-                          <TabsTrigger value="custom">Custom Questions</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="auto" className="space-y-3">
-                          <Alert>
-                            <Brain className="h-4 w-4" />
-                            <AlertTitle>AI-Generated Questions</AlertTitle>
-                            <AlertDescription>
-                              AI will automatically generate relevant questions based on the job requirements and candidate's resume, 
-                              following the distribution percentages you've set above.
-                            </AlertDescription>
-                          </Alert>
-                        </TabsContent>
-                        
-                        <TabsContent value="manual" className="space-y-3">
-                          <Alert>
-                            <BookOpen className="h-4 w-4" />
-                            <AlertTitle>Select from Question Bank</AlertTitle>
-                            <AlertDescription>
-                              Choose specific questions from your question bank for this role. AI will use these questions 
-                              during the interview while maintaining the distribution balance.
-                            </AlertDescription>
-                          </Alert>
-                          <div className="border rounded-lg p-4 bg-gray-50">
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {selectedQuestions.length > 0 
-                                ? `${selectedQuestions.length} questions selected`
-                                : "No questions selected yet"}
-                            </p>
-                            <Button 
-                              variant="outline" 
-                              onClick={() => window.open('/dashboard/question-bank', '_blank')}
-                            >
-                              <BookOpen className="mr-2 h-4 w-4" />
-                              Open Question Bank
-                            </Button>
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="custom" className="space-y-3">
-                          <Alert>
-                            <Edit className="h-4 w-4" />
-                            <AlertTitle>Custom Questions</AlertTitle>
-                            <AlertDescription>
-                              Add your own custom questions for this specific interview. Enter one question per line.
-                            </AlertDescription>
-                          </Alert>
-                          <Textarea
-                            placeholder="Enter your custom questions here...&#10;One question per line&#10;&#10;Example:&#10;1. What interests you about this position?&#10;2. Describe your experience with React and TypeScript&#10;3. How do you handle tight deadlines?"
-                            value={customQuestions}
-                            onChange={(e) => setCustomQuestions(e.target.value)}
-                            rows={8}
-                            className="font-mono text-sm"
-                          />
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm text-muted-foreground">
-                              {customQuestions.split('\n').filter(q => q.trim()).length} questions added
-                            </p>
-                            <div className="space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setCustomQuestions("")}
-                                disabled={!customQuestions}
-                              >
-                                Clear All
-                              </Button>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                      
-                      {/* Advanced Options */}
-                      <div className="pt-4 border-t">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <Label className="text-sm font-medium">Skip Question Selection</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Let AI handle everything automatically
-                            </p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setQuestionSelectionMode("auto")
-                              setSelectedQuestions([])
-                              setCustomQuestions("")
-                            }}
-                          >
-                            Reset to Default
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>AI Interview Customization</AlertTitle>
-                    <AlertDescription>
-                      These settings will be applied to all AI interviews for this vacancy. 
-                      The AI will dynamically adjust questions based on candidate responses while maintaining the specified distribution.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("notification")}>
-                      Back
-                    </Button>
-                    <Button 
-                      onClick={() => setCurrentStep("scheduling")}
-                      disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
-                    >
-                      Continue to Scheduling
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* Step 6: Scheduling */}
+
               {currentStep === "scheduling" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 6: Share Scheduling Links</h3>
