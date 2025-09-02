@@ -74,8 +74,13 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
     {
       href: ROUTES.HR_INTERVIEWS,
       label: "Interviews",
-      icon: Calendar,
+      icon: Clock,
       badge: "3",
+    },
+    {
+      href: ROUTES.HR_CALENDAR,
+      label: "Calendar",
+      icon: Calendar,
     },
     {
       href: ROUTES.HR_INTERVIEW_REPORTS,

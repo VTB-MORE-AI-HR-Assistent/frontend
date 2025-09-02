@@ -73,6 +73,7 @@ export function Navigation({ user }: NavigationProps) {
       { href: ROUTES.HR_VACANCIES, label: "Vacancies", icon: Briefcase },
       { href: ROUTES.HR_CANDIDATES, label: "Candidates", icon: Users },
       { href: ROUTES.HR_INTERVIEWS, label: "Interviews", icon: Calendar },
+      { href: ROUTES.HR_CALENDAR, label: "Calendar", icon: Calendar },
       { href: ROUTES.HR_INTERVIEW_REPORTS, label: "Reports", icon: FileText },
       { href: ROUTES.HR_QUESTION_BANK, label: "Question Bank", icon: BookOpen },
       { href: ROUTES.HR_ANALYTICS, label: "Analytics", icon: BarChart3 },

@@ -139,6 +139,7 @@ export const ROUTES = {
   HR_VACANCIES: "/dashboard/vacancies",
   HR_CANDIDATES: "/dashboard/candidates",
   HR_INTERVIEWS: "/dashboard/interviews",
+  HR_CALENDAR: "/dashboard/calendar",
   HR_INTERVIEW_REPORTS: "/dashboard/interview-reports",
   HR_QUESTION_BANK: "/dashboard/question-bank",
   HR_ANALYTICS: "/dashboard/analytics",

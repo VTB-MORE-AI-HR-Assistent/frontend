@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -30,6 +31,11 @@ const navItems = [
     title: "Candidates",
     href: "/candidates",
     icon: Users,
+  },
+  {
+    title: "Calendar",
+    href: "/dashboard/calendar",
+    icon: Calendar,
   },
   {
     title: "Reports",
