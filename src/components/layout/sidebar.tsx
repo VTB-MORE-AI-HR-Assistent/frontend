@@ -26,6 +26,7 @@ import {
   FileText,
   UserCheck,
   Building,
+  BookOpen,
   TrendingUp,
   Clock,
   Star,
@@ -81,6 +82,11 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
       label: "Reports",
       icon: FileText,
       badge: "New",
+    },
+    {
+      href: ROUTES.HR_QUESTION_BANK,
+      label: "Question Bank",
+      icon: BookOpen,
     },
     {
       href: ROUTES.HR_ANALYTICS,

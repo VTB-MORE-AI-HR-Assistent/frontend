@@ -41,7 +41,9 @@ import {
   MapPin,
   Zap,
   Loader2,
-  X
+  X,
+  BookOpen,
+  Edit
 } from "lucide-react"
 
 type PipelineStep = "vacancy" | "upload" | "analysis" | "notification" | "interview-config" | "scheduling" | "complete"
@@ -105,6 +107,11 @@ export default function DashboardPage() {
     behavioral: 30,
     experience: 20
   })
+  
+  // Question selection state
+  const [questionSelectionMode, setQuestionSelectionMode] = useState<"auto" | "manual" | "custom">("auto")
+  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([])
+  const [customQuestions, setCustomQuestions] = useState<string>("")
 
   // Simulate data loading
   useEffect(() => {
@@ -1091,6 +1098,116 @@ export default function DashboardPage() {
                             <div className="w-3 h-3 bg-purple-500 rounded"></div>
                             <span className="text-xs">Experience</span>
                           </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Question Selection Mode */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Question Selection</CardTitle>
+                      <CardDescription>
+                        Choose how AI should select interview questions
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Tabs value={questionSelectionMode} onValueChange={(value: any) => setQuestionSelectionMode(value)}>
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="auto">Automatic</TabsTrigger>
+                          <TabsTrigger value="manual">From Question Bank</TabsTrigger>
+                          <TabsTrigger value="custom">Custom Questions</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="auto" className="space-y-3">
+                          <Alert>
+                            <Brain className="h-4 w-4" />
+                            <AlertTitle>AI-Generated Questions</AlertTitle>
+                            <AlertDescription>
+                              AI will automatically generate relevant questions based on the job requirements and candidate's resume, 
+                              following the distribution percentages you've set above.
+                            </AlertDescription>
+                          </Alert>
+                        </TabsContent>
+                        
+                        <TabsContent value="manual" className="space-y-3">
+                          <Alert>
+                            <BookOpen className="h-4 w-4" />
+                            <AlertTitle>Select from Question Bank</AlertTitle>
+                            <AlertDescription>
+                              Choose specific questions from your question bank for this role. AI will use these questions 
+                              during the interview while maintaining the distribution balance.
+                            </AlertDescription>
+                          </Alert>
+                          <div className="border rounded-lg p-4 bg-gray-50">
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {selectedQuestions.length > 0 
+                                ? `${selectedQuestions.length} questions selected`
+                                : "No questions selected yet"}
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => window.open('/dashboard/question-bank', '_blank')}
+                            >
+                              <BookOpen className="mr-2 h-4 w-4" />
+                              Open Question Bank
+                            </Button>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="custom" className="space-y-3">
+                          <Alert>
+                            <Edit className="h-4 w-4" />
+                            <AlertTitle>Custom Questions</AlertTitle>
+                            <AlertDescription>
+                              Add your own custom questions for this specific interview. Enter one question per line.
+                            </AlertDescription>
+                          </Alert>
+                          <Textarea
+                            placeholder="Enter your custom questions here...&#10;One question per line&#10;&#10;Example:&#10;1. What interests you about this position?&#10;2. Describe your experience with React and TypeScript&#10;3. How do you handle tight deadlines?"
+                            value={customQuestions}
+                            onChange={(e) => setCustomQuestions(e.target.value)}
+                            rows={8}
+                            className="font-mono text-sm"
+                          />
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                              {customQuestions.split('\n').filter(q => q.trim()).length} questions added
+                            </p>
+                            <div className="space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setCustomQuestions("")}
+                                disabled={!customQuestions}
+                              >
+                                Clear All
+                              </Button>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                      
+                      {/* Advanced Options */}
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium">Skip Question Selection</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Let AI handle everything automatically
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setQuestionSelectionMode("auto")
+                              setSelectedQuestions([])
+                              setCustomQuestions("")
+                            }}
+                          >
+                            Reset to Default
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

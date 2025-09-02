@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/command"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Menu, Search, Settings, LogOut, User, Briefcase, Home, Users, Calendar, FileText, BarChart3, Brain } from "lucide-react"
+import { Bell, Menu, Search, Settings, LogOut, User, Briefcase, Home, Users, Calendar, FileText, BarChart3, BookOpen } from "lucide-react"
 import { ROUTES } from "@/lib/constants"
 
 interface NavigationProps {
@@ -73,6 +73,8 @@ export function Navigation({ user }: NavigationProps) {
       { href: ROUTES.HR_VACANCIES, label: "Vacancies", icon: Briefcase },
       { href: ROUTES.HR_CANDIDATES, label: "Candidates", icon: Users },
       { href: ROUTES.HR_INTERVIEWS, label: "Interviews", icon: Calendar },
+      { href: ROUTES.HR_INTERVIEW_REPORTS, label: "Reports", icon: FileText },
+      { href: ROUTES.HR_QUESTION_BANK, label: "Question Bank", icon: BookOpen },
       { href: ROUTES.HR_ANALYTICS, label: "Analytics", icon: BarChart3 },
     ]
   }, [user])

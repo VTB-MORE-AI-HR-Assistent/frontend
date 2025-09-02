@@ -9,7 +9,8 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  BookOpen
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -34,6 +35,11 @@ const navItems = [
     title: "Reports",
     href: "/dashboard/interview-reports",
     icon: FileText,
+  },
+  {
+    title: "Question Bank",
+    href: "/dashboard/question-bank",
+    icon: BookOpen,
   },
 ]
 
