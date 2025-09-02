@@ -44,7 +44,7 @@ import {
   X
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "analysis" | "notification" | "scheduling" | "complete"
+type PipelineStep = "vacancy" | "upload" | "analysis" | "notification" | "interview-config" | "scheduling" | "complete"
 
 interface Candidate {
   id: string
@@ -98,6 +98,13 @@ export default function DashboardPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
+  
+  // Question distribution state
+  const [questionDistribution, setQuestionDistribution] = useState({
+    technical: 50,
+    behavioral: 30,
+    experience: 20
+  })
 
   // Simulate data loading
   useEffect(() => {
@@ -296,13 +303,43 @@ export default function DashboardPage() {
           : c
       ))
       setIsProcessing(false)
-      setCurrentStep("scheduling")
+      setCurrentStep("interview-config")
     }, 2000)
+  }
+
+  const handleQuestionDistributionChange = (type: 'technical' | 'behavioral' | 'experience', value: number) => {
+    const otherTypes = Object.keys(questionDistribution).filter(k => k !== type) as Array<'technical' | 'behavioral' | 'experience'>
+    const currentOthersTotal = otherTypes.reduce((sum, t) => sum + questionDistribution[t], 0)
+    const newTotal = value + currentOthersTotal
+    
+    if (newTotal <= 100) {
+      setQuestionDistribution(prev => ({
+        ...prev,
+        [type]: value
+      }))
+    } else {
+      // Adjust other values proportionally
+      const excess = newTotal - 100
+      const ratio = excess / currentOthersTotal
+      
+      const newDistribution = { ...questionDistribution, [type]: value }
+      otherTypes.forEach(t => {
+        newDistribution[t] = Math.max(0, Math.floor(questionDistribution[t] * (1 - ratio)))
+      })
+      
+      // Ensure total is exactly 100
+      const sum = Object.values(newDistribution).reduce((a, b) => a + b, 0)
+      if (sum < 100) {
+        newDistribution[otherTypes[0]] += 100 - sum
+      }
+      
+      setQuestionDistribution(newDistribution)
+    }
   }
 
 
   const getStepNumber = (step: PipelineStep) => {
-    const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "notification", "scheduling", "complete"]
+    const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "notification", "interview-config", "scheduling", "complete"]
     return steps.indexOf(step) + 1
   }
 
@@ -900,10 +937,193 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Step 5: Scheduling */}
+              {/* Step 5: Interview Configuration */}
+              {currentStep === "interview-config" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Step 5: Configure AI Interview</h3>
+                  
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <Brain className="h-4 w-4 text-blue-600" />
+                    <AlertTitle className="text-blue-900">Customize Interview Focus</AlertTitle>
+                    <AlertDescription className="text-blue-800">
+                      Set the distribution of question types for the AI interviewer to ensure comprehensive candidate assessment.
+                    </AlertDescription>
+                  </Alert>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Question Distribution</CardTitle>
+                      <CardDescription>
+                        Adjust the percentage of each question type. Total must equal 100%.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Technical Questions */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-medium">Technical Questions</Label>
+                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.technical}%</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Programming skills, frameworks, tools, and technical problem-solving
+                        </p>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={questionDistribution.technical}
+                          onChange={(e) => handleQuestionDistributionChange('technical', parseInt(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>0%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+
+                      {/* Behavioral Questions */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-medium">Behavioral Questions</Label>
+                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.behavioral}%</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Soft skills, teamwork, communication, and problem-solving approach
+                        </p>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={questionDistribution.behavioral}
+                          onChange={(e) => handleQuestionDistributionChange('behavioral', parseInt(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>0%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+
+                      {/* Experience Questions */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-medium">Experience Questions</Label>
+                          <span className="text-2xl font-bold text-[#1B4F8C]">{questionDistribution.experience}%</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Previous work experience, projects, achievements, and career progression
+                        </p>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={questionDistribution.experience}
+                          onChange={(e) => handleQuestionDistributionChange('experience', parseInt(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1B4F8C]"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>0%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+
+                      {/* Total Indicator */}
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Total Distribution</span>
+                          <span className={`text-lg font-bold ${
+                            (questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }`}>
+                            {questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience}%
+                          </span>
+                        </div>
+                        {(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100 && (
+                          <p className="text-sm text-red-600 mt-1">
+                            Distribution must equal 100%
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Visual Distribution */}
+                      <div className="pt-4">
+                        <Label className="text-sm font-medium mb-2 block">Visual Distribution</Label>
+                        <div className="flex h-8 rounded-lg overflow-hidden">
+                          {questionDistribution.technical > 0 && (
+                            <div 
+                              style={{ width: `${questionDistribution.technical}%` }}
+                              className="bg-blue-500 flex items-center justify-center text-xs text-white font-medium"
+                            >
+                              {questionDistribution.technical > 10 && `${questionDistribution.technical}%`}
+                            </div>
+                          )}
+                          {questionDistribution.behavioral > 0 && (
+                            <div 
+                              style={{ width: `${questionDistribution.behavioral}%` }}
+                              className="bg-green-500 flex items-center justify-center text-xs text-white font-medium"
+                            >
+                              {questionDistribution.behavioral > 10 && `${questionDistribution.behavioral}%`}
+                            </div>
+                          )}
+                          {questionDistribution.experience > 0 && (
+                            <div 
+                              style={{ width: `${questionDistribution.experience}%` }}
+                              className="bg-purple-500 flex items-center justify-center text-xs text-white font-medium"
+                            >
+                              {questionDistribution.experience > 10 && `${questionDistribution.experience}%`}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between mt-2">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                            <span className="text-xs">Technical</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-green-500 rounded"></div>
+                            <span className="text-xs">Behavioral</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                            <span className="text-xs">Experience</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>AI Interview Customization</AlertTitle>
+                    <AlertDescription>
+                      These settings will be applied to all AI interviews for this vacancy. 
+                      The AI will dynamically adjust questions based on candidate responses while maintaining the specified distribution.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={() => setCurrentStep("notification")}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={() => setCurrentStep("scheduling")}
+                      disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
+                    >
+                      Continue to Scheduling
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 6: Scheduling */}
               {currentStep === "scheduling" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 5: Share Scheduling Links</h3>
+                  <h3 className="text-lg font-semibold">Step 6: Share Scheduling Links</h3>
                   
                   <Alert className="border-blue-200 bg-blue-50">
                     <Mail className="h-4 w-4 text-blue-600" />
@@ -981,7 +1201,7 @@ export default function DashboardPage() {
                   </Alert>
 
                   <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("notification")}>
+                    <Button variant="outline" onClick={() => setCurrentStep("interview-config")}>
                       Back
                     </Button>
                     <Button 

@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  BookOpen,
+  FileText,
   ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -33,9 +33,9 @@ const navItems = [
     icon: Users,
   },
   {
-    title: "Interview Prep",
-    href: "/interview-prep",
-    icon: BookOpen,
+    title: "Reports",
+    href: "/dashboard/interview-reports",
+    icon: FileText,
   },
 ]
 

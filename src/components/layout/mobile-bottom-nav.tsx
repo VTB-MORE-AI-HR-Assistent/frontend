@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  BookOpen
+  FileText
 } from "lucide-react"
 
 const navItems = [
@@ -27,9 +27,9 @@ const navItems = [
     icon: Users,
   },
   {
-    title: "Interview",
-    href: "/interview-prep",
-    icon: BookOpen,
+    title: "Reports",
+    href: "/dashboard/interview-reports",
+    icon: FileText,
   },
 ]
 

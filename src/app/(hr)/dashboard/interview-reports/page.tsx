@@ -1,0 +1,517 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { 
+  Brain, FileText, Download, Eye, Filter, Search,
+  CheckCircle, XCircle, AlertTriangle, TrendingUp, TrendingDown,
+  User, Calendar, Clock, Video, Mic, Target, Award,
+  AlertCircle, ThumbsUp, ThumbsDown, MessageSquare,
+  BarChart3, PieChart, Activity, Zap, Flag, ChevronRight,
+  Star, Shield, Lightbulb, BookOpen, Send
+} from "lucide-react"
+
+// Mock data for AI interview reports
+const interviewReports = [
+  {
+    id: 1,
+    candidateName: "Maria Petrova",
+    position: "Senior Frontend Developer",
+    interviewDate: "2024-12-03",
+    interviewDuration: "45 min",
+    overallCompliance: 87,
+    aiRecommendation: "next-stage",
+    status: "reviewed",
+    experienceRelevance: 92,
+    competencies: {
+      technical: { score: 85, strengths: ["React", "TypeScript", "System Design"], gaps: ["GraphQL", "Testing"] },
+      behavioral: { score: 90, strengths: ["Leadership", "Communication"], gaps: ["Conflict Resolution"] },
+      cultural: { score: 88, strengths: ["Team Collaboration", "Innovation"], gaps: [] }
+    },
+    redFlags: [],
+    contradictions: [],
+    personalizedFeedback: "Your React and TypeScript skills are excellent and meet our requirements. Consider strengthening your GraphQL knowledge and automated testing practices for senior-level positions."
+  },
+  {
+    id: 2,
+    candidateName: "Alexander Smirnov",
+    position: "Backend Developer",
+    interviewDate: "2024-12-02",
+    interviewDuration: "50 min",
+    overallCompliance: 72,
+    aiRecommendation: "clarification",
+    status: "pending",
+    experienceRelevance: 78,
+    competencies: {
+      technical: { score: 70, strengths: ["Python", "Django"], gaps: ["Microservices", "Docker", "Kubernetes"] },
+      behavioral: { score: 75, strengths: ["Problem Solving"], gaps: ["Team Leadership", "Mentoring"] },
+      cultural: { score: 72, strengths: ["Adaptability"], gaps: ["Initiative"] }
+    },
+    redFlags: ["Template answers detected", "Avoided system design questions"],
+    contradictions: ["Claims 5 years experience but demonstrates junior-level knowledge"],
+    personalizedFeedback: "Your Python skills are solid, but you need deeper knowledge of microservices architecture and containerization (Docker/Kubernetes) for this role. Consider gaining hands-on experience with distributed systems."
+  },
+  {
+    id: 3,
+    candidateName: "Elena Kozlova",
+    position: "Product Manager",
+    interviewDate: "2024-12-01",
+    interviewDuration: "55 min",
+    overallCompliance: 65,
+    aiRecommendation: "rejection",
+    status: "rejected",
+    experienceRelevance: 60,
+    competencies: {
+      technical: { score: 68, strengths: ["Analytics"], gaps: ["Technical Knowledge", "API Understanding"] },
+      behavioral: { score: 62, strengths: ["Communication"], gaps: ["Strategic Thinking", "Stakeholder Management"] },
+      cultural: { score: 65, strengths: [], gaps: ["Innovation", "Customer Focus"] }
+    },
+    redFlags: ["Inconsistent answers", "Lack of specific examples", "Poor preparation"],
+    contradictions: ["Experience timeline doesn't match resume", "Conflicting project ownership claims"],
+    personalizedFeedback: "While your communication skills are good, you need to develop stronger technical understanding and strategic thinking abilities. Focus on learning about API design and gaining experience with stakeholder management."
+  },
+  {
+    id: 4,
+    candidateName: "Ivan Petrov",
+    position: "DevOps Engineer",
+    interviewDate: "2024-11-30",
+    interviewDuration: "48 min",
+    overallCompliance: 94,
+    aiRecommendation: "next-stage",
+    status: "approved",
+    experienceRelevance: 96,
+    competencies: {
+      technical: { score: 95, strengths: ["Kubernetes", "CI/CD", "AWS", "Monitoring"], gaps: [] },
+      behavioral: { score: 92, strengths: ["Problem Solving", "Crisis Management"], gaps: [] },
+      cultural: { score: 94, strengths: ["Ownership", "Continuous Learning"], gaps: [] }
+    },
+    redFlags: [],
+    contradictions: [],
+    personalizedFeedback: "Excellent technical knowledge and practical experience. Your DevOps expertise perfectly matches our requirements. Strong candidate for the position."
+  }
+]
+
+export default function InterviewReportsPage() {
+  const [selectedReport, setSelectedReport] = useState(interviewReports[0])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const getRecommendationColor = (recommendation: string) => {
+    switch (recommendation) {
+      case "next-stage": return "bg-green-100 text-green-800"
+      case "clarification": return "bg-amber-100 text-amber-800"
+      case "rejection": return "bg-red-100 text-red-800"
+      default: return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getComplianceColor = (score: number) => {
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-amber-600"
+    return "text-red-600"
+  }
+
+  const filteredReports = interviewReports.filter(report => {
+    const matchesSearch = report.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         report.position.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = filterStatus === "all" || report.status === filterStatus
+    return matchesSearch && matchesFilter
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <Brain className="h-12 w-12 mx-auto text-[#1B4F8C] animate-pulse" />
+          <p className="text-muted-foreground">Loading AI Interview Reports...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-1 space-y-4 p-4 pt-6 pb-20 md:pb-6 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">AI Interview Reports</h2>
+          <p className="text-muted-foreground">
+            Review AI-conducted interviews and assessment results
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search candidates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+            prefix={<Search className="h-4 w-4" />}
+          />
+          <Button variant="outline">
+            <Filter className="mr-2 h-4 w-4" />
+            Filter
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Interview List */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Recent Interviews</CardTitle>
+            <CardDescription>AI-conducted interview sessions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[600px] pr-4">
+              <div className="space-y-3">
+                {filteredReports.map((report) => (
+                  <div
+                    key={report.id}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                      selectedReport.id === report.id
+                        ? "border-[#1B4F8C] bg-blue-50/50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setSelectedReport(report)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {report.candidateName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{report.candidateName}</p>
+                          <p className="text-sm text-muted-foreground">{report.position}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Compliance</span>
+                        <span className={`font-bold ${getComplianceColor(report.overallCompliance)}`}>
+                          {report.overallCompliance}%
+                        </span>
+                      </div>
+                      
+                      <Progress value={report.overallCompliance} className="h-2" />
+                      
+                      <div className="flex items-center justify-between pt-1">
+                        <Badge className={getRecommendationColor(report.aiRecommendation)}>
+                          {report.aiRecommendation === "next-stage" && "Next Stage"}
+                          {report.aiRecommendation === "clarification" && "Needs Clarification"}
+                          {report.aiRecommendation === "rejection" && "Reject"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {report.interviewDate}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Detailed Report */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Interview Assessment Report</CardTitle>
+                <CardDescription>
+                  AI analysis for {selectedReport.candidateName} - {selectedReport.position}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Recording
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="competencies">Competencies</TabsTrigger>
+                <TabsTrigger value="redflags">Red Flags</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+              </TabsList>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-4">
+                {/* Main Metrics */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Position Compliance</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className={`text-3xl font-bold ${getComplianceColor(selectedReport.overallCompliance)}`}>
+                          {selectedReport.overallCompliance}%
+                        </div>
+                        <Target className={`h-8 w-8 ${getComplianceColor(selectedReport.overallCompliance)}`} />
+                      </div>
+                      <Progress value={selectedReport.overallCompliance} className="mt-3 h-2" />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Experience Relevance</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className={`text-3xl font-bold ${getComplianceColor(selectedReport.experienceRelevance)}`}>
+                          {selectedReport.experienceRelevance}%
+                        </div>
+                        <Award className={`h-8 w-8 ${getComplianceColor(selectedReport.experienceRelevance)}`} />
+                      </div>
+                      <Progress value={selectedReport.experienceRelevance} className="mt-3 h-2" />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* AI Recommendation */}
+                <Alert className={
+                  selectedReport.aiRecommendation === "next-stage" ? "border-green-200 bg-green-50" :
+                  selectedReport.aiRecommendation === "clarification" ? "border-amber-200 bg-amber-50" :
+                  "border-red-200 bg-red-50"
+                }>
+                  <Brain className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>AI Recommendation:</strong>{" "}
+                    {selectedReport.aiRecommendation === "next-stage" && "Proceed to next interview stage"}
+                    {selectedReport.aiRecommendation === "clarification" && "Schedule clarification call with HR"}
+                    {selectedReport.aiRecommendation === "rejection" && "Not suitable for this position"}
+                  </AlertDescription>
+                </Alert>
+
+                {/* Interview Details */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Interview Date</span>
+                      <span className="font-medium">{selectedReport.interviewDate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-medium">{selectedReport.interviewDuration}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Interview Type</span>
+                      <span className="font-medium">AI Video Interview</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Language</span>
+                      <span className="font-medium">Russian</span>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Competencies Tab */}
+              <TabsContent value="competencies" className="space-y-4">
+                {Object.entries(selectedReport.competencies).map(([key, value]) => (
+                  <Card key={key}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base capitalize">{key} Skills</CardTitle>
+                        <span className={`text-lg font-bold ${getComplianceColor(value.score)}`}>
+                          {value.score}%
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Progress value={value.score} className="h-2" />
+                      
+                      {value.strengths.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
+                            <ThumbsUp className="h-4 w-4" />
+                            Strengths
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {value.strengths.map((strength, i) => (
+                              <Badge key={i} variant="outline" className="border-green-200 bg-green-50">
+                                {strength}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {value.gaps.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-amber-700 mb-2 flex items-center gap-1">
+                            <AlertTriangle className="h-4 w-4" />
+                            Areas for Improvement
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {value.gaps.map((gap, i) => (
+                              <Badge key={i} variant="outline" className="border-amber-200 bg-amber-50">
+                                {gap}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
+
+              {/* Red Flags Tab */}
+              <TabsContent value="redflags" className="space-y-4">
+                {selectedReport.redFlags.length === 0 && selectedReport.contradictions.length === 0 ? (
+                  <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription>
+                      <strong>No red flags or contradictions detected.</strong> The candidate provided consistent and genuine responses throughout the interview.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    {selectedReport.redFlags.length > 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Flag className="h-5 w-5 text-red-500" />
+                            Red Flags Detected
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {selectedReport.redFlags.map((flag, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                                <span className="text-sm">{flag}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {selectedReport.contradictions.length > 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                            Contradictions Found
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {selectedReport.contradictions.map((contradiction, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                                <span className="text-sm">{contradiction}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+
+              {/* Feedback Tab */}
+              <TabsContent value="feedback" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
+                      Personalized Candidate Feedback
+                    </CardTitle>
+                    <CardDescription>
+                      AI-generated feedback to share with the candidate
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm leading-relaxed">
+                        {selectedReport.personalizedFeedback}
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button className="flex-1">
+                        <Send className="mr-2 h-4 w-4" />
+                        Send to Candidate
+                      </Button>
+                      <Button variant="outline">
+                        Edit Feedback
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Next Steps</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {selectedReport.aiRecommendation === "next-stage" && (
+                      <>
+                        <Button className="w-full justify-start" variant="outline">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Schedule Next Interview Round
+                        </Button>
+                        <Button className="w-full justify-start" variant="outline">
+                          <User className="mr-2 h-4 w-4" />
+                          Assign to Hiring Manager
+                        </Button>
+                      </>
+                    )}
+                    {selectedReport.aiRecommendation === "clarification" && (
+                      <Button className="w-full justify-start" variant="outline">
+                        <Video className="mr-2 h-4 w-4" />
+                        Schedule Clarification Call
+                      </Button>
+                    )}
+                    <Button className="w-full justify-start" variant="outline">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Generate Detailed Report
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

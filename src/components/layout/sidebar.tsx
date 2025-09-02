@@ -29,6 +29,7 @@ import {
   TrendingUp,
   Clock,
   Star,
+  FileText,
 } from "lucide-react"
 import { ROUTES } from "@/lib/constants"
 
@@ -74,6 +75,12 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
       label: "Interviews",
       icon: Calendar,
       badge: "3",
+    },
+    {
+      href: ROUTES.HR_INTERVIEW_REPORTS,
+      label: "Reports",
+      icon: FileText,
+      badge: "New",
     },
     {
       href: ROUTES.HR_ANALYTICS,

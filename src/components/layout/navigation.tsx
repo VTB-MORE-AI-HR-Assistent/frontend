@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/command"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Menu, Search, Settings, LogOut, User, Briefcase, Home, Users, Calendar, FileText, BarChart3 } from "lucide-react"
+import { Bell, Menu, Search, Settings, LogOut, User, Briefcase, Home, Users, Calendar, FileText, BarChart3, Brain } from "lucide-react"
 import { ROUTES } from "@/lib/constants"
 
 interface NavigationProps {

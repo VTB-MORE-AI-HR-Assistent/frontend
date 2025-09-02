@@ -9,7 +9,7 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  BookOpen
+  FileText
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -31,9 +31,9 @@ const navItems = [
     icon: Users,
   },
   {
-    title: "Interview Prep",
-    href: "/interview-prep",
-    icon: BookOpen,
+    title: "Reports",
+    href: "/dashboard/interview-reports",
+    icon: FileText,
   },
 ]
 

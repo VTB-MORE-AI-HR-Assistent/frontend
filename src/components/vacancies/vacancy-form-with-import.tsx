@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useDropzone } from "react-dropzone"
 import { 
   ArrowLeft,
   Save,
@@ -23,7 +24,8 @@ import {
   Loader2,
   CheckCircle,
   Globe,
-  Import
+  Import,
+  Upload
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,9 +61,11 @@ interface VacancyFormProps {
 
 export default function VacancyFormWithImport({ mode, initialData }: VacancyFormProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"manual" | "import">("manual")
+  const [activeTab, setActiveTab] = useState<"manual" | "import" | "file">("manual")
   const [importUrl, setImportUrl] = useState("")
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [importStatus, setImportStatus] = useState<{
     type: "success" | "error" | "info" | null
     message: string
@@ -100,6 +104,91 @@ export default function VacancyFormWithImport({ mode, initialData }: VacancyForm
     { name: "LinkedIn", domain: "linkedin.com", icon: "🔷" },
     { name: "Indeed", domain: "indeed.com", icon: "🟦" }
   ]
+
+  // File upload handlers
+  const onDropFile = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setUploadedFile(acceptedFiles[0])
+      setImportStatus({ type: null, message: "" })
+    }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onDropFile,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
+    },
+    multiple: false,
+    maxSize: 10 * 1024 * 1024 // 10MB
+  })
+
+  const handleFileUpload = async () => {
+    if (!uploadedFile) {
+      setImportStatus({ type: "error", message: "Please select a file to upload" })
+      return
+    }
+
+    setIsUploading(true)
+    setImportStatus({ type: "info", message: "Parsing vacancy document..." })
+
+    try {
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('file', uploadedFile)
+
+      // Send file to backend for parsing
+      const response = await fetch('/api/vacancies/parse-file', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to parse vacancy document')
+      }
+
+      const parsedData = await response.json()
+
+      // Update form with parsed data
+      setFormData(prev => ({
+        ...prev,
+        title: parsedData.title || prev.title,
+        department: parsedData.department || prev.department,
+        location: parsedData.location || prev.location,
+        type: parsedData.type || prev.type,
+        experience: parsedData.experience || prev.experience,
+        salaryMin: parsedData.salaryMin || prev.salaryMin,
+        salaryMax: parsedData.salaryMax || prev.salaryMax,
+        currency: parsedData.currency || prev.currency,
+        description: parsedData.description || prev.description,
+        responsibilities: parsedData.responsibilities?.length > 0 ? parsedData.responsibilities : [""],
+        requirements: parsedData.requirements?.length > 0 ? parsedData.requirements : [""],
+        benefits: parsedData.benefits?.length > 0 ? parsedData.benefits : [""],
+      }))
+
+      setImportStatus({ 
+        type: "success", 
+        message: `Document parsed successfully! Review and edit the information below.` 
+      })
+      
+      // Switch to manual tab to show imported data
+      setTimeout(() => {
+        setActiveTab("manual")
+        setUploadedFile(null)
+      }, 1500)
+
+    } catch (error) {
+      console.error("File upload error:", error)
+      setImportStatus({ 
+        type: "error", 
+        message: "Failed to parse document. Please try again or enter manually." 
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const handleImportFromUrl = async () => {
     if (!importUrl.trim()) {
@@ -260,16 +349,20 @@ export default function VacancyFormWithImport({ mode, initialData }: VacancyForm
         </div>
       </div>
 
-      {/* Import/Manual Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "manual" | "import")}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      {/* Import/Manual/File Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "manual" | "import" | "file")}>
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsTrigger value="manual" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Manual Entry
+          </TabsTrigger>
           <TabsTrigger value="import" className="flex items-center gap-2">
             <Import className="h-4 w-4" />
             Import from URL
           </TabsTrigger>
-          <TabsTrigger value="manual" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Manual Entry
+          <TabsTrigger value="file" className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Upload File
           </TabsTrigger>
         </TabsList>
 
@@ -349,6 +442,130 @@ export default function VacancyFormWithImport({ mode, initialData }: VacancyForm
                 <p className="text-xs text-muted-foreground">
                   More job sites will be added soon. Contact support to request a specific site.
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* File Upload Tab */}
+        <TabsContent value="file" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Upload Vacancy Document
+              </CardTitle>
+              <CardDescription>
+                Upload a PDF, DOC, DOCX, or TXT file containing the vacancy description
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Dropzone */}
+              <div
+                {...getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                  isDragActive 
+                    ? "border-blue-500 bg-blue-50" 
+                    : uploadedFile 
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-300 hover:border-gray-400 bg-gray-50/50"
+                }`}
+              >
+                <input {...getInputProps()} />
+                
+                {uploadedFile ? (
+                  <div className="space-y-3">
+                    <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                    <div>
+                      <p className="font-medium text-gray-900">{uploadedFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(uploadedFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setUploadedFile(null)
+                        setImportStatus({ type: null, message: "" })
+                      }}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Remove File
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className={`mx-auto h-12 w-12 mb-3 ${
+                      isDragActive ? "text-blue-500" : "text-gray-400"
+                    }`} />
+                    <p className="font-medium text-gray-900 mb-1">
+                      {isDragActive 
+                        ? "Drop the file here" 
+                        : "Drop your vacancy document here"
+                      }
+                    </p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      or click to browse
+                    </p>
+                    <Button variant="outline" type="button">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Select File
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Supported formats: PDF, DOC, DOCX, TXT (Max 10MB)
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Parse Button */}
+              {uploadedFile && (
+                <Button 
+                  className="w-full"
+                  onClick={handleFileUpload}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Parsing Document...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Parse Vacancy Document
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Import Status */}
+              {importStatus.type && (
+                <Alert variant={importStatus.type === "error" ? "destructive" : "default"}>
+                  {importStatus.type === "success" && <CheckCircle className="h-4 w-4" />}
+                  {importStatus.type === "error" && <AlertCircle className="h-4 w-4" />}
+                  {importStatus.type === "info" && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <AlertTitle>
+                    {importStatus.type === "success" && "Success!"}
+                    {importStatus.type === "error" && "Error"}
+                    {importStatus.type === "info" && "Processing"}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {importStatus.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Info Section */}
+              <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">How it works</h4>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Upload a document containing the vacancy description</li>
+                  <li>Our AI will extract key information like title, requirements, and responsibilities</li>
+                  <li>Review and edit the extracted information before publishing</li>
+                </ol>
               </div>
             </CardContent>
           </Card>
