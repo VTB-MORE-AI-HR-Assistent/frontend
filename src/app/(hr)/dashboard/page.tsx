@@ -444,19 +444,9 @@ export default function DashboardPage() {
                     </div>
                     <h3 className="text-lg font-semibold">Start Hiring with AI</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-muted-foreground">
                     Upload vacancy → AI screens CVs → Schedule top candidates
                   </p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      <Clock className="h-3 w-3 mr-1" />
-                      5 min process
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      85% time saved
-                    </Badge>
-                  </div>
                 </div>
                 <div className="flex items-center gap-4">
                   {/* Animated Process Flow */}
@@ -1479,27 +1469,33 @@ export default function DashboardPage() {
       </Dialog>
 
       {/* Main Content Grid - Fill remaining height */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 flex-1">
+      <div className="grid gap-6 md:grid-cols-2 flex-1">
         {/* AI Interview Schedule */}
         <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-base">
-              <span>AI Interviews Today</span>
+              <span>Upcoming AI Interviews</span>
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                 <span className="text-xs text-muted-foreground">Live</span>
               </div>
             </CardTitle>
             <CardDescription className="text-xs">
-              {aiInterviews.length} interviews scheduled • 1 in progress
+              Next {Math.min(5, aiInterviews.length)} interviews • {aiInterviews.filter(i => i.status === 'in-progress').length} in progress
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col pt-2">
             <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {aiInterviews.slice(0, 3).map((interview) => (
-                <div key={interview.id} className={`flex items-start space-x-2 p-1.5 rounded-lg transition-all ${
-                  interview.status === 'in-progress' ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
-                }`}>
+              {aiInterviews.slice(0, 5).map((interview) => (
+                <div 
+                  key={interview.id} 
+                  onClick={() => document.getElementById('calendar-trigger')?.click()}
+                  className={`flex items-start space-x-2 p-1.5 rounded-lg transition-all cursor-pointer ${
+                    interview.status === 'in-progress' 
+                      ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' 
+                      : 'hover:bg-gray-50 hover:border hover:border-[#1B4F8C]/20'
+                  }`}
+                >
                   <div className="text-xs font-medium text-muted-foreground w-12 pt-0.5">
                     {interview.time}
                   </div>
@@ -1513,115 +1509,119 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground leading-tight truncate">{interview.position}</p>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5">
-                        {interview.interviewType}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5">
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-gray-500">
                         {interview.duration}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] py-0 px-1 h-3.5 text-green-600 border-green-200">
-                        {interview.matchScore}%
-                      </Badge>
+                      </span>
+                      <span className="text-[10px] font-medium text-green-600">
+                        {interview.matchScore}% match
+                      </span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
-                    <ChevronRight className="h-3 w-3" />
-                  </Button>
+                  <ChevronRight className="h-3 w-3 text-gray-400" />
                 </div>
               ))}
             </div>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full mt-3 h-8" size="sm">
+                <Button id="calendar-trigger" variant="outline" className="w-full mt-3 h-8" size="sm">
                   <Calendar className="h-3 w-3 mr-1" />
                   View full calendar
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>AI Interview Calendar</DialogTitle>
+                  <DialogTitle>Today's AI Interviews</DialogTitle>
                   <DialogDescription>
-                    All scheduled AI interviews across all positions
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                   </DialogDescription>
                 </DialogHeader>
                 
-                {/* Calendar Component */}
+                {/* Today's Schedule */}
                 <div className="mt-4">
-                  {/* Week View */}
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold">Week of {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</h3>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Today
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {/* Time Grid */}
-                    <div className="grid grid-cols-8 gap-0 border-t">
-                      {/* Time Column */}
-                      <div className="border-r">
-                        <div className="h-8 border-b text-xs text-muted-foreground p-1">Time</div>
-                        {['9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:00', '5:00'].map(time => (
-                          <div key={time} className="h-16 border-b text-xs text-muted-foreground p-1">
-                            {time}
-                          </div>
-                        ))}
-                      </div>
+                  <div className="border rounded-lg">
+                    {/* Time slots from 9 AM to 6 PM */}
+                    {[
+                      { time: '9:00 AM', hour: 9 },
+                      { time: '10:00 AM', hour: 10 },
+                      { time: '11:00 AM', hour: 11 },
+                      { time: '12:00 PM', hour: 12 },
+                      { time: '1:00 PM', hour: 13 },
+                      { time: '2:00 PM', hour: 14 },
+                      { time: '3:00 PM', hour: 15 },
+                      { time: '4:00 PM', hour: 16 },
+                      { time: '5:00 PM', hour: 17 },
+                      { time: '6:00 PM', hour: 18 }
+                    ].map((slot, index) => {
+                      // Find interviews for this time slot
+                      const slotInterviews = aiInterviews.filter(interview => {
+                        // Match the time format
+                        return interview.time.replace(' ', '') === slot.time.replace(' ', '');
+                      });
                       
-                      {/* Days */}
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, dayIndex) => (
-                        <div key={day} className="border-r">
-                          <div className="h-8 border-b text-xs font-medium p-1 text-center">
-                            {day}
-                            <div className="text-[10px] text-muted-foreground">
-                              {new Date(Date.now() + dayIndex * 24 * 60 * 60 * 1000).getDate()}
-                            </div>
+                      return (
+                        <div key={slot.time} className={`flex border-b last:border-b-0 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                          {/* Time column */}
+                          <div className="w-24 p-3 text-sm text-gray-500 font-medium border-r">
+                            {slot.time}
                           </div>
                           
-                          {/* Time Slots */}
-                          {[9, 10, 11, 12, 13, 14, 15, 16, 17].map(hour => (
-                            <div key={hour} className="h-16 border-b relative">
-                              {/* Sample Interview Blocks */}
-                              {dayIndex === 0 && hour === 10 && (
-                                <div className="absolute inset-x-1 top-1 bottom-8 bg-blue-100 border border-blue-300 rounded p-1 cursor-pointer hover:bg-blue-200">
-                                  <div className="text-[10px] font-medium">Ivan Petrov</div>
-                                  <div className="text-[9px] text-muted-foreground">Frontend Dev</div>
+                          {/* Interview slot */}
+                          <div className="flex-1 p-3">
+                            {slotInterviews.length > 0 ? (
+                              slotInterviews.map((interview) => (
+                                <div key={interview.id} className={`rounded-lg p-3 ${
+                                  interview.status === 'in-progress' 
+                                    ? 'bg-blue-100 border border-blue-300' 
+                                    : 'bg-green-50 border border-green-200'
+                                }`}>
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-medium text-sm">{interview.candidateName}</p>
+                                        {interview.status === 'in-progress' && (
+                                          <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0 h-4">
+                                            LIVE NOW
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-gray-600 mt-0.5">{interview.position}</p>
+                                      <div className="flex items-center gap-3 mt-1">
+                                        <span className="text-xs text-gray-500">
+                                          Duration: {interview.duration}
+                                        </span>
+                                        <span className="text-xs font-medium text-green-600">
+                                          Match: {interview.matchScore}%
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="h-7 text-xs">
+                                      View Details
+                                    </Button>
+                                  </div>
                                 </div>
-                              )}
-                              {dayIndex === 2 && hour === 14 && (
-                                <div className="absolute inset-x-1 top-1 bottom-8 bg-green-100 border border-green-300 rounded p-1 cursor-pointer hover:bg-green-200">
-                                  <div className="text-[10px] font-medium">Maria K.</div>
-                                  <div className="text-[9px] text-muted-foreground">Backend</div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                              ))
+                            ) : (
+                              <div className="text-sm text-gray-400">Available</div>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {/* Legend */}
-                    <div className="flex items-center gap-4 mt-4 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 bg-blue-100 border border-blue-300 rounded"></div>
-                        <span>Technical</span>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Summary */}
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm">
+                        <span className="font-medium">Total interviews today:</span> {aiInterviews.length}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 bg-green-100 border border-green-300 rounded"></div>
-                        <span>Behavioral</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 bg-purple-100 border border-purple-300 rounded"></div>
-                        <span>Experience</span>
+                      <div className="text-sm">
+                        <span className="font-medium">Average match score:</span> {
+                          aiInterviews.length > 0 
+                            ? Math.round(aiInterviews.reduce((sum, i) => sum + i.matchScore, 0) / aiInterviews.length)
+                            : 0
+                        }%
                       </div>
                     </div>
                   </div>
@@ -1645,105 +1645,37 @@ export default function DashboardPage() {
           <CardContent className="flex-1 flex flex-col pt-2">
             <div className="space-y-1.5 flex-1 overflow-y-auto">
               {topMatchCandidates.slice(0, 4).map((candidate) => (
-                <div key={candidate.id} className="group relative">
-                  <div className="flex items-start gap-2 p-1.5 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
-                    {/* Avatar */}
-                    <div className="relative">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-[10px]">
-                        {candidate.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      {/* Match Score Badge */}
-                      <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full shadow-sm">
-                        <div className={`text-[9px] font-bold px-0.5 rounded-full ${
-                          candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
-                          candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {candidate.matchScore}%
-                        </div>
-                      </div>
+                <Link key={candidate.id} href={`/candidates/${candidate.id}`} className="block group">
+                  <div className="flex items-center gap-2 p-2 rounded-lg border hover:bg-gray-50 hover:border-[#1B4F8C]/20 transition-all cursor-pointer">
+                    {/* Avatar - simple without badge */}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-xs">
+                      {candidate.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     
-                    {/* Candidate Info */}
+                    {/* Candidate Info - just name and position */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate leading-tight">{candidate.name}</p>
-                          <p className="text-xs text-muted-foreground leading-tight truncate">{candidate.position}</p>
-                        </div>
-                        {candidate.status === "new" && (
-                          <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1 py-0 h-3.5">New</Badge>
-                        )}
-                        {candidate.status === "reviewing" && (
-                          <Badge className="bg-yellow-100 text-yellow-700 text-[10px] px-1 py-0 h-3.5">Review</Badge>
-                        )}
-                        {candidate.status === "interview" && (
-                          <Badge className="bg-green-100 text-green-700 text-[10px] px-1 py-0 h-3.5">Interview</Badge>
-                        )}
-                      </div>
-                      
-                      {/* Skills */}
-                      <div className="flex flex-wrap gap-0.5 mt-0.5">
-                        {candidate.skills.slice(0, 2).map((skill, i) => (
-                          <span key={i} className="inline-flex items-center px-1 py-0 rounded text-[9px] font-medium bg-gray-100 text-gray-700 h-3.5">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                      <p className="font-medium text-sm truncate">{candidate.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{candidate.position}</p>
+                    </div>
+                    
+                    {/* Match percentage - single display on the right */}
+                    <div className={`text-sm font-bold ${
+                      candidate.matchScore >= 90 ? 'text-green-600' :
+                      candidate.matchScore >= 80 ? 'text-blue-600' :
+                      'text-gray-600'
+                    }`}>
+                      {candidate.matchScore}% match
                     </div>
                     
                     {/* Action Button */}
-                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="h-3 w-3" />
-                    </Button>
+                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
             <Link href="/candidates">
               <Button variant="outline" className="w-full mt-3 h-8" size="sm">
                 View all candidates
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Top Vacancies */}
-        <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span>Active Vacancies</span>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col pt-2">
-            <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {topVacancies.map((vacancy) => (
-                <div key={vacancy.id} className="flex items-center justify-between py-1.5 hover:bg-gray-50 rounded px-1 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium leading-tight truncate">{vacancy.title}</p>
-                      {vacancy.status === "paused" && (
-                        <Badge variant="secondary" className="text-[10px] py-0 px-1 h-3.5">
-                          Paused
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      {vacancy.uploadedCVs} CVs · {vacancy.new} new
-                    </p>
-                  </div>
-                  <Link href={`/vacancies/${vacancy.id}`}>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                      <ChevronRight className="h-3 w-3" />
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
-            <Link href="/vacancies">
-              <Button variant="outline" className="w-full mt-3 h-8" size="sm">
-                Manage all vacancies
               </Button>
             </Link>
           </CardContent>
