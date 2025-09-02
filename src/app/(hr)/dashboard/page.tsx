@@ -56,19 +56,13 @@ interface Candidate {
   experience: string
   status: "analyzing" | "qualified" | "notified" | "scheduled" | "rejected"
   cvUrl?: string
-  availability?: TimeSlot[]
-}
-
-interface TimeSlot {
-  date: string
-  time: string
-  available: boolean
 }
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<PipelineStep>("vacancy")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [currentTab, setCurrentTab] = useState("manual")
   const [vacancyData, setVacancyData] = useState<{
     title: string;
     description: string;
@@ -83,6 +77,7 @@ export default function DashboardPage() {
     deadline: string;
     startDate: string;
     uploadedFile: File | null;
+    jobUrl: string;
   }>({
     title: "",
     description: "",
@@ -96,14 +91,13 @@ export default function DashboardPage() {
     currency: "RUB",
     deadline: "",
     startDate: "",
-    uploadedFile: null
+    uploadedFile: null,
+    jobUrl: ""
   })
   const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
-  const [showScheduler, setShowScheduler] = useState(false)
-  const [selectedTimeSlots, setSelectedTimeSlots] = useState<{[key: string]: string}>({})
 
   // Simulate data loading
   useEffect(() => {
@@ -210,15 +204,6 @@ export default function DashboardPage() {
     { id: 4, title: "QA Automation Engineer", uploadedCVs: 18, new: 3, status: "paused" }
   ]
 
-  // Mock time slots for scheduling
-  const availableTimeSlots = [
-    { date: "2025-01-15", time: "10:00 AM", available: true },
-    { date: "2025-01-15", time: "2:00 PM", available: true },
-    { date: "2025-01-16", time: "11:00 AM", available: true },
-    { date: "2025-01-16", time: "3:00 PM", available: true },
-    { date: "2025-01-17", time: "10:00 AM", available: true },
-    { date: "2025-01-17", time: "4:00 PM", available: true },
-  ]
 
   const onDropCVs = useCallback((acceptedFiles: File[]) => {
     setUploadedCVs(prev => [...prev, ...acceptedFiles])
@@ -312,18 +297,9 @@ export default function DashboardPage() {
       ))
       setIsProcessing(false)
       setCurrentStep("scheduling")
-      setShowScheduler(true)
     }, 2000)
   }
 
-  const confirmSchedule = () => {
-    setCandidates(prev => prev.map(c => 
-      selectedCandidates.includes(c.id) 
-        ? { ...c, status: "scheduled" as const }
-        : c
-    ))
-    setCurrentStep("complete")
-  }
 
   const getStepNumber = (step: PipelineStep) => {
     const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "notification", "scheduling", "complete"]
@@ -453,7 +429,7 @@ export default function DashboardPage() {
               {currentStep === "vacancy" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 1: Upload Vacancy</h3>
-                  <Tabs defaultValue="manual" className="w-full">
+                  <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                       <TabsTrigger value="file">Upload File</TabsTrigger>
@@ -677,8 +653,12 @@ export default function DashboardPage() {
                       <div className="space-y-2">
                         <Label>Job Posting URL</Label>
                         <div className="flex gap-2">
-                          <Input placeholder="https://example.com/job/12345" />
-                          <Button>
+                          <Input 
+                            placeholder="https://example.com/job/12345" 
+                            value={vacancyData.jobUrl}
+                            onChange={(e) => setVacancyData({...vacancyData, jobUrl: e.target.value})}
+                          />
+                          <Button type="button">
                             <LinkIcon className="mr-2 h-4 w-4" />
                             Import
                           </Button>
@@ -695,7 +675,16 @@ export default function DashboardPage() {
                   </Tabs>
                   
                   <div className="flex justify-end">
-                    <Button onClick={submitVacancy} disabled={!vacancyData.title}>
+                    <Button 
+                      onClick={submitVacancy} 
+                      disabled={
+                        currentTab === 'manual' 
+                          ? !vacancyData.title || !vacancyData.department || !vacancyData.location || !vacancyData.experience || !vacancyData.deadline || !vacancyData.description
+                          : currentTab === 'file' 
+                            ? !vacancyData.uploadedFile
+                            : !vacancyData.jobUrl
+                      }
+                    >
                       Next: Upload CVs
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -752,17 +741,6 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   )}
-
-                  <Alert>
-                    <Brain className="h-4 w-4" />
-                    <AlertTitle>AI Analysis Ready</AlertTitle>
-                    <AlertDescription>
-                      {uploadedCVs.length > 0 
-                        ? `${uploadedCVs.length} CVs will be analyzed for "${vacancyData.title}"`
-                        : "Upload CVs to start AI screening"
-                      }
-                    </AlertDescription>
-                  </Alert>
 
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={() => setCurrentStep("vacancy")}>
@@ -925,18 +903,18 @@ export default function DashboardPage() {
               {/* Step 5: Scheduling */}
               {currentStep === "scheduling" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 5: Schedule Interviews</h3>
+                  <h3 className="text-lg font-semibold">Step 5: Share Scheduling Links</h3>
                   
                   <Alert className="border-blue-200 bg-blue-50">
                     <Mail className="h-4 w-4 text-blue-600" />
                     <AlertTitle className="text-blue-900">Invitations Sent</AlertTitle>
                     <AlertDescription className="text-blue-800">
-                      Candidates have been notified. Select interview time slots below.
+                      Scheduling links have been sent to candidates. They will select their preferred interview times.
                     </AlertDescription>
                   </Alert>
 
                   <div className="space-y-4">
-                    {candidates.filter(c => c.status === "notified").map((candidate) => (
+                    {candidates.filter(c => c.status === "notified").map((candidate, index) => (
                       <Card key={candidate.id}>
                         <CardHeader>
                           <div className="flex items-center justify-between">
@@ -951,46 +929,65 @@ export default function DashboardPage() {
                                 <p className="text-sm text-muted-foreground">{candidate.email}</p>
                               </div>
                             </div>
-                            <Badge className="bg-green-100 text-green-800">
-                              Available for Interview
+                            <Badge className="bg-amber-100 text-amber-800">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Awaiting Response
                             </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          <Label className="mb-3 block">Select Interview Time</Label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {availableTimeSlots.map((slot, index) => (
-                              <Button
-                                key={index}
-                                variant={selectedTimeSlots[candidate.id] === `${slot.date}-${slot.time}` ? "default" : "outline"}
-                                size="sm"
-                                className="text-xs"
-                                onClick={() => setSelectedTimeSlots({
-                                  ...selectedTimeSlots,
-                                  [candidate.id]: `${slot.date}-${slot.time}`
-                                })}
-                              >
-                                <Calendar className="mr-1 h-3 w-3" />
-                                {new Date(slot.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                <Clock className="ml-2 mr-1 h-3 w-3" />
-                                {slot.time}
-                              </Button>
-                            ))}
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div className="flex-1">
+                              <Label className="text-xs text-muted-foreground mb-1">Scheduling Link</Label>
+                              <div className="flex items-center gap-2">
+                                <LinkIcon className="h-4 w-4 text-slate-500" />
+                                <code className="text-xs text-slate-600">
+                                  {`${window.location.origin}/interview-schedule/${candidate.id}-${index + 1}`}
+                                </code>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  `${window.location.origin}/interview-schedule/${candidate.id}-${index + 1}`
+                                )
+                                // In production, would show a toast notification
+                                alert("Link copied to clipboard!")
+                              }}
+                            >
+                              <LinkIcon className="mr-2 h-3 w-3" />
+                              Copy Link
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            <span>Email sent at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
 
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Tracking Interview Scheduling</AlertTitle>
+                    <AlertDescription>
+                      You'll receive notifications when candidates select their interview times. 
+                      The dashboard will automatically update with confirmed schedules.
+                    </AlertDescription>
+                  </Alert>
+
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={() => setCurrentStep("notification")}>
                       Back
                     </Button>
                     <Button 
-                      onClick={confirmSchedule}
-                      disabled={Object.keys(selectedTimeSlots).length !== selectedCandidates.length}
+                      onClick={() => setCurrentStep("complete")}
                     >
-                      Confirm Schedule
+                      Finish Setup
                       <CheckCircle className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -1035,7 +1032,6 @@ export default function DashboardPage() {
                       setUploadedCVs([])
                       setCandidates([])
                       setSelectedCandidates([])
-                      setSelectedTimeSlots({})
                     }}
                     className="mt-4"
                   >
