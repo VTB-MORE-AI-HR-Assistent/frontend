@@ -37,6 +37,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { WeightPipeline } from "@/components/ui/weight-pipeline"
 import {
   Plus,
   Search,
@@ -54,16 +55,18 @@ import {
   Briefcase,
   AlertCircle,
   CheckCircle,
-  FileQuestion
+  FileQuestion,
+  Settings
 } from "lucide-react"
 
-type QuestionType = "technical" | "behavioral" | "experience"
+type QuestionType = "technical" | "behavioral" | "experience" | "soft-skills" | "situational" | "cultural-fit"
 type QuestionDifficulty = "easy" | "medium" | "hard"
 
 interface Question {
   id: string
   question: string
   type: QuestionType
+  category?: string // More specific category within type
   difficulty: QuestionDifficulty
   expectedAnswer?: string
   timeLimit?: number // in minutes
@@ -78,6 +81,10 @@ interface Role {
   level: string // Junior, Middle, Senior, Lead
   department: string // Backend, Frontend, DevOps, QA, etc.
   questions: Question[]
+  interviewDuration?: number // Total interview duration in minutes
+  technicalWeight: number // Percentage weight for technical questions
+  behavioralWeight: number // Percentage weight for behavioral questions
+  softSkillsWeight: number // Percentage weight for soft skills
   createdAt: Date
 }
 
@@ -88,11 +95,16 @@ const initialRoles: Role[] = [
     name: "Java Developer",
     level: "Junior",
     department: "Backend",
+    interviewDuration: 45,
+    technicalWeight: 50,
+    behavioralWeight: 30,
+    softSkillsWeight: 20,
     questions: [
       {
         id: "q-1",
         question: "What is the difference between JDK, JRE, and JVM?",
         type: "technical",
+        category: "Java Fundamentals",
         difficulty: "easy",
         expectedAnswer: "JDK is Java Development Kit, JRE is Java Runtime Environment, JVM is Java Virtual Machine...",
         timeLimit: 3,
@@ -109,6 +121,16 @@ const initialRoles: Role[] = [
         tags: ["learning", "adaptability"],
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        id: "q-6",
+        question: "How do you handle feedback and criticism?",
+        type: "soft-skills",
+        difficulty: "easy",
+        timeLimit: 3,
+        tags: ["communication", "growth-mindset"],
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ],
     createdAt: new Date()
@@ -118,11 +140,16 @@ const initialRoles: Role[] = [
     name: "React Developer",
     level: "Middle",
     department: "Frontend",
+    interviewDuration: 60,
+    technicalWeight: 40,
+    behavioralWeight: 35,
+    softSkillsWeight: 25,
     questions: [
       {
         id: "q-3",
         question: "Explain the Virtual DOM and how React uses it.",
         type: "technical",
+        category: "React Core Concepts",
         difficulty: "medium",
         expectedAnswer: "Virtual DOM is a JavaScript representation of the real DOM...",
         timeLimit: 5,
@@ -139,6 +166,16 @@ const initialRoles: Role[] = [
         tags: ["projects", "react"],
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        id: "q-7",
+        question: "How would you handle a situation where a design requirement conflicts with technical limitations?",
+        type: "situational",
+        difficulty: "medium",
+        timeLimit: 5,
+        tags: ["problem-solving", "communication"],
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ],
     createdAt: new Date()
@@ -148,15 +185,30 @@ const initialRoles: Role[] = [
     name: "GoLang Developer",
     level: "Senior",
     department: "Backend",
+    interviewDuration: 90,
+    technicalWeight: 60,
+    behavioralWeight: 25,
+    softSkillsWeight: 15,
     questions: [
       {
         id: "q-5",
         question: "Explain Go's concurrency model and how goroutines work.",
         type: "technical",
+        category: "Go Concurrency",
         difficulty: "hard",
         expectedAnswer: "Go uses CSP (Communicating Sequential Processes) model...",
         timeLimit: 7,
         tags: ["golang", "concurrency", "goroutines"],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "q-8",
+        question: "What values are most important to you in a workplace culture?",
+        type: "cultural-fit",
+        difficulty: "medium",
+        timeLimit: 4,
+        tags: ["culture", "values", "team-fit"],
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -172,6 +224,8 @@ export default function QuestionBankPage() {
   const [filterType, setFilterType] = useState<QuestionType | "all">("all")
   const [filterDifficulty, setFilterDifficulty] = useState<QuestionDifficulty | "all">("all")
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false)
+  const [isEditRoleOpen, setIsEditRoleOpen] = useState(false)
+  const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [deleteConfirmQuestion, setDeleteConfirmQuestion] = useState<Question | null>(null)
@@ -181,12 +235,17 @@ export default function QuestionBankPage() {
   const [newRole, setNewRole] = useState({
     name: "",
     level: "",
-    department: ""
+    department: "",
+    interviewDuration: 60,
+    technicalWeight: 40,
+    behavioralWeight: 30,
+    softSkillsWeight: 30
   })
 
   const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
     question: "",
     type: "technical",
+    category: "",
     difficulty: "medium",
     expectedAnswer: "",
     timeLimit: 5,
@@ -201,6 +260,9 @@ export default function QuestionBankPage() {
       case "technical": return <Code className="h-4 w-4" />
       case "behavioral": return <Users className="h-4 w-4" />
       case "experience": return <Briefcase className="h-4 w-4" />
+      case "soft-skills": return <Users className="h-4 w-4" />
+      case "situational": return <AlertCircle className="h-4 w-4" />
+      case "cultural-fit": return <CheckCircle className="h-4 w-4" />
     }
   }
 
@@ -209,6 +271,9 @@ export default function QuestionBankPage() {
       case "technical": return "bg-blue-100 text-blue-800"
       case "behavioral": return "bg-green-100 text-green-800"
       case "experience": return "bg-purple-100 text-purple-800"
+      case "soft-skills": return "bg-yellow-100 text-yellow-800"
+      case "situational": return "bg-orange-100 text-orange-800"
+      case "cultural-fit": return "bg-teal-100 text-teal-800"
     }
   }
 
@@ -227,13 +292,61 @@ export default function QuestionBankPage() {
         name: newRole.name,
         level: newRole.level,
         department: newRole.department,
+        interviewDuration: newRole.interviewDuration,
+        technicalWeight: newRole.technicalWeight,
+        behavioralWeight: newRole.behavioralWeight,
+        softSkillsWeight: newRole.softSkillsWeight,
         questions: [],
         createdAt: new Date()
       }
       setRoles([...roles, role])
       setSelectedRole(role)
-      setNewRole({ name: "", level: "", department: "" })
+      setNewRole({ 
+        name: "", 
+        level: "", 
+        department: "",
+        interviewDuration: 60,
+        technicalWeight: 40,
+        behavioralWeight: 30,
+        softSkillsWeight: 30
+      })
       setIsAddRoleOpen(false)
+    }
+  }
+
+  const handleUpdateRole = () => {
+    if (editingRole && newRole.name && newRole.level && newRole.department) {
+      const updatedRole: Role = {
+        ...editingRole,
+        name: newRole.name,
+        level: newRole.level,
+        department: newRole.department,
+        interviewDuration: newRole.interviewDuration,
+        technicalWeight: newRole.technicalWeight,
+        behavioralWeight: newRole.behavioralWeight,
+        softSkillsWeight: newRole.softSkillsWeight
+      }
+
+      const updatedRoles = roles.map(role => 
+        role.id === editingRole.id ? updatedRole : role
+      )
+      
+      setRoles(updatedRoles)
+      if (selectedRole?.id === editingRole.id) {
+        setSelectedRole(updatedRole)
+      }
+      
+      setEditingRole(null)
+      setNewRole({ 
+        name: "", 
+        level: "", 
+        department: "",
+        interviewDuration: 60,
+        technicalWeight: 40,
+        behavioralWeight: 30,
+        softSkillsWeight: 30
+      })
+      setIsEditRoleOpen(false)
     }
   }
 
@@ -243,6 +356,7 @@ export default function QuestionBankPage() {
         id: `q-${Date.now()}`,
         question: newQuestion.question,
         type: newQuestion.type as QuestionType,
+        category: newQuestion.category,
         difficulty: newQuestion.difficulty as QuestionDifficulty,
         expectedAnswer: newQuestion.expectedAnswer,
         timeLimit: newQuestion.timeLimit,
@@ -263,6 +377,7 @@ export default function QuestionBankPage() {
       setNewQuestion({
         question: "",
         type: "technical",
+        category: "",
         difficulty: "medium",
         expectedAnswer: "",
         timeLimit: 5,
@@ -278,6 +393,7 @@ export default function QuestionBankPage() {
         ...editingQuestion,
         question: newQuestion.question,
         type: newQuestion.type as QuestionType,
+        category: newQuestion.category,
         difficulty: newQuestion.difficulty as QuestionDifficulty,
         expectedAnswer: newQuestion.expectedAnswer,
         timeLimit: newQuestion.timeLimit,
@@ -304,6 +420,7 @@ export default function QuestionBankPage() {
       setNewQuestion({
         question: "",
         type: "technical",
+        category: "",
         difficulty: "medium",
         expectedAnswer: "",
         timeLimit: 5,
@@ -376,9 +493,9 @@ export default function QuestionBankPage() {
     <div className="flex-1 space-y-6 p-4 pt-6 pb-20 md:pb-6 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Interview Question Bank</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Interview Configuration</h1>
         <p className="text-sm text-muted-foreground">
-          Create and manage interview questions for different roles and experience levels
+          Configure interview questions and assessment criteria for different roles
         </p>
       </div>
 
@@ -438,6 +555,48 @@ export default function QuestionBankPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Interview Duration (minutes)</Label>
+                      <Input
+                        type="number"
+                        min="15"
+                        max="180"
+                        value={newRole.interviewDuration}
+                        onChange={(e) => setNewRole({ ...newRole, interviewDuration: parseInt(e.target.value) || 60 })}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label className="text-xs font-medium">Question Type Weights</Label>
+                    <WeightPipeline
+                      segments={[
+                        {
+                          label: "Technical",
+                          value: newRole.technicalWeight,
+                          color: "bg-blue-500",
+                        },
+                        {
+                          label: "Behavioral",
+                          value: newRole.behavioralWeight,
+                          color: "bg-green-500",
+                        },
+                        {
+                          label: "Soft Skills",
+                          value: newRole.softSkillsWeight,
+                          color: "bg-yellow-500",
+                        }
+                      ]}
+                      onChange={(segments) => {
+                        setNewRole({
+                          ...newRole,
+                          technicalWeight: Math.round(segments[0].value),
+                          behavioralWeight: Math.round(segments[1].value),
+                          softSkillsWeight: Math.round(segments[2].value)
+                        })
+                      }}
+                    />
                   </div>
                   <DialogFooter>
                     <Button variant="outline" size="sm" onClick={() => setIsAddRoleOpen(false)} className="text-sm">Cancel</Button>
@@ -497,16 +656,51 @@ export default function QuestionBankPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>{selectedRole.level} {selectedRole.name}</CardTitle>
-                      <CardDescription>
-                        {selectedRole.department} • {selectedRole.questions.length} questions
-                      </CardDescription>
+                    <div className="space-y-2">
+                      <div>
+                        <CardTitle>{selectedRole.level} {selectedRole.name}</CardTitle>
+                        <CardDescription>
+                          {selectedRole.department} • {selectedRole.questions.length} questions • {selectedRole.interviewDuration || 60} min interview
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Badge variant="outline" className="text-xs">
+                          Technical: {selectedRole.technicalWeight || 40}%
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Behavioral: {selectedRole.behavioralWeight || 30}%
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Soft Skills: {selectedRole.softSkillsWeight || 30}%
+                        </Badge>
+                      </div>
                     </div>
-                    <Button onClick={() => setIsAddQuestionOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Question
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => {
+                          setEditingRole(selectedRole)
+                          setNewRole({
+                            name: selectedRole.name,
+                            level: selectedRole.level,
+                            department: selectedRole.department,
+                            interviewDuration: selectedRole.interviewDuration || 60,
+                            technicalWeight: selectedRole.technicalWeight || 40,
+                            behavioralWeight: selectedRole.behavioralWeight || 30,
+                            softSkillsWeight: selectedRole.softSkillsWeight || 30
+                          })
+                          setIsEditRoleOpen(true)
+                        }}
+                        title="Edit Role Configuration"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button onClick={() => setIsAddQuestionOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Question
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -535,6 +729,9 @@ export default function QuestionBankPage() {
                         <SelectItem value="technical">Technical</SelectItem>
                         <SelectItem value="behavioral">Behavioral</SelectItem>
                         <SelectItem value="experience">Experience</SelectItem>
+                        <SelectItem value="soft-skills">Soft Skills</SelectItem>
+                        <SelectItem value="situational">Situational</SelectItem>
+                        <SelectItem value="cultural-fit">Cultural Fit</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={filterDifficulty} onValueChange={(value: any) => setFilterDifficulty(value)}>
@@ -567,6 +764,11 @@ export default function QuestionBankPage() {
                                   {getTypeIcon(question.type)}
                                   <span className="ml-1">{question.type}</span>
                                 </Badge>
+                                {question.category && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {question.category}
+                                  </Badge>
+                                )}
                                 <Badge className={getDifficultyColor(question.difficulty)}>
                                   {question.difficulty}
                                 </Badge>
@@ -609,6 +811,7 @@ export default function QuestionBankPage() {
                                   setNewQuestion({
                                     question: question.question,
                                     type: question.type,
+                                    category: question.category,
                                     difficulty: question.difficulty,
                                     expectedAnswer: question.expectedAnswer,
                                     timeLimit: question.timeLimit,
@@ -677,6 +880,7 @@ export default function QuestionBankPage() {
           setNewQuestion({
             question: "",
             type: "technical",
+            category: "",
             difficulty: "medium",
             expectedAnswer: "",
             timeLimit: 5,
@@ -704,7 +908,7 @@ export default function QuestionBankPage() {
               />
             </div>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="type" className="text-xs font-medium">Type</Label>
                 <Select 
@@ -718,10 +922,26 @@ export default function QuestionBankPage() {
                     <SelectItem value="technical" className="text-sm">Technical</SelectItem>
                     <SelectItem value="behavioral" className="text-sm">Behavioral</SelectItem>
                     <SelectItem value="experience" className="text-sm">Experience</SelectItem>
+                    <SelectItem value="soft-skills" className="text-sm">Soft Skills</SelectItem>
+                    <SelectItem value="situational" className="text-sm">Situational</SelectItem>
+                    <SelectItem value="cultural-fit" className="text-sm">Cultural Fit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
+              <div className="space-y-1.5">
+                <Label htmlFor="category" className="text-xs font-medium">Category (Optional)</Label>
+                <Input
+                  id="category"
+                  placeholder="e.g., Java Core, React Hooks, Team Management"
+                  value={newQuestion.category || ""}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="difficulty" className="text-xs font-medium">Difficulty</Label>
                 <Select 
@@ -790,6 +1010,7 @@ export default function QuestionBankPage() {
                 setNewQuestion({
                   question: "",
                   type: "technical",
+                  category: "",
                   difficulty: "medium",
                   expectedAnswer: "",
                   timeLimit: 5,
@@ -847,6 +1068,122 @@ export default function QuestionBankPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Role Dialog */}
+      <Dialog open={isEditRoleOpen} onOpenChange={setIsEditRoleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">Edit Role Configuration</DialogTitle>
+            <DialogDescription className="text-xs">
+              Update interview configuration for {editingRole?.level} {editingRole?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Role Name</Label>
+              <Input
+                placeholder="e.g., Java Developer"
+                value={newRole.name}
+                onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Level</Label>
+              <Select value={newRole.level} onValueChange={(value) => setNewRole({ ...newRole, level: value })}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {levels.map(level => (
+                    <SelectItem key={level} value={level} className="text-sm">{level}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Department</Label>
+              <Select value={newRole.department} onValueChange={(value) => setNewRole({ ...newRole, department: value })}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map(dept => (
+                    <SelectItem key={dept} value={dept} className="text-sm">{dept}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Interview Duration (minutes)</Label>
+              <Input
+                type="number"
+                min="15"
+                max="180"
+                value={newRole.interviewDuration}
+                onChange={(e) => setNewRole({ ...newRole, interviewDuration: parseInt(e.target.value) || 60 })}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <Label className="text-xs font-medium">Question Type Weights</Label>
+            <WeightPipeline
+              segments={[
+                {
+                  label: "Technical",
+                  value: newRole.technicalWeight,
+                  color: "bg-blue-500",
+                },
+                {
+                  label: "Behavioral",
+                  value: newRole.behavioralWeight,
+                  color: "bg-green-500",
+                },
+                {
+                  label: "Soft Skills",
+                  value: newRole.softSkillsWeight,
+                  color: "bg-yellow-500",
+                }
+              ]}
+              onChange={(segments) => {
+                setNewRole({
+                  ...newRole,
+                  technicalWeight: Math.round(segments[0].value),
+                  behavioralWeight: Math.round(segments[1].value),
+                  softSkillsWeight: Math.round(segments[2].value)
+                })
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setIsEditRoleOpen(false)
+                setEditingRole(null)
+                setNewRole({ 
+                  name: "", 
+                  level: "", 
+                  department: "",
+                  interviewDuration: 60,
+                  technicalWeight: 40,
+                  behavioralWeight: 30,
+                  softSkillsWeight: 30
+                })
+              }} 
+              className="text-sm"
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleUpdateRole} className="text-sm">
+              Update Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

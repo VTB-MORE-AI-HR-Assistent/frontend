@@ -43,7 +43,7 @@ const navItems = [
     icon: FileText,
   },
   {
-    title: "Question Bank",
+    title: "Interview Config",
     href: "/dashboard/question-bank",
     icon: BookOpen,
   },

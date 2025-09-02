@@ -46,7 +46,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { Separator } from "@/components/ui/separator"
 
 // Mock vacancies data
 const mockVacancies = [
@@ -293,12 +292,6 @@ export default function CandidatesPage() {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
   }
 
-  // Stats calculations
-  const totalCVs = selectedVacancy === "all" ? cvs.length : filteredCVs.length
-  const newCVs = filteredCVs.filter(cv => cv.status === "new").length
-  const reviewingCVs = filteredCVs.filter(cv => cv.status === "reviewing").length
-  const interviewCVs = filteredCVs.filter(cv => cv.status === "interview").length
-
   return (
     <div className="p-6 bg-gray-50/50 min-h-[calc(100vh-64px)]">
       <div className="flex gap-6 h-[calc(100vh-112px)]">
@@ -414,56 +407,6 @@ export default function CandidatesPage() {
                 )}
               </div>
             )}
-
-            {/* Quick Stats Section */}
-            <div className="mt-6 pt-6 border-t space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold mb-2">Quick Stats</h3>
-                <p className="text-xs text-muted-foreground">Your CV processing overview</p>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total CVs</span>
-                  <span className="text-lg font-bold">{totalCVs}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-muted-foreground">Shortlisted</span>
-                    </div>
-                    <span className="text-sm font-semibold">{filteredCVs.filter(cv => cv.status === "shortlisted").length}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm text-muted-foreground">Under Review</span>
-                    </div>
-                    <span className="text-sm font-semibold">{reviewingCVs}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-purple-500" />
-                      <span className="text-sm text-muted-foreground">In Interview</span>
-                    </div>
-                    <span className="text-sm font-semibold">{interviewCVs}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Last Activity</span>
-                  <span className="text-sm">{sortedCVs.length > 0 ? "Today" : "No activity yet"}</span>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
