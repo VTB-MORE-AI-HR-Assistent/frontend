@@ -11,6 +11,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { 
   Brain, FileText, Download, Eye, Filter, Search,
   CheckCircle, XCircle, AlertTriangle, TrendingUp, TrendingDown,
@@ -26,6 +33,7 @@ const interviewReports = [
     id: 1,
     candidateName: "Maria Petrova",
     position: "Senior Frontend Developer",
+    vacancy: "Frontend Developer - React",
     interviewDate: "2024-12-03",
     interviewDuration: "45 min",
     overallCompliance: 87,
@@ -45,6 +53,7 @@ const interviewReports = [
     id: 2,
     candidateName: "Alexander Smirnov",
     position: "Backend Developer",
+    vacancy: "Backend Developer - Python",
     interviewDate: "2024-12-02",
     interviewDuration: "50 min",
     overallCompliance: 72,
@@ -64,6 +73,7 @@ const interviewReports = [
     id: 3,
     candidateName: "Elena Kozlova",
     position: "Product Manager",
+    vacancy: "Senior Product Manager",
     interviewDate: "2024-12-01",
     interviewDuration: "55 min",
     overallCompliance: 65,
@@ -83,6 +93,7 @@ const interviewReports = [
     id: 4,
     candidateName: "Ivan Petrov",
     position: "DevOps Engineer",
+    vacancy: "DevOps Engineer - AWS",
     interviewDate: "2024-11-30",
     interviewDuration: "48 min",
     overallCompliance: 94,
@@ -104,7 +115,11 @@ export default function InterviewReportsPage() {
   const [selectedReport, setSelectedReport] = useState(interviewReports[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
+  const [selectedVacancy, setSelectedVacancy] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
+
+  // Get unique vacancies for filter
+  const vacancies = Array.from(new Set(interviewReports.map(r => r.vacancy)))
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -132,7 +147,8 @@ export default function InterviewReportsPage() {
     const matchesSearch = report.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          report.position.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = filterStatus === "all" || report.status === filterStatus
-    return matchesSearch && matchesFilter
+    const matchesVacancy = selectedVacancy === "all" || report.vacancy === selectedVacancy
+    return matchesSearch && matchesFilter && matchesVacancy
   })
 
   if (isLoading) {
@@ -151,8 +167,8 @@ export default function InterviewReportsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">AI Interview Reports</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold tracking-tight">AI Interview Reports</h2>
+          <p className="text-sm text-muted-foreground">
             Review AI-conducted interviews and assessment results
           </p>
         </div>
@@ -161,11 +177,24 @@ export default function InterviewReportsPage() {
             placeholder="Search candidates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64"
+            className="w-48 h-9"
             prefix={<Search className="h-4 w-4" />}
           />
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
+          <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
+            <SelectTrigger className="w-48 h-9">
+              <SelectValue placeholder="Filter by vacancy" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vacancies</SelectItem>
+              {vacancies.map((vacancy) => (
+                <SelectItem key={vacancy} value={vacancy}>
+                  {vacancy}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" className="h-9">
+            <Filter className="mr-2 h-3 w-3" />
             Filter
           </Button>
         </div>
@@ -174,9 +203,9 @@ export default function InterviewReportsPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Interview List */}
         <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Interviews</CardTitle>
-            <CardDescription>AI-conducted interview sessions</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Recent Interviews</CardTitle>
+            <CardDescription className="text-xs">AI-conducted interview sessions</CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[600px] pr-4">
@@ -193,22 +222,22 @@ export default function InterviewReportsPage() {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
                             {report.candidateName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">{report.candidateName}</p>
-                          <p className="text-sm text-muted-foreground">{report.position}</p>
+                          <p className="font-medium text-sm">{report.candidateName}</p>
+                          <p className="text-xs text-muted-foreground">{report.position}</p>
                         </div>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Compliance</span>
-                        <span className={`font-bold ${getComplianceColor(report.overallCompliance)}`}>
+                        <span className="text-xs text-muted-foreground">Compliance</span>
+                        <span className={`font-semibold text-sm ${getComplianceColor(report.overallCompliance)}`}>
                           {report.overallCompliance}%
                         </span>
                       </div>
@@ -216,12 +245,12 @@ export default function InterviewReportsPage() {
                       <Progress value={report.overallCompliance} className="h-2" />
                       
                       <div className="flex items-center justify-between pt-1">
-                        <Badge className={getRecommendationColor(report.aiRecommendation)}>
+                        <Badge className={`text-[10px] py-0 px-1.5 h-5 ${getRecommendationColor(report.aiRecommendation)}`}>
                           {report.aiRecommendation === "next-stage" && "Next Stage"}
                           {report.aiRecommendation === "clarification" && "Needs Clarification"}
                           {report.aiRecommendation === "rejection" && "Reject"}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground">
                           {report.interviewDate}
                         </span>
                       </div>
@@ -238,8 +267,8 @@ export default function InterviewReportsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Interview Assessment Report</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-base">Interview Assessment Report</CardTitle>
+                <CardDescription className="text-xs">
                   AI analysis for {selectedReport.candidateName} - {selectedReport.position}
                 </CardDescription>
               </div>
@@ -274,10 +303,10 @@ export default function InterviewReportsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <div className={`text-3xl font-bold ${getComplianceColor(selectedReport.overallCompliance)}`}>
+                        <div className={`text-2xl font-bold ${getComplianceColor(selectedReport.overallCompliance)}`}>
                           {selectedReport.overallCompliance}%
                         </div>
-                        <Target className={`h-8 w-8 ${getComplianceColor(selectedReport.overallCompliance)}`} />
+                        <Target className={`h-6 w-6 ${getComplianceColor(selectedReport.overallCompliance)}`} />
                       </div>
                       <Progress value={selectedReport.overallCompliance} className="mt-3 h-2" />
                     </CardContent>
@@ -289,10 +318,10 @@ export default function InterviewReportsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <div className={`text-3xl font-bold ${getComplianceColor(selectedReport.experienceRelevance)}`}>
+                        <div className={`text-2xl font-bold ${getComplianceColor(selectedReport.experienceRelevance)}`}>
                           {selectedReport.experienceRelevance}%
                         </div>
-                        <Award className={`h-8 w-8 ${getComplianceColor(selectedReport.experienceRelevance)}`} />
+                        <Award className={`h-6 w-6 ${getComplianceColor(selectedReport.experienceRelevance)}`} />
                       </div>
                       <Progress value={selectedReport.experienceRelevance} className="mt-3 h-2" />
                     </CardContent>
@@ -300,13 +329,13 @@ export default function InterviewReportsPage() {
                 </div>
 
                 {/* AI Recommendation */}
-                <Alert className={
+                <Alert className={`text-xs ${
                   selectedReport.aiRecommendation === "next-stage" ? "border-green-200 bg-green-50" :
                   selectedReport.aiRecommendation === "clarification" ? "border-amber-200 bg-amber-50" :
                   "border-red-200 bg-red-50"
-                }>
-                  <Brain className="h-4 w-4" />
-                  <AlertDescription>
+                }`}>
+                  <Brain className="h-3 w-3" />
+                  <AlertDescription className="text-xs">
                     <strong>AI Recommendation:</strong>{" "}
                     {selectedReport.aiRecommendation === "next-stage" && "Proceed to next interview stage"}
                     {selectedReport.aiRecommendation === "clarification" && "Schedule clarification call with HR"}
@@ -315,7 +344,7 @@ export default function InterviewReportsPage() {
                 </Alert>
 
                 {/* Interview Details */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-xs">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Interview Date</span>
@@ -356,13 +385,13 @@ export default function InterviewReportsPage() {
                       
                       {value.strengths.length > 0 && (
                         <div>
-                          <p className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
-                            <ThumbsUp className="h-4 w-4" />
+                          <p className="text-xs font-medium text-green-700 mb-2 flex items-center gap-1">
+                            <ThumbsUp className="h-3 w-3" />
                             Strengths
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {value.strengths.map((strength, i) => (
-                              <Badge key={i} variant="outline" className="border-green-200 bg-green-50">
+                              <Badge key={i} variant="outline" className="text-[10px] py-0 px-1.5 h-5 border-green-200 bg-green-50">
                                 {strength}
                               </Badge>
                             ))}
@@ -372,13 +401,13 @@ export default function InterviewReportsPage() {
                       
                       {value.gaps.length > 0 && (
                         <div>
-                          <p className="text-sm font-medium text-amber-700 mb-2 flex items-center gap-1">
-                            <AlertTriangle className="h-4 w-4" />
+                          <p className="text-xs font-medium text-amber-700 mb-2 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
                             Areas for Improvement
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {value.gaps.map((gap, i) => (
-                              <Badge key={i} variant="outline" className="border-amber-200 bg-amber-50">
+                              <Badge key={i} variant="outline" className="text-[10px] py-0 px-1.5 h-5 border-amber-200 bg-amber-50">
                                 {gap}
                               </Badge>
                             ))}
@@ -394,8 +423,8 @@ export default function InterviewReportsPage() {
               <TabsContent value="redflags" className="space-y-4">
                 {selectedReport.redFlags.length === 0 && selectedReport.contradictions.length === 0 ? (
                   <Alert className="border-green-200 bg-green-50">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription>
+                    <CheckCircle className="h-3 w-3 text-green-600" />
+                    <AlertDescription className="text-xs">
                       <strong>No red flags or contradictions detected.</strong> The candidate provided consistent and genuine responses throughout the interview.
                     </AlertDescription>
                   </Alert>
@@ -403,9 +432,9 @@ export default function InterviewReportsPage() {
                   <>
                     {selectedReport.redFlags.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Flag className="h-5 w-5 text-red-500" />
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Flag className="h-4 w-4 text-red-500" />
                             Red Flags Detected
                           </CardTitle>
                         </CardHeader>
@@ -413,8 +442,8 @@ export default function InterviewReportsPage() {
                           <ul className="space-y-2">
                             {selectedReport.redFlags.map((flag, i) => (
                               <li key={i} className="flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
-                                <span className="text-sm">{flag}</span>
+                                <AlertCircle className="h-3 w-3 text-red-500 mt-0.5" />
+                                <span className="text-xs">{flag}</span>
                               </li>
                             ))}
                           </ul>
@@ -424,9 +453,9 @@ export default function InterviewReportsPage() {
 
                     {selectedReport.contradictions.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-500" />
                             Contradictions Found
                           </CardTitle>
                         </CardHeader>
@@ -434,8 +463,8 @@ export default function InterviewReportsPage() {
                           <ul className="space-y-2">
                             {selectedReport.contradictions.map((contradiction, i) => (
                               <li key={i} className="flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                                <span className="text-sm">{contradiction}</span>
+                                <AlertCircle className="h-3 w-3 text-amber-500 mt-0.5" />
+                                <span className="text-xs">{contradiction}</span>
                               </li>
                             ))}
                           </ul>
@@ -449,28 +478,28 @@ export default function InterviewReportsPage() {
               {/* Feedback Tab */}
               <TabsContent value="feedback" className="space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
                       Personalized Candidate Feedback
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs">
                       AI-generated feedback to share with the candidate
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm leading-relaxed">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-xs leading-relaxed">
                         {selectedReport.personalizedFeedback}
                       </p>
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button className="flex-1">
-                        <Send className="mr-2 h-4 w-4" />
+                      <Button className="flex-1" size="sm">
+                        <Send className="mr-2 h-3 w-3" />
                         Send to Candidate
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" size="sm">
                         Edit Feedback
                       </Button>
                     </div>
@@ -479,30 +508,30 @@ export default function InterviewReportsPage() {
 
                 {/* Quick Actions */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Next Steps</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Next Steps</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {selectedReport.aiRecommendation === "next-stage" && (
                       <>
-                        <Button className="w-full justify-start" variant="outline">
-                          <Calendar className="mr-2 h-4 w-4" />
+                        <Button className="w-full justify-start text-xs" variant="outline" size="sm">
+                          <Calendar className="mr-2 h-3 w-3" />
                           Schedule Next Interview Round
                         </Button>
-                        <Button className="w-full justify-start" variant="outline">
-                          <User className="mr-2 h-4 w-4" />
+                        <Button className="w-full justify-start text-xs" variant="outline" size="sm">
+                          <User className="mr-2 h-3 w-3" />
                           Assign to Hiring Manager
                         </Button>
                       </>
                     )}
                     {selectedReport.aiRecommendation === "clarification" && (
-                      <Button className="w-full justify-start" variant="outline">
-                        <Video className="mr-2 h-4 w-4" />
+                      <Button className="w-full justify-start text-xs" variant="outline" size="sm">
+                        <Video className="mr-2 h-3 w-3" />
                         Schedule Clarification Call
                       </Button>
                     )}
-                    <Button className="w-full justify-start" variant="outline">
-                      <FileText className="mr-2 h-4 w-4" />
+                    <Button className="w-full justify-start text-xs" variant="outline" size="sm">
+                      <FileText className="mr-2 h-3 w-3" />
                       Generate Detailed Report
                     </Button>
                   </CardContent>
