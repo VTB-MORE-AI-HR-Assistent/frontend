@@ -83,11 +83,89 @@ export function AudioInterview({
     }
   }, [connectionState])
 
-  // Initialize Daily.co call object
+  // Initialize Daily.co call object (Mock implementation for testing)
   const initializeDaily = useCallback(async () => {
     try {
       setConnectionState('connecting')
       setError('')
+
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // MOCK: Since we don't have Daily.co credentials, simulate a successful connection
+      console.log('[MOCK] Simulating Daily.co connection for testing')
+      
+      // Create mock participants
+      const mockLocalParticipant: ParticipantInfo = {
+        id: 'local-participant',
+        name: candidateName,
+        isLocal: true,
+        isMuted: false,
+        isActiveSpeaker: false,
+        audioLevel: 0
+      }
+      
+      const mockAIParticipant: ParticipantInfo = {
+        id: 'ai-interviewer',
+        name: 'AI Interviewer',
+        isLocal: false,
+        isMuted: false,
+        isActiveSpeaker: false,
+        audioLevel: 0
+      }
+      
+      // Add participants to the map
+      setParticipants(new Map([
+        [mockLocalParticipant.id, mockLocalParticipant],
+        [mockAIParticipant.id, mockAIParticipant]
+      ]))
+      
+      setLocalParticipant(mockLocalParticipant)
+      
+      // Set to connected state
+      setConnectionState('connected')
+      
+      // Simulate AI speaking occasionally
+      const speakingInterval = setInterval(() => {
+        setParticipants(prev => {
+          const updated = new Map(prev)
+          const ai = updated.get('ai-interviewer')
+          if (ai) {
+            // Toggle AI speaking state randomly
+            ai.isActiveSpeaker = Math.random() > 0.7
+            ai.audioLevel = ai.isActiveSpeaker ? Math.random() * 80 + 20 : 0
+            updated.set('ai-interviewer', { ...ai })
+          }
+          return updated
+        })
+      }, 3000)
+      
+      // Simulate local user audio level (as if speaking)
+      const localAudioInterval = setInterval(() => {
+        // Simulate occasional speaking from the user
+        const isSpeaking = Math.random() > 0.8
+        setLocalAudioLevel(isSpeaking ? Math.random() * 60 + 20 : Math.random() * 10)
+      }, 500)
+      
+      // Store the intervals to clean them up later
+      audioContextRef.current = { 
+        close: () => {
+          clearInterval(speakingInterval)
+          clearInterval(localAudioInterval)
+        }
+      } as any
+      
+      /* PRODUCTION CODE - Uncomment when Daily.co credentials are available
+      // Clean up any existing call object first
+      if (callRef.current) {
+        try {
+          await callRef.current.leave()
+          callRef.current.destroy()
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        callRef.current = null
+      }
 
       // Create call object (audio-only configuration)
       const callObject = DailyIframe.createCallObject({
@@ -122,6 +200,7 @@ export function AudioInterview({
       }, 30000) // 30 second timeout
       
       setAiJoinTimeout(timeout)
+      */
       
     } catch (err) {
       console.error('Failed to initialize Daily.co:', err)
@@ -270,6 +349,7 @@ export function AudioInterview({
       isMuted: participant.audio === false,
       isActiveSpeaker: false,
       audioLevel: 0,
+    }
 
     if (participant.local) {
       setLocalParticipant(participantInfo)
@@ -346,6 +426,14 @@ export function AudioInterview({
 
   // Leave interview
   const leaveInterview = async () => {
+    // MOCK: For testing without Daily.co
+    console.log('[MOCK] Leaving interview')
+    cleanup()
+    if (onInterviewEnd) {
+      onInterviewEnd()
+    }
+    
+    /* PRODUCTION CODE - Uncomment when Daily.co credentials are available
     if (callRef.current) {
       await callRef.current.leave()
       cleanup()
@@ -353,6 +441,7 @@ export function AudioInterview({
         onInterviewEnd()
       }
     }
+    */
   }
 
   // Cleanup
@@ -381,7 +470,10 @@ export function AudioInterview({
   // Handle pre-checks passed
   const handlePreChecksPassed = () => {
     setShowPreCheck(false)
-    initializeDaily()
+    // Only initialize if not already connecting or connected
+    if (connectionState !== 'connecting' && connectionState !== 'connected' && !callRef.current) {
+      initializeDaily()
+    }
   }
 
   // Handle pre-checks failed

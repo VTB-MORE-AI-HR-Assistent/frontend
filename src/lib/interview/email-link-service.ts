@@ -37,15 +37,15 @@ class JWTService {
   private static readonly SECRET = 'vtb-ai-hr-secret-key' // In production, use environment variable
 
   static generateToken(payload: any, expiresIn: number = 24 * 60 * 60 * 1000): string {
-    // Mock JWT token generation
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-    const data = btoa(JSON.stringify({
+    // Mock JWT token generation with proper Unicode handling
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64')
+    const data = Buffer.from(JSON.stringify({
       ...payload,
       iat: Date.now(),
       exp: Date.now() + expiresIn
-    }))
+    })).toString('base64')
     // In production, this would include proper signing
-    const signature = btoa(`${header}.${data}.${this.SECRET}`)
+    const signature = Buffer.from(`${header}.${data}.${this.SECRET}`).toString('base64')
     return `${header}.${data}.${signature}`
   }
 
@@ -54,7 +54,7 @@ class JWTService {
       const parts = token.split('.')
       if (parts.length !== 3) return null
       
-      const payload = JSON.parse(atob(parts[1]))
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'))
       
       // Check expiration
       if (payload.exp && payload.exp < Date.now()) {
@@ -76,7 +76,16 @@ class JWTService {
 
 // Email Link Service
 export class EmailLinkService {
-  private static readonly BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hraiassistant.ru'
+  // Dynamic URL generation for correct environment
+  private static getBaseUrl(): string {
+    // Client-side: use current origin
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    // Server-side: use environment variable or default
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+  }
+  
   private static readonly LINK_EXPIRY_HOURS = 48 // Links expire after 48 hours
   private static readonly PRE_INTERVIEW_WINDOW = 15 // Allow joining 15 minutes before scheduled time
 
@@ -108,7 +117,7 @@ export class EmailLinkService {
       expiresAt
     })
 
-    return `${this.BASE_URL}/interview/${data.sessionId}?token=${encodeURIComponent(token)}`
+    return `${this.getBaseUrl()}/interview/${data.sessionId}?token=${encodeURIComponent(token)}`
   }
 
   /**
@@ -460,6 +469,13 @@ ${data.hrContactPhone ? `Телефон: ${data.hrContactPhone}` : ''}
 
   static setInterviewStatus(sessionId: string, status: InterviewStatus): void {
     this.statusStorage.set(sessionId, status)
+  }
+
+  /**
+   * Decode interview token to get session data
+   */
+  static decodeInterviewToken(token: string): any {
+    return JWTService.decodeToken(token)
   }
 }
 

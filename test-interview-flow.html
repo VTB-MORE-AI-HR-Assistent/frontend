@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VTB AI HR - Interview Test Flow</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      width: 100%;
+      padding: 40px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .logo {
+      display: inline-block;
+      background: linear-gradient(135deg, #1B4F8C 0%, #2563EB 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #64748b;
+      font-size: 18px;
+    }
+    
+    .flow-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .flow-section h2 {
+      color: #1B4F8C;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    .step {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .step-number {
+      background: #1B4F8C;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      margin-right: 15px;
+      flex-shrink: 0;
+    }
+    
+    .step-content {
+      flex: 1;
+    }
+    
+    .step-title {
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 5px;
+    }
+    
+    .step-description {
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .links-section {
+      display: grid;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .link-card {
+      padding: 20px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 12px;
+      border: 2px solid #1B4F8C;
+    }
+    
+    .link-card h3 {
+      color: #1B4F8C;
+      margin-bottom: 10px;
+    }
+    
+    .link-card p {
+      color: #64748b;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #1B4F8C 0%, #2563EB 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(27, 79, 140, 0.3);
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    
+    .status.working {
+      background: #10b981;
+      color: white;
+    }
+    
+    .status.mock {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .note {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+    }
+    
+    .note h3 {
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+    
+    .note p {
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .note ul {
+      margin-top: 10px;
+      margin-left: 20px;
+    }
+    
+    .note li {
+      color: #78350f;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    
+    .implementation-status {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+    }
+    
+    .implementation-status h3 {
+      color: #14532d;
+      margin-bottom: 15px;
+    }
+    
+    .feature-list {
+      display: grid;
+      gap: 10px;
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
+    
+    .feature .icon {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    
+    .feature.complete .icon {
+      color: #10b981;
+    }
+    
+    .feature.partial .icon {
+      color: #f59e0b;
+    }
+    
+    .feature.pending .icon {
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">VTB AI HR</div>
+      <h1>Interview System Test Flow</h1>
+      <p class="subtitle">Complete implementation with Daily.co prebuilt UI</p>
+    </div>
+    
+    <div class="flow-section">
+      <h2>📋 Test Flow Overview</h2>
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">Email Invitation</div>
+          <div class="step-description">Candidate receives an email with a unique interview link containing JWT token</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">Link Validation</div>
+          <div class="step-description">System validates the token and checks interview schedule (no login required)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">Interview Ready</div>
+          <div class="step-description">Candidate sees interview details and can start when ready</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <div class="step-title">Video Conference</div>
+          <div class="step-description">Daily.co prebuilt UI shows with participant tiles (candidate + AI interviewer)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="links-section">
+      <div class="link-card">
+        <h3>🔗 Test Links</h3>
+        <p>Access the mock email invitation page to generate and test interview links</p>
+        <a href="http://localhost:3001/mock-email" class="btn">Open Mock Email Page</a>
+        <span class="status mock">Mock Implementation</span>
+      </div>
+    </div>
+    
+    <div class="implementation-status">
+      <h3>✅ Implementation Status</h3>
+      <div class="feature-list">
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Email invitation flow with JWT tokens</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Public interview links (no authentication required)</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Token validation and session management</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Interview ready screen with session details</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Daily.co prebuilt UI integration</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Mock Zoom-style conference UI (2 participant tiles)</span>
+        </div>
+        <div class="feature complete">
+          <span class="icon">✅</span>
+          <span>Unicode character support in tokens (Cyrillic names)</span>
+        </div>
+        <div class="feature partial">
+          <span class="icon">⚠️</span>
+          <span>Real Daily.co connection (requires API credentials)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="note">
+      <h3>📌 Important Notes</h3>
+      <p><strong>Current Implementation:</strong></p>
+      <ul>
+        <li>The system shows a mock Daily.co prebuilt UI when credentials are not configured</li>
+        <li>The mock UI displays a Zoom-style interface with 2 participant tiles</li>
+        <li>Participant 1: Candidate (shows initials "АИ" for Александр Иванов)</li>
+        <li>Participant 2: AI Interviewer (shows "AI" with gradient background)</li>
+        <li>Bottom control bar includes: mic, camera, screen share, and leave buttons</li>
+        <li>Top bar shows meeting info and recording indicator</li>
+      </ul>
+      <p style="margin-top: 15px;"><strong>With Real Daily.co Credentials:</strong></p>
+      <ul>
+        <li>Replace the API key in .env.local file</li>
+        <li>The system will automatically use Daily.co's real prebuilt iframe</li>
+        <li>Full video/audio conferencing capabilities will be available</li>
+      </ul>
+    </div>
+    
+    <div class="flow-section" style="margin-top: 30px;">
+      <h2>🎯 What You'll See</h2>
+      <div class="step">
+        <div class="step-number">📧</div>
+        <div class="step-content">
+          <div class="step-title">Mock Gmail Interface</div>
+          <div class="step-description">Realistic email from VTB with interview invitation in Russian</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">🔐</div>
+        <div class="step-content">
+          <div class="step-title">No Login Required</div>
+          <div class="step-description">Interview links are completely public - no authentication needed</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">🎥</div>
+        <div class="step-content">
+          <div class="step-title">Video Conference UI</div>
+          <div class="step-description">Zoom-style interface with participant tiles and controls (not just "Interview Completed")</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -59,21 +59,65 @@ export interface ApiResponse<T> {
   }
 }
 
+// Mock session store for testing
+const testSessions = new Map<string, InterviewSession>()
+
 // Mock data generator utilities
-const generateMockSession = (sessionId: string): InterviewSession => ({
-  sessionId,
-  candidateId: `candidate_${Math.random().toString(36).substr(2, 9)}`,
-  candidateName: ['John Doe', 'Jane Smith', 'Alex Johnson', 'Maria Garcia'][Math.floor(Math.random() * 4)],
-  candidateEmail: `candidate${Math.floor(Math.random() * 100)}@example.com`,
-  jobTitle: ['Senior Frontend Developer', 'Backend Engineer', 'Full Stack Developer', 'DevOps Engineer'][Math.floor(Math.random() * 4)],
-  jobDescription: 'We are looking for an experienced developer to join our team...',
-  department: 'Engineering',
-  scheduledTime: new Date(Date.now() + 5 * 60000), // 5 minutes from now
-  duration: 30,
-  status: 'scheduled',
-  interviewType: 'technical',
-  difficulty: 'senior'
-})
+const generateMockSession = (sessionId: string): InterviewSession => {
+  // Check if we have a test session stored
+  const testSession = testSessions.get(sessionId)
+  if (testSession) {
+    return testSession
+  }
+  
+  // Generate default mock session
+  return {
+    sessionId,
+    candidateId: `candidate_${Math.random().toString(36).substr(2, 9)}`,
+    candidateName: ['John Doe', 'Jane Smith', 'Alex Johnson', 'Maria Garcia'][Math.floor(Math.random() * 4)],
+    candidateEmail: `candidate${Math.floor(Math.random() * 100)}@example.com`,
+    jobTitle: ['Senior Frontend Developer', 'Backend Engineer', 'Full Stack Developer', 'DevOps Engineer'][Math.floor(Math.random() * 4)],
+    jobDescription: 'We are looking for an experienced developer to join our team...',
+    department: 'Engineering',
+    scheduledTime: new Date(Date.now() + 5 * 60000), // 5 minutes from now
+    duration: 30,
+    status: 'scheduled',
+    interviewType: 'technical',
+    difficulty: 'senior'
+  }
+}
+
+// Helper function to register test sessions
+export function registerTestSession(data: {
+  sessionId: string
+  candidateName: string
+  candidateEmail: string
+  position: string
+  scheduledTime: Date
+  duration: number
+}) {
+  const session: InterviewSession = {
+    sessionId: data.sessionId,
+    candidateId: `test_candidate_${Date.now()}`,
+    candidateName: data.candidateName,
+    candidateEmail: data.candidateEmail,
+    jobTitle: data.position,
+    jobDescription: `Interview for ${data.position} position at VTB`,
+    department: 'Engineering',
+    scheduledTime: data.scheduledTime,
+    duration: data.duration,
+    status: 'scheduled',
+    interviewType: 'technical',
+    difficulty: 'senior'
+  }
+  testSessions.set(data.sessionId, session)
+  return session
+}
+
+// Helper function to get test session
+export function getTestSession(sessionId: string): InterviewSession | undefined {
+  return testSessions.get(sessionId)
+}
 
 const generateMockToken = (): string => {
   // Generate a mock JWT-like token
@@ -100,9 +144,6 @@ export const interviewApi = {
     console.log('[Mock API] Validating session:', sessionId)
     await mockDelay()
 
-    // Mock validation logic
-    const isValid = Math.random() > 0.2 // 80% success rate
-    
     if (!token) {
       return {
         success: false,
@@ -113,6 +154,22 @@ export const interviewApi = {
       }
     }
 
+    // Always succeed for test sessions
+    const isTestSession = sessionId.startsWith('test-')
+    if (isTestSession) {
+      return {
+        success: true,
+        data: {
+          isValid: true,
+          session: generateMockSession(sessionId),
+          remainingTime: 30 // 30 minutes until expiry
+        }
+      }
+    }
+
+    // Mock validation logic for non-test sessions
+    const isValid = Math.random() > 0.2 // 80% success rate
+    
     if (!isValid) {
       const errorTypes = [
         { code: 'SESSION_EXPIRED', message: 'This interview session has expired' },

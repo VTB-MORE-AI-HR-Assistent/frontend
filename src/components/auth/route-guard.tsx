@@ -16,7 +16,16 @@ const publicRoutes = [
   '/register',
   '/forgot-password',
   '/403',
-  '/404'
+  '/404',
+  '/',
+  '/mock-email',
+  '/test-interview',
+  '/test-daily'
+]
+
+// Routes that should be publicly accessible with any path (like interview sessions)
+const publicRoutePrefixes = [
+  '/interview/'  // All interview sessions are public
 ]
 
 export function RouteGuard({ children }: RouteGuardProps) {
@@ -28,8 +37,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
     // Wait for auth check to complete
     if (isLoading) return
 
-    // Check if route is public (exact match only)
-    const isPublicRoute = publicRoutes.includes(pathname)
+    // Check if route is public (exact match or prefix match)
+    const isPublicRoute = publicRoutes.includes(pathname) || 
+                         publicRoutePrefixes.some(prefix => pathname.startsWith(prefix))
     
     if (isPublicRoute) {
       // Public routes are always accessible
@@ -49,8 +59,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
     return <LoadingScreen />
   }
 
-  // Check if this is a public route (exact match only)
-  const isPublicRoute = publicRoutes.includes(pathname)
+  // Check if this is a public route (exact match or prefix match)
+  const isPublicRoute = publicRoutes.includes(pathname) || 
+                       publicRoutePrefixes.some(prefix => pathname.startsWith(prefix))
   
   // For protected routes, ensure user is authenticated
   if (!isPublicRoute && !user) {

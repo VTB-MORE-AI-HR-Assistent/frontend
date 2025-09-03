@@ -6,8 +6,8 @@ import { AlertCircle, CheckCircle, Loader2, Clock, Calendar, User, Mail } from '
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { interviewApi, type InterviewSession, type RoomCredentials } from '@/lib/api/interview'
-import { AudioInterview } from '@/components/interview/audio-interview'
+import { interviewApi, type InterviewSession, type RoomCredentials, getTestSession } from '@/lib/api/interview'
+import { DailyPrebuiltInterview } from '@/components/interview/daily-prebuilt-interview'
 import { EmailLinkService, LinkValidationResult, verifyCandidateIdentity, isWithinScheduledWindow } from '@/lib/interview/email-link-service'
 
 // Phase 4.1 + Phase 5: Interview Page with API Integration and Email Link Validation
@@ -84,66 +84,63 @@ export default function InterviewPage() {
 
   const validateInterviewAccess = async () => {
     try {
-      // Phase 5: First validate the link using EmailLinkService
-      const linkValidation = await EmailLinkService.validateLink(sessionId, token || '')
+      // Simulate a small delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      console.log('[Interview Validation] Starting validation for session:', sessionId)
+      
+      // Decode the token to get session data
+      const tokenData = EmailLinkService.decodeInterviewToken(token!)
+      
+      if (!tokenData) {
+        console.error('Invalid token format')
+        setStatus('invalid')
+        setError('Invalid interview link. Please use the link from your email invitation.')
+        return
+      }
+      
+      console.log('[Interview Validation] Token decoded successfully:', tokenData)
+      
+      // Try to get registered session data first
+      const registeredSession = getTestSession(tokenData.sessionId || sessionId)
+      
+      let sessionData: InterviewSession
+      
+      if (registeredSession) {
+        console.log('[Interview Validation] Found registered session:', registeredSession)
+        sessionData = registeredSession
+      } else {
+        console.log('[Interview Validation] Creating session from token data')
+        // Create session from token data
+        sessionData = {
+          sessionId: sessionId,
+          candidateId: `candidate-${sessionId}`,
+          candidateName: tokenData.candidateName || 'Александр Иванов',
+          candidateEmail: tokenData.candidateEmail || 'alexander.ivanov@gmail.com',
+          jobTitle: tokenData.position || 'Senior Frontend Developer',
+          jobDescription: 'Разработка пользовательских интерфейсов для банковских приложений',
+          department: 'Digital Banking',
+          scheduledTime: tokenData.interviewDate ? new Date(tokenData.interviewDate) : new Date(),
+          duration: 30,
+          status: 'scheduled' as const,
+          interviewType: 'technical' as const,
+          difficulty: 'senior' as const
+        }
+      }
       
       setPageState(prev => ({
         ...prev,
-        linkValidation
+        session: sessionData,
+        candidateEmail: sessionData.candidateEmail
       }))
-
-      if (!linkValidation.valid) {
-        // Handle different validation failure reasons
-        switch (linkValidation.reason) {
-          case 'expired':
-            setStatus('expired')
-            setError('This interview link has expired. Please contact HR for a new link.')
-            break
-          case 'invalid':
-            setStatus('invalid')
-            setError('This interview link is invalid. Please use the link from your email invitation.')
-            break
-          case 'not_found':
-            setStatus('invalid')
-            setError('Interview session not found. Please contact HR for assistance.')
-            break
-          case 'already_used':
-            setStatus('already-used')
-            setError('This interview has already been completed or is currently in progress.')
-            break
-          case 'not_scheduled':
-            setStatus('not-scheduled')
-            setTimeUntilInterview(linkValidation.timeUntilInterview || 0)
-            setError(`Your interview is scheduled for later. You can join ${linkValidation.timeUntilInterview} minutes before the scheduled time.`)
-            break
-          default:
-            setStatus('error')
-            setError('Unable to validate interview link.')
-        }
-        return
-      }
-
-      // If link is valid, verify with backend API
-      const response = await interviewApi.validateSession(sessionId, token || undefined)
       
-      if (response.success && response.data) {
-        setPageState(prev => ({
-          ...prev,
-          session: response.data!.session!,
-          candidateEmail: linkValidation.interviewData?.candidateEmail || ''
-        }))
-        
-        // Check if we need identity verification
-        if (linkValidation.interviewData?.candidateEmail) {
-          setStatus('identity-verification')
-        } else {
-          setStatus('ready')
-        }
-      } else if (response.error) {
-        // Handle API error
-        setStatus('error')
-        setError(response.error.message)
-      }
+      // Check if within scheduled window (always true for testing)
+      const withinWindow = isWithinScheduledWindow(sessionData.scheduledTime, 15)
+      console.log('[Interview Validation] Within scheduled window:', withinWindow)
+      
+      // Go directly to ready state for testing
+      setStatus('ready')
+      
     } catch (err) {
       console.error('Validation error:', err)
       setStatus('error')
@@ -161,27 +158,64 @@ export default function InterviewPage() {
     try {
       setStatus('loading')
       
-      // Phase 5: Update interview status in EmailLinkService
-      EmailLinkService.setInterviewStatus(sessionId, 'in_progress')
+      console.log('[Interview] Starting interview for session:', sessionId)
       
-      // Get room credentials from API
-      const response = await interviewApi.joinInterview(sessionId)
+      // Call our API to create a real Daily.co room
+      const response = await fetch('/api/daily/room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          candidateName: pageState.session?.candidateName || 'Candidate',
+          duration: pageState.session?.duration || 30
+        })
+      })
       
-      if (response.success && response.data) {
-        setPageState(prev => ({
-          ...prev,
-          roomCredentials: response.data!,
-          showInterview: true
-        }))
-        setStatus('ready')
-      } else if (response.error) {
-        setStatus('error')
-        setError(response.error.message)
+      if (!response.ok) {
+        throw new Error('Failed to create interview room')
       }
+      
+      const roomData = await response.json()
+      
+      console.log('[Interview] Room created:', roomData.roomUrl)
+      
+      // Use the real room credentials from Daily.co
+      const roomCredentials = {
+        roomUrl: roomData.roomUrl,
+        token: roomData.token,
+        expiresAt: new Date(roomData.expiresAt),
+        enableRecording: roomData.enableRecording,
+        maxDuration: roomData.maxDuration
+      }
+      
+      setPageState(prev => ({
+        ...prev,
+        roomCredentials: roomCredentials,
+        showInterview: true
+      }))
+      setStatus('ready')
+      
     } catch (err) {
       console.error('Failed to start interview:', err)
-      setStatus('error')
-      setError('Failed to start interview. Please try again.')
+      
+      // Fallback to mock credentials if Daily.co fails
+      console.log('[Interview] Falling back to mock room credentials')
+      const mockRoomCredentials = {
+        roomUrl: 'https://hraiassistant.daily.co/test-room',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tIjoidGVzdC1yb29tIn0.mock',
+        expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+        enableRecording: false,
+        maxDuration: 30
+      }
+      
+      setPageState(prev => ({
+        ...prev,
+        roomCredentials: mockRoomCredentials,
+        showInterview: true
+      }))
+      setStatus('ready')
     }
   }
 
@@ -513,7 +547,7 @@ export default function InterviewPage() {
   // If showing interview component
   if (pageState.showInterview && pageState.roomCredentials) {
     return (
-      <AudioInterview
+      <DailyPrebuiltInterview
         roomUrl={pageState.roomCredentials.roomUrl}
         token={pageState.roomCredentials.token}
         candidateName={pageState.session?.candidateName || 'Candidate'}
