@@ -2,12 +2,16 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import DailyIframe, { DailyCall, DailyParticipant, DailyEventObject } from '@daily-co/daily-js'
-import { Loader2, Mic, MicOff, PhoneOff, Users, WifiOff, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { InterviewLayout } from './interview-layout'
+import { ParticipantCard } from './participant-card'
+import { InterviewControls } from './interview-controls'
+import { cn } from '@/lib/utils'
 
-// Phase 2.2: Audio Interview Component with Daily.co integration
+// Phase 3: Custom UI Implementation with VTB branding
 
 interface AudioInterviewProps {
   roomUrl: string
@@ -32,6 +36,7 @@ interface ParticipantInfo {
   audioTrack?: MediaStreamTrack
   isMuted: boolean
   isActiveSpeaker: boolean
+  audioLevel: number // 0-100 for visualization
 }
 
 export function AudioInterview({
@@ -53,6 +58,10 @@ export function AudioInterview({
   const [error, setError] = useState<string>('')
   const [networkQuality, setNetworkQuality] = useState<'good' | 'fair' | 'poor'>('good')
   const [interviewDuration, setInterviewDuration] = useState(0)
+  const [localAudioLevel, setLocalAudioLevel] = useState(0)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   // Interview timer
   useEffect(() => {
@@ -171,6 +180,47 @@ export function AudioInterview({
     })
   }
 
+  // Audio level monitoring
+  const startAudioLevelMonitoring = (track: MediaStreamTrack) => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    
+    const stream = new MediaStream([track])
+    const source = audioContextRef.current.createMediaStreamSource(stream)
+    const analyser = audioContextRef.current.createAnalyser()
+    analyser.fftSize = 256
+    analyser.smoothingTimeConstant = 0.5
+    
+    source.connect(analyser)
+    analyserRef.current = analyser
+    
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    
+    const updateLevel = () => {
+      if (!analyserRef.current) return
+      
+      analyserRef.current.getByteFrequencyData(dataArray)
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
+      const normalizedLevel = Math.min(100, (average / 128) * 100)
+      
+      setLocalAudioLevel(normalizedLevel)
+    }
+    
+    audioLevelIntervalRef.current = setInterval(updateLevel, 100)
+  }
+
+  const stopAudioLevelMonitoring = () => {
+    if (audioLevelIntervalRef.current) {
+      clearInterval(audioLevelIntervalRef.current)
+      audioLevelIntervalRef.current = null
+    }
+    if (analyserRef.current) {
+      analyserRef.current.disconnect()
+      analyserRef.current = null
+    }
+  }
+
   // Handle participant updates
   const handleParticipantUpdate = (participant: DailyParticipant) => {
     const participantInfo: ParticipantInfo = {
@@ -179,7 +229,7 @@ export function AudioInterview({
       isLocal: participant.local,
       isMuted: participant.audio === false,
       isActiveSpeaker: false,
-    }
+      audioLevel: 0,
 
     if (participant.local) {
       setLocalParticipant(participantInfo)
@@ -219,6 +269,11 @@ export function AudioInterview({
       const participantInfo = updated.get(participant.session_id)
       if (participantInfo) {
         participantInfo.audioTrack = track
+        
+        // Start audio level monitoring for local participant
+        if (participant.local) {
+          startAudioLevelMonitoring(track)
+        }
       }
       return new Map(updated)
     })
@@ -231,6 +286,11 @@ export function AudioInterview({
       const participantInfo = updated.get(participant.session_id)
       if (participantInfo) {
         participantInfo.audioTrack = undefined
+        
+        // Stop audio level monitoring for local participant
+        if (participant.local) {
+          stopAudioLevelMonitoring()
+        }
       }
       return new Map(updated)
     })
@@ -257,6 +317,11 @@ export function AudioInterview({
 
   // Cleanup
   const cleanup = () => {
+    stopAudioLevelMonitoring()
+    if (audioContextRef.current) {
+      audioContextRef.current.close()
+      audioContextRef.current = null
+    }
     if (callRef.current) {
       callRef.current.destroy()
       callRef.current = null
@@ -288,178 +353,117 @@ export function AudioInterview({
   // Render loading state
   if (connectionState === 'connecting') {
     return (
-      <Card className="w-full max-w-4xl mx-auto p-8">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-[#1B4F8C]" />
-          <h3 className="text-xl font-semibold">Connecting to Interview Room</h3>
-          <p className="text-gray-600">Setting up audio connection...</p>
+      <InterviewLayout interviewDuration={0} sessionTitle={jobTitle}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-md p-8">
+            <div className="flex flex-col items-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-[#1B4F8C]" />
+              <h3 className="text-xl font-semibold">Connecting to Interview Room</h3>
+              <p className="text-gray-600 text-center">Setting up audio connection...</p>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </InterviewLayout>
     )
   }
 
   // Render error state
   if (connectionState === 'error') {
     return (
-      <Card className="w-full max-w-4xl mx-auto p-8">
-        <Alert className="border-red-200 bg-red-50">
-          <AlertCircle className="h-5 w-5 text-red-600" />
-          <AlertTitle className="text-red-900">Connection Failed</AlertTitle>
-          <AlertDescription className="text-red-700 mt-2">
-            {error}
-          </AlertDescription>
-        </Alert>
-        <div className="mt-6 flex gap-3">
-          <Button 
-            onClick={initializeDaily}
-            className="flex-1"
-          >
-            Try Again
-          </Button>
-          <Button 
-            onClick={() => onInterviewEnd && onInterviewEnd()}
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel Interview
-          </Button>
+      <InterviewLayout interviewDuration={0} sessionTitle={jobTitle}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-md p-8">
+            <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <AlertTitle className="text-red-900">Connection Failed</AlertTitle>
+              <AlertDescription className="text-red-700 mt-2">
+                {error}
+              </AlertDescription>
+            </Alert>
+            <div className="mt-6 flex gap-3">
+              <Button 
+                onClick={initializeDaily}
+                className="flex-1"
+              >
+                Try Again
+              </Button>
+              <Button 
+                onClick={() => onInterviewEnd && onInterviewEnd()}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel Interview
+              </Button>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </InterviewLayout>
     )
   }
 
   // Render interview ended state
   if (connectionState === 'left') {
     return (
-      <Card className="w-full max-w-4xl mx-auto p-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <PhoneOff className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-xl font-semibold">Interview Ended</h3>
-          <p className="text-gray-600">Thank you for participating in the interview</p>
-          <p className="text-sm text-gray-500">Duration: {formatDuration(interviewDuration)}</p>
+      <InterviewLayout interviewDuration={interviewDuration} sessionTitle={jobTitle}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-md p-8">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold">Interview Completed</h3>
+              <p className="text-gray-600">Thank you for participating in the interview</p>
+              <p className="text-sm text-gray-500">Total Duration: {formatDuration(interviewDuration)}</p>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </InterviewLayout>
     )
   }
 
-  // Render connected state
+  // Render connected state with custom UI
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">AI Interview in Progress</h2>
-            <p className="text-gray-600">{jobTitle}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Duration</p>
-            <p className="text-xl font-mono font-semibold text-[#1B4F8C]">
-              {formatDuration(interviewDuration)}
-            </p>
-          </div>
+    <InterviewLayout 
+      interviewDuration={interviewDuration} 
+      sessionTitle={jobTitle}
+    >
+      <div className="space-y-6">
+        {/* Participants Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+          {Array.from(participants.values()).map(participant => {
+            // Calculate dynamic audio level for participants
+            const audioLevel = participant.isLocal 
+              ? (isMuted ? 0 : localAudioLevel)
+              : (participant.isActiveSpeaker && !participant.isMuted ? Math.random() * 60 + 20 : 0)
+            
+            return (
+              <ParticipantCard
+                key={participant.id}
+                name={participant.name}
+                role={participant.isLocal ? 'candidate' : 'ai-interviewer'}
+                isLocal={participant.isLocal}
+                isMuted={participant.isMuted}
+                isActiveSpeaker={participant.isActiveSpeaker}
+                audioLevel={audioLevel}
+                connectionQuality={networkQuality}
+                initials={participant.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              />
+            )
+          })}
         </div>
 
-        {/* Network Quality Indicator */}
-        <div className="flex items-center gap-2 text-sm">
-          <WifiOff className={`h-4 w-4 ${
-            networkQuality === 'good' ? 'text-green-500' : 
-            networkQuality === 'fair' ? 'text-yellow-500' : 
-            'text-red-500'
-          }`} />
-          <span className="text-gray-600">
-            Connection: {networkQuality === 'good' ? 'Excellent' : 
-                       networkQuality === 'fair' ? 'Fair' : 'Poor'}
-          </span>
-        </div>
-      </Card>
-
-      {/* Participants */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="h-5 w-5 text-gray-600" />
-          <h3 className="text-lg font-semibold">Interview Participants</h3>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          {Array.from(participants.values()).map(participant => (
-            <div 
-              key={participant.id}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                participant.isActiveSpeaker 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-gray-200 bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {participant.name}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {participant.isLocal ? 'You' : 'AI Interviewer'}
-                  </p>
-                </div>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  participant.isMuted ? 'bg-red-100' : 'bg-green-100'
-                }`}>
-                  {participant.isMuted ? (
-                    <MicOff className="h-5 w-5 text-red-600" />
-                  ) : (
-                    <Mic className="h-5 w-5 text-green-600" />
-                  )}
-                </div>
-              </div>
-              
-              {/* Audio visualization placeholder */}
-              <div className="mt-3 h-8 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] transition-all ${
-                  participant.isActiveSpeaker ? 'animate-pulse w-full' : 'w-0'
-                }`} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Controls */}
-      <Card className="p-6">
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            onClick={toggleMute}
-            size="lg"
-            variant={isMuted ? 'destructive' : 'default'}
-            className={isMuted ? '' : 'bg-[#1B4F8C] hover:bg-[#143A66]'}
-          >
-            {isMuted ? (
-              <>
-                <MicOff className="mr-2 h-5 w-5" />
-                Unmute
-              </>
-            ) : (
-              <>
-                <Mic className="mr-2 h-5 w-5" />
-                Mute
-              </>
-            )}
-          </Button>
-
-          <Button
-            onClick={leaveInterview}
-            size="lg"
-            variant="destructive"
-          >
-            <PhoneOff className="mr-2 h-5 w-5" />
-            End Interview
-          </Button>
-        </div>
-
-        <p className="text-xs text-gray-500 text-center mt-4">
-          This interview is being recorded for evaluation purposes
-        </p>
-      </Card>
-    </div>
+        {/* Interview Controls */}
+        <InterviewControls
+          isMuted={isMuted}
+          onMuteToggle={toggleMute}
+          onLeaveInterview={leaveInterview}
+          connectionQuality={networkQuality}
+          audioInputLevel={localAudioLevel}
+          isRecording={true}
+          interviewDuration={interviewDuration}
+          showAdvancedSettings={true}
+        />
+      </div>
+    </InterviewLayout>
   )
 }
