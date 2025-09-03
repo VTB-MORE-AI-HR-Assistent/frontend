@@ -6,8 +6,10 @@ import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { interviewApi, type InterviewSession, type RoomCredentials } from '@/lib/api/interview'
+import { AudioInterview } from '@/components/interview/audio-interview'
 
-// Phase 2.1: Interview Page Route with validation and error handling
+// Phase 4.1: Interview Page with API Integration
 
 type InterviewStatus = 
   | 'loading' 
@@ -18,14 +20,10 @@ type InterviewStatus =
   | 'error' 
   | 'no-token'
 
-interface InterviewSession {
-  sessionId: string
-  candidateName: string
-  jobTitle: string
-  scheduledTime: Date
-  status: 'scheduled' | 'active' | 'completed' | 'expired'
-  roomUrl?: string
-  token?: string
+interface InterviewPageState {
+  session: InterviewSession | null
+  roomCredentials: RoomCredentials | null
+  showInterview: boolean
 }
 
 export default function InterviewPage() {
@@ -38,7 +36,11 @@ export default function InterviewPage() {
   const token = searchParams.get('token')
   
   const [status, setStatus] = useState<InterviewStatus>('loading')
-  const [session, setSession] = useState<InterviewSession | null>(null)
+  const [pageState, setPageState] = useState<InterviewPageState>({
+    session: null,
+    roomCredentials: null,
+    showInterview: false
+  })
   const [error, setError] = useState<string>('')
   const [countdown, setCountdown] = useState(5)
 
@@ -73,36 +75,25 @@ export default function InterviewPage() {
 
   const validateInterviewAccess = async () => {
     try {
-      // Simulate API call to validate session and token
-      // In real implementation, this would call the backend API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Use the API service to validate session
+      const response = await interviewApi.validateSession(sessionId, token || undefined)
       
-      // Mock validation logic
-      const mockValidation = Math.random() > 0.3 // 70% success rate for demo
-      
-      if (mockValidation) {
-        // Mock successful validation
-        const mockSession: InterviewSession = {
-          sessionId: sessionId,
-          candidateName: 'John Doe',
-          jobTitle: 'Senior Frontend Developer',
-          scheduledTime: new Date(Date.now() + 5 * 60000), // 5 minutes from now
-          status: 'scheduled',
-          roomUrl: `https://vtbaihr.daily.co/interview-${sessionId}`,
-          token: token
-        }
-        
-        setSession(mockSession)
+      if (response.success && response.data) {
+        setPageState(prev => ({
+          ...prev,
+          session: response.data!.session!
+        }))
         setStatus('ready')
-      } else {
-        // Mock validation failure
-        const failureType = Math.random() > 0.5 ? 'expired' : 'invalid'
-        setStatus(failureType)
-        setError(
-          failureType === 'expired' 
-            ? 'This interview link has expired. Please contact HR for a new link.'
-            : 'Invalid interview link. Please check your email for the correct link.'
-        )
+      } else if (response.error) {
+        // Handle different error types
+        if (response.error.code === 'SESSION_EXPIRED') {
+          setStatus('expired')
+        } else if (response.error.code === 'SESSION_NOT_FOUND' || response.error.code === 'INVALID_TOKEN') {
+          setStatus('invalid')
+        } else {
+          setStatus('error')
+        }
+        setError(response.error.message)
       }
     } catch (err) {
       console.error('Validation error:', err)
@@ -117,13 +108,45 @@ export default function InterviewPage() {
     validateInterviewAccess()
   }
 
-  const handleStartInterview = () => {
-    // This will be implemented in Phase 2.2
-    console.log('Starting interview with:', {
-      sessionId,
-      roomUrl: session?.roomUrl,
-      token: session?.token
-    })
+  const handleStartInterview = async () => {
+    try {
+      setStatus('loading')
+      
+      // Get room credentials from API
+      const response = await interviewApi.joinInterview(sessionId)
+      
+      if (response.success && response.data) {
+        setPageState(prev => ({
+          ...prev,
+          roomCredentials: response.data!,
+          showInterview: true
+        }))
+        setStatus('ready')
+      } else if (response.error) {
+        setStatus('error')
+        setError(response.error.message)
+      }
+    } catch (err) {
+      console.error('Failed to start interview:', err)
+      setStatus('error')
+      setError('Failed to start interview. Please try again.')
+    }
+  }
+
+  const handleInterviewEnd = async () => {
+    try {
+      // Report interview ended to API
+      await interviewApi.endInterview(sessionId, 0) // Duration will be tracked by interview component
+      
+      // Navigate back to home or show completion message
+      setPageState(prev => ({
+        ...prev,
+        showInterview: false
+      }))
+      setStatus('left')
+    } catch (err) {
+      console.error('Failed to end interview properly:', err)
+    }
   }
 
   // Render different states
@@ -249,7 +272,20 @@ export default function InterviewPage() {
     )
   }
 
-  if (status === 'ready' && session) {
+  // If showing interview component
+  if (pageState.showInterview && pageState.roomCredentials) {
+    return (
+      <AudioInterview
+        roomUrl={pageState.roomCredentials.roomUrl}
+        token={pageState.roomCredentials.token}
+        candidateName={pageState.session?.candidateName || 'Candidate'}
+        jobTitle={pageState.session?.jobTitle || 'Position'}
+        onInterviewEnd={handleInterviewEnd}
+      />
+    )
+  }
+
+  if (status === 'ready' && pageState.session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-lg p-8">
@@ -273,15 +309,15 @@ export default function InterviewPage() {
             <div className="bg-blue-50 rounded-lg p-4 text-left space-y-3">
               <div>
                 <p className="text-sm text-gray-600">Candidate</p>
-                <p className="font-semibold text-gray-900">{session.candidateName}</p>
+                <p className="font-semibold text-gray-900">{pageState.session.candidateName}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Position</p>
-                <p className="font-semibold text-gray-900">{session.jobTitle}</p>
+                <p className="font-semibold text-gray-900">{pageState.session.jobTitle}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Session ID</p>
-                <p className="font-mono text-sm text-gray-700">{session.sessionId}</p>
+                <p className="font-mono text-sm text-gray-700">{pageState.session.sessionId}</p>
               </div>
             </div>
 
