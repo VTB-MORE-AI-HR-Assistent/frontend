@@ -39,7 +39,6 @@ interface TopicConfiguration {
   easy: number
   medium: number
   hard: number
-  questionsCount: number
 }
 
 interface RoleConfiguration {
@@ -89,10 +88,10 @@ export default function InterviewConfig() {
       level: "middle",
       interviewDuration: 60,
       topics: [
-        { topic: "java", enabled: true, easy: 40, medium: 40, hard: 20, questionsCount: 10 },
-        { topic: "database", enabled: true, easy: 50, medium: 35, hard: 15, questionsCount: 5 },
-        { topic: "kafka", enabled: true, easy: 60, medium: 30, hard: 10, questionsCount: 3 },
-        { topic: "algorithms", enabled: true, easy: 30, medium: 50, hard: 20, questionsCount: 4 },
+        { topic: "java", enabled: true, easy: 40, medium: 40, hard: 20 },
+        { topic: "database", enabled: true, easy: 50, medium: 35, hard: 15 },
+        { topic: "kafka", enabled: true, easy: 60, medium: 30, hard: 10 },
+        { topic: "algorithms", enabled: true, easy: 30, medium: 50, hard: 20 },
       ],
     },
     {
@@ -102,10 +101,10 @@ export default function InterviewConfig() {
       level: "senior",
       interviewDuration: 90,
       topics: [
-        { topic: "javascript", enabled: true, easy: 20, medium: 50, hard: 30, questionsCount: 8 },
-        { topic: "database", enabled: true, easy: 30, medium: 50, hard: 20, questionsCount: 5 },
-        { topic: "system-design", enabled: true, easy: 20, medium: 40, hard: 40, questionsCount: 4 },
-        { topic: "docker", enabled: true, easy: 40, medium: 40, hard: 20, questionsCount: 3 },
+        { topic: "javascript", enabled: true, easy: 20, medium: 50, hard: 30 },
+        { topic: "database", enabled: true, easy: 30, medium: 50, hard: 20 },
+        { topic: "system-design", enabled: true, easy: 20, medium: 40, hard: 40 },
+        { topic: "docker", enabled: true, easy: 40, medium: 40, hard: 20 },
       ],
     },
   ])
@@ -121,6 +120,8 @@ export default function InterviewConfig() {
     interviewDuration: 60,
     topics: [],
   })
+  const [showTopicSelector, setShowTopicSelector] = useState(false)
+  const [selectedTopic, setSelectedTopic] = useState<QuestionTopic | "">("")
 
 
   const handleUpdateTopicDifficulty = (topicIndex: number, difficulty: "easy" | "medium" | "hard", value: number) => {
@@ -137,6 +138,21 @@ export default function InterviewConfig() {
     const updatedTopics = [...(formData.topics || [])]
     updatedTopics.splice(index, 1)
     setFormData({ ...formData, topics: updatedTopics })
+  }
+
+  const handleAddTopic = () => {
+    if (selectedTopic && !formData.topics?.some(t => t.topic === selectedTopic)) {
+      const newTopic: TopicConfiguration = {
+        topic: selectedTopic as QuestionTopic,
+        enabled: true,
+        easy: 40,
+        medium: 40,
+        hard: 20,
+      }
+      setFormData({ ...formData, topics: [...(formData.topics || []), newTopic] })
+      setSelectedTopic("")
+      setShowTopicSelector(false)
+    }
   }
 
   const handleSaveRole = () => {
@@ -163,6 +179,9 @@ export default function InterviewConfig() {
         interviewDuration: 60,
         topics: [],
       })
+      setShowTopicSelector(false)
+      setSelectedTopic("")
+      setEditingRole(null)
     }
   }
 
@@ -183,9 +202,35 @@ export default function InterviewConfig() {
             Configure interview settings for different positions
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open)
+          if (open && !editingRole) {
+            // Reset form when opening for new role
+            setFormData({
+              name: "",
+              description: "",
+              level: "middle",
+              interviewDuration: 60,
+              topics: [],
+            })
+            setShowTopicSelector(false)
+            setSelectedTopic("")
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB]">
+            <Button 
+              className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB]"
+              onClick={() => {
+                setEditingRole(null)
+                setFormData({
+                  name: "",
+                  description: "",
+                  level: "middle",
+                  interviewDuration: 60,
+                  topics: [],
+                })
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Role Configuration
             </Button>
@@ -249,7 +294,64 @@ export default function InterviewConfig() {
 
               {/* Topic Configuration */}
               <div>
-                <Label className="mb-3 block">Question Topics Configuration</Label>
+                <div className="flex justify-between items-center mb-3">
+                  <Label className="block">Question Topics Configuration</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTopicSelector(!showTopicSelector)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Topic
+                  </Button>
+                </div>
+
+                {/* Topic Selector */}
+                {showTopicSelector && (
+                  <Card className="mb-3">
+                    <CardContent className="p-3">
+                      <div className="flex gap-2">
+                        <Select
+                          value={selectedTopic}
+                          onValueChange={(value) => setSelectedTopic(value as QuestionTopic)}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select a topic to add" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allTopics
+                              .filter(topic => !formData.topics?.some(t => t.topic === topic))
+                              .map(topic => (
+                                <SelectItem key={topic} value={topic}>
+                                  <span className="capitalize">{topic.replace("-", " ")}</span>
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleAddTopic}
+                          disabled={!selectedTopic}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowTopicSelector(false)
+                            setSelectedTopic("")
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Topics List */}
                 <div className="space-y-3">
@@ -318,21 +420,6 @@ export default function InterviewConfig() {
                               " (Should be 100%)"
                             }
                           </div>
-                          <div>
-                            <Label className="text-xs">Number of Questions</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="20"
-                              value={topic.questionsCount}
-                              onChange={(e) => {
-                                const updatedTopics = [...(formData.topics || [])]
-                                updatedTopics[index].questionsCount = parseInt(e.target.value)
-                                setFormData({ ...formData, topics: updatedTopics })
-                              }}
-                              className="mt-1"
-                            />
-                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -400,10 +487,6 @@ export default function InterviewConfig() {
                         </span>
                       </div>
                       <div className="text-xs space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Questions:</span>
-                          <span className="font-medium">{topic.questionsCount}</span>
-                        </div>
                         <div className="flex gap-1">
                           <span className="text-green-600">E:{topic.easy}%</span>
                           <span className="text-yellow-600">M:{topic.medium}%</span>
