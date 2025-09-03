@@ -1,8 +1,10 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useDropzone } from "react-dropzone"
 import { VacanciesPageSkeleton } from "@/components/skeletons/vacancies-skeleton"
+import { WeightPipeline } from "@/components/ui/weight-pipeline"
 import { 
   Plus, 
   MoreVertical, 
@@ -26,7 +28,12 @@ import {
   X,
   CheckCircle,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Settings,
+  Upload,
+  Link2,
+  FileJson,
+  FileSpreadsheet
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -87,6 +94,10 @@ const mockVacancies = [
     created: "2024-01-15",
     deadline: "2024-02-15",
     description: "We are looking for an experienced Frontend Developer to join our team...",
+    interviewDuration: 60,
+    technicalWeight: 40,
+    behavioralWeight: 35,
+    softSkillsWeight: 25,
     candidates: [
       { id: "c1", name: "Maria Petrova", position: "Frontend Dev", matchScore: 95, status: "interview", uploadDate: "2024-01-20" },
       { id: "c2", name: "Ivan Sidorov", position: "React Developer", matchScore: 88, status: "new", uploadDate: "2024-01-21" },
@@ -115,6 +126,10 @@ const mockVacancies = [
     created: "2024-01-10",
     deadline: "2024-02-10",
     description: "Seeking a talented Product Manager to lead our digital banking initiatives...",
+    interviewDuration: 45,
+    technicalWeight: 30,
+    behavioralWeight: 45,
+    softSkillsWeight: 25,
     candidates: [
       { id: "c6", name: "Alexander Smirnov", position: "Senior PM", matchScore: 91, status: "interview", uploadDate: "2024-01-15" },
       { id: "c7", name: "Natalia Ivanova", position: "Product Manager", matchScore: 85, status: "review", uploadDate: "2024-01-16" },
@@ -140,6 +155,10 @@ const mockVacancies = [
     created: "2024-01-12",
     deadline: "2024-02-20",
     description: "Join our backend team to build scalable banking solutions...",
+    interviewDuration: 90,
+    technicalWeight: 60,
+    behavioralWeight: 25,
+    softSkillsWeight: 15,
     candidates: [
       { id: "c9", name: "Pavel Fedorov", position: "Backend Engineer", matchScore: 93, status: "interview", uploadDate: "2024-01-14" },
       { id: "c10", name: "Olga Sokolova", position: "Python Developer", matchScore: 87, status: "review", uploadDate: "2024-01-15" },
@@ -162,6 +181,30 @@ export default function VacanciesPage() {
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
   const [selectedVacancyForQuestion, setSelectedVacancyForQuestion] = useState<string | null>(null)
+  const [isEditConfigOpen, setIsEditConfigOpen] = useState(false)
+  const [editingVacancyConfig, setEditingVacancyConfig] = useState<any>(null)
+  const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false)
+  const [createMethod, setCreateMethod] = useState<"manual" | "file" | "link">("manual")
+  const [importLink, setImportLink] = useState("")
+  const [isImporting, setIsImporting] = useState(false)
+  const [newVacancy, setNewVacancy] = useState({
+    title: "",
+    department: "",
+    location: "",
+    type: "Full-time",
+    experience: "",
+    salaryMin: 0,
+    salaryMax: 0,
+    currency: "RUB",
+    status: "draft",
+    priority: "medium",
+    deadline: "",
+    description: "",
+    interviewDuration: 60,
+    technicalWeight: 40,
+    behavioralWeight: 30,
+    softSkillsWeight: 30
+  })
 
   // Simulate data loading
   useEffect(() => {
@@ -228,6 +271,140 @@ export default function VacanciesPage() {
     }))
   }
 
+  const handleUpdateVacancyConfig = () => {
+    if (editingVacancyConfig) {
+      setVacancies(prev => prev.map(vacancy => {
+        if (vacancy.id === editingVacancyConfig.id) {
+          return {
+            ...vacancy,
+            interviewDuration: editingVacancyConfig.interviewDuration,
+            technicalWeight: editingVacancyConfig.technicalWeight,
+            behavioralWeight: editingVacancyConfig.behavioralWeight,
+            softSkillsWeight: editingVacancyConfig.softSkillsWeight
+          }
+        }
+        return vacancy
+      }))
+      setIsEditConfigOpen(false)
+      setEditingVacancyConfig(null)
+    }
+  }
+
+  const handleCreateVacancy = () => {
+    if (newVacancy.title && newVacancy.department && newVacancy.location) {
+      const vacancy = {
+        ...newVacancy,
+        id: `v-${Date.now()}`,
+        created: new Date().toISOString().split('T')[0],
+        candidates: [],
+        customQuestions: []
+      }
+      setVacancies(prev => [vacancy, ...prev])
+      setIsCreateVacancyOpen(false)
+      setCreateMethod("manual")
+      setImportLink("")
+      setNewVacancy({
+        title: "",
+        department: "",
+        location: "",
+        type: "Full-time",
+        experience: "",
+        salaryMin: 0,
+        salaryMax: 0,
+        currency: "RUB",
+        status: "draft",
+        priority: "medium",
+        deadline: "",
+        description: "",
+        interviewDuration: 60,
+        technicalWeight: 40,
+        behavioralWeight: 30,
+        softSkillsWeight: 30
+      })
+    }
+  }
+
+  const handleFileUpload = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0]
+      setIsImporting(true)
+      
+      // Simulate file parsing
+      setTimeout(() => {
+        // Mock parsed data from file
+        const parsedVacancy = {
+          title: "Imported: " + file.name.replace(/\.[^/.]+$/, ""),
+          department: "Engineering",
+          location: "Moscow",
+          type: "Full-time",
+          experience: "3-5 years",
+          salaryMin: 200000,
+          salaryMax: 300000,
+          currency: "RUB",
+          status: "draft",
+          priority: "medium",
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          description: "This vacancy was imported from a file. Please review and edit the details.",
+          interviewDuration: 60,
+          technicalWeight: 40,
+          behavioralWeight: 30,
+          softSkillsWeight: 30
+        }
+        
+        setNewVacancy(parsedVacancy)
+        setIsImporting(false)
+        // Switch to manual tab to show imported data
+        setCreateMethod("manual")
+      }, 1500)
+    }
+  }, [])
+
+  const handleLinkImport = () => {
+    if (importLink) {
+      setIsImporting(true)
+      
+      // Simulate fetching from link
+      setTimeout(() => {
+        // Mock data from link
+        const importedVacancy = {
+          title: "Senior Full Stack Developer",
+          department: "Engineering",
+          location: "Remote",
+          type: "Full-time",
+          experience: "5+ years",
+          salaryMin: 300000,
+          salaryMax: 450000,
+          currency: "RUB",
+          status: "draft",
+          priority: "high",
+          deadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          description: "We are looking for an experienced Full Stack Developer to join our team. This position was imported from an external job board.",
+          interviewDuration: 90,
+          technicalWeight: 50,
+          behavioralWeight: 30,
+          softSkillsWeight: 20
+        }
+        
+        setNewVacancy(importedVacancy)
+        setIsImporting(false)
+        setImportLink("")
+        // Switch to manual tab to show imported data
+        setCreateMethod("manual")
+      }, 2000)
+    }
+  }
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: handleFileUpload,
+    accept: {
+      'application/json': ['.json'],
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
+    },
+    multiple: false
+  })
+
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
       active: "bg-green-100 text-green-800 border-green-200",
@@ -286,12 +463,13 @@ export default function VacanciesPage() {
             Manage vacancies, candidates, and interview questions
           </p>
         </div>
-        <Link href="/dashboard">
-          <Button className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Vacancy
-          </Button>
-        </Link>
+        <Button 
+          className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white"
+          onClick={() => setIsCreateVacancyOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create Vacancy
+        </Button>
       </div>
 
       {/* Filters */}
@@ -586,6 +764,53 @@ export default function VacanciesPage() {
                           <h3 className="text-sm font-medium mb-2">Description</h3>
                           <p className="text-sm text-muted-foreground">{vacancy.description}</p>
                         </div>
+
+                        {/* Interview Configuration Section */}
+                        <div className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-medium">Interview Configuration</h3>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setEditingVacancyConfig({
+                                  id: vacancy.id,
+                                  title: vacancy.title,
+                                  interviewDuration: vacancy.interviewDuration || 60,
+                                  technicalWeight: vacancy.technicalWeight || 40,
+                                  behavioralWeight: vacancy.behavioralWeight || 30,
+                                  softSkillsWeight: vacancy.softSkillsWeight || 30
+                                })
+                                setIsEditConfigOpen(true)
+                              }}
+                            >
+                              <Settings className="mr-2 h-3 w-3" />
+                              Edit Config
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Interview Duration:</span>
+                              <span className="font-medium">{vacancy.interviewDuration || 60} minutes</span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Question Weights:</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  Technical: {vacancy.technicalWeight || 40}%
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Behavioral: {vacancy.behavioralWeight || 30}%
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Soft Skills: {vacancy.softSkillsWeight || 30}%
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
@@ -673,6 +898,547 @@ export default function VacanciesPage() {
               }
             }}>
               Add Question
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Interview Configuration Dialog */}
+      <Dialog open={isEditConfigOpen} onOpenChange={setIsEditConfigOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Interview Configuration</DialogTitle>
+            <DialogDescription>
+              Configure interview settings for {editingVacancyConfig?.title}
+            </DialogDescription>
+          </DialogHeader>
+          {editingVacancyConfig && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="duration" className="text-sm font-medium">
+                  Interview Duration (minutes)
+                </Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min="15"
+                  max="180"
+                  value={editingVacancyConfig.interviewDuration}
+                  onChange={(e) => setEditingVacancyConfig({
+                    ...editingVacancyConfig,
+                    interviewDuration: parseInt(e.target.value) || 60
+                  })}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Question Type Weights</Label>
+                <WeightPipeline
+                  segments={[
+                    {
+                      label: "Technical",
+                      value: editingVacancyConfig.technicalWeight,
+                      color: "bg-blue-500",
+                    },
+                    {
+                      label: "Behavioral",
+                      value: editingVacancyConfig.behavioralWeight,
+                      color: "bg-green-500",
+                    },
+                    {
+                      label: "Soft Skills",
+                      value: editingVacancyConfig.softSkillsWeight,
+                      color: "bg-yellow-500",
+                    }
+                  ]}
+                  onChange={(segments) => {
+                    setEditingVacancyConfig({
+                      ...editingVacancyConfig,
+                      technicalWeight: Math.round(segments[0].value),
+                      behavioralWeight: Math.round(segments[1].value),
+                      softSkillsWeight: Math.round(segments[2].value)
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsEditConfigOpen(false)
+                setEditingVacancyConfig(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateVacancyConfig}>
+              Save Configuration
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Vacancy Dialog */}
+      <Dialog open={isCreateVacancyOpen} onOpenChange={(open) => {
+        setIsCreateVacancyOpen(open)
+        if (!open) {
+          setCreateMethod("manual")
+          setImportLink("")
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Vacancy</DialogTitle>
+            <DialogDescription>
+              Choose how you want to create a new job vacancy
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Method Selection Tabs */}
+          <Tabs value={createMethod} onValueChange={(value: any) => setCreateMethod(value)} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="manual" className="flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Manual Entry
+              </TabsTrigger>
+              <TabsTrigger value="file" className="flex items-center gap-2">
+                <FileJson className="h-4 w-4" />
+                Upload File
+              </TabsTrigger>
+              <TabsTrigger value="link" className="flex items-center gap-2">
+                <Link2 className="h-4 w-4" />
+                Import from Link
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Manual Entry Tab */}
+            <TabsContent value="manual" className="mt-4">
+              <div className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Basic Information</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="title" className="text-sm">
+                    Job Title <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g., Senior Frontend Developer"
+                    value={newVacancy.title}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, title: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="department" className="text-sm">
+                    Department <span className="text-red-500">*</span>
+                  </Label>
+                  <Select 
+                    value={newVacancy.department} 
+                    onValueChange={(value) => setNewVacancy({ ...newVacancy, department: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Engineering">Engineering</SelectItem>
+                      <SelectItem value="Product">Product</SelectItem>
+                      <SelectItem value="Design">Design</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="HR">HR</SelectItem>
+                      <SelectItem value="Finance">Finance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="location" className="text-sm">
+                    Location <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="e.g., Moscow"
+                    value={newVacancy.location}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, location: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="type" className="text-sm">
+                    Employment Type
+                  </Label>
+                  <Select 
+                    value={newVacancy.type} 
+                    onValueChange={(value) => setNewVacancy({ ...newVacancy, type: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Full-time">Full-time</SelectItem>
+                      <SelectItem value="Part-time">Part-time</SelectItem>
+                      <SelectItem value="Contract">Contract</SelectItem>
+                      <SelectItem value="Internship">Internship</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="experience" className="text-sm">
+                    Experience Required
+                  </Label>
+                  <Input
+                    id="experience"
+                    placeholder="e.g., 3-5 years"
+                    value={newVacancy.experience}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, experience: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="deadline" className="text-sm">
+                    Application Deadline
+                  </Label>
+                  <Input
+                    id="deadline"
+                    type="date"
+                    value={newVacancy.deadline}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, deadline: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="description" className="text-sm">
+                  Job Description
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the role, responsibilities, and requirements..."
+                  value={newVacancy.description}
+                  onChange={(e) => setNewVacancy({ ...newVacancy, description: e.target.value })}
+                  className="mt-1"
+                  rows={4}
+                />
+              </div>
+            </div>
+            
+            {/* Salary Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Salary Information</h3>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="salaryMin" className="text-sm">
+                    Minimum Salary
+                  </Label>
+                  <Input
+                    id="salaryMin"
+                    type="number"
+                    placeholder="0"
+                    value={newVacancy.salaryMin}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, salaryMin: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="salaryMax" className="text-sm">
+                    Maximum Salary
+                  </Label>
+                  <Input
+                    id="salaryMax"
+                    type="number"
+                    placeholder="0"
+                    value={newVacancy.salaryMax}
+                    onChange={(e) => setNewVacancy({ ...newVacancy, salaryMax: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="currency" className="text-sm">
+                    Currency
+                  </Label>
+                  <Select 
+                    value={newVacancy.currency} 
+                    onValueChange={(value) => setNewVacancy({ ...newVacancy, currency: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="RUB">RUB</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Interview Configuration */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Interview Configuration</h3>
+              
+              <div>
+                <Label htmlFor="interviewDuration" className="text-sm">
+                  Interview Duration (minutes)
+                </Label>
+                <Input
+                  id="interviewDuration"
+                  type="number"
+                  min="15"
+                  max="180"
+                  value={newVacancy.interviewDuration}
+                  onChange={(e) => setNewVacancy({ ...newVacancy, interviewDuration: parseInt(e.target.value) || 60 })}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="text-sm">Question Type Weights</Label>
+                <WeightPipeline
+                  segments={[
+                    {
+                      label: "Technical",
+                      value: newVacancy.technicalWeight,
+                      color: "bg-blue-500",
+                    },
+                    {
+                      label: "Behavioral",
+                      value: newVacancy.behavioralWeight,
+                      color: "bg-green-500",
+                    },
+                    {
+                      label: "Soft Skills",
+                      value: newVacancy.softSkillsWeight,
+                      color: "bg-yellow-500",
+                    }
+                  ]}
+                  onChange={(segments) => {
+                    setNewVacancy({
+                      ...newVacancy,
+                      technicalWeight: Math.round(segments[0].value),
+                      behavioralWeight: Math.round(segments[1].value),
+                      softSkillsWeight: Math.round(segments[2].value)
+                    })
+                  }}
+                />
+              </div>
+            </div>
+            
+            {/* Status and Priority */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Status & Priority</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="status" className="text-sm">
+                    Status
+                  </Label>
+                  <Select 
+                    value={newVacancy.status} 
+                    onValueChange={(value) => setNewVacancy({ ...newVacancy, status: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="priority" className="text-sm">
+                    Priority
+                  </Label>
+                  <Select 
+                    value={newVacancy.priority} 
+                    onValueChange={(value) => setNewVacancy({ ...newVacancy, priority: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+            </TabsContent>
+            
+            {/* File Upload Tab */}
+            <TabsContent value="file" className="mt-4">
+              <div className="space-y-4">
+                <div
+                  {...getRootProps()}
+                  className={`
+                    border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer
+                    ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'}
+                    ${isImporting ? 'opacity-50 pointer-events-none' : ''}
+                  `}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className={`mx-auto h-12 w-12 mb-4 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+                  <p className="text-lg font-medium mb-2">
+                    {isImporting ? 'Processing file...' : 'Drop your vacancy file here'}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    or click to browse from your computer
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Supported formats: JSON, CSV, Excel (XLSX, XLS)
+                  </p>
+                </div>
+                
+                {isImporting && (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-sm text-gray-600">Parsing file...</span>
+                  </div>
+                )}
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">File Format Guide</h4>
+                  <ul className="text-xs text-blue-800 space-y-1">
+                    <li>• JSON: Include fields like title, department, location, salary range</li>
+                    <li>• CSV: First row should contain column headers</li>
+                    <li>• Excel: Use the first sheet with headers in the first row</li>
+                  </ul>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Link Import Tab */}
+            <TabsContent value="link" className="mt-4">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="import-link" className="text-sm font-medium">
+                    Job Posting URL
+                  </Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      id="import-link"
+                      type="url"
+                      placeholder="https://example.com/job/senior-developer"
+                      value={importLink}
+                      onChange={(e) => setImportLink(e.target.value)}
+                      disabled={isImporting}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={handleLinkImport}
+                      disabled={!importLink || isImporting}
+                      className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white"
+                    >
+                      {isImporting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Import
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Paste a link from popular job boards like LinkedIn, Indeed, HeadHunter, etc.
+                  </p>
+                </div>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-green-900 mb-2">Supported Platforms</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-green-800">
+                    <div>
+                      <p className="font-semibold mb-1">International:</p>
+                      <ul className="space-y-0.5">
+                        <li>• LinkedIn Jobs</li>
+                        <li>• Indeed</li>
+                        <li>• Glassdoor</li>
+                        <li>• AngelList</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-1">Russian:</p>
+                      <ul className="space-y-0.5">
+                        <li>• HeadHunter (hh.ru)</li>
+                        <li>• SuperJob</li>
+                        <li>• Rabota.ru</li>
+                        <li>• Zarplata.ru</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-amber-900 mb-1">Note</h4>
+                  <p className="text-xs text-amber-800">
+                    The AI will extract and parse the job details from the provided link. 
+                    Please review and adjust the imported information before saving.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsCreateVacancyOpen(false)
+                setCreateMethod("manual")
+                setImportLink("")
+                setNewVacancy({
+                  title: "",
+                  department: "",
+                  location: "",
+                  type: "Full-time",
+                  experience: "",
+                  salaryMin: 0,
+                  salaryMax: 0,
+                  currency: "RUB",
+                  status: "draft",
+                  priority: "medium",
+                  deadline: "",
+                  description: "",
+                  interviewDuration: 60,
+                  technicalWeight: 40,
+                  behavioralWeight: 30,
+                  softSkillsWeight: 30
+                })
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateVacancy}
+              disabled={!newVacancy.title || !newVacancy.department || !newVacancy.location}
+              className="bg-gradient-to-r from-[#1B4F8C] to-[#2563EB] text-white"
+            >
+              Create Vacancy
             </Button>
           </DialogFooter>
         </DialogContent>
