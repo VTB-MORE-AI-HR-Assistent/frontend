@@ -13,11 +13,12 @@ import { ROUTES } from "@/lib/constants";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
-  // const router = useRouter() // Temporarily commented, will be used for future navigation
-  const { login } = useAuth();
+  const router = useRouter();
+  const { login, error: authError } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(false);
+  const [apiError, setApiError] = React.useState("");
 
   // Form state
   const [formData, setFormData] = React.useState({
@@ -36,6 +37,7 @@ export default function LoginPage() {
 
     // Clear previous errors
     setErrors({ email: "", password: "" });
+    setApiError("");
 
     // Basic validation
     let hasErrors = false;
@@ -62,16 +64,16 @@ export default function LoginPage() {
       return;
     }
 
-    // Simulate login
+    // Call real API
     setIsLoading(true);
-
-    // Mock API call
-    setTimeout(async () => {
-      // Use the auth context login method
+    
+    try {
       await login(formData.email, formData.password);
-      setIsLoading(false);
       // The auth context will handle the redirect
-    }, 1500);
+    } catch (error: any) {
+      setApiError(error.message || "Failed to login. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const slides = [
@@ -108,6 +110,13 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* API Error Display */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+              {apiError}
+            </div>
+          )}
+
           {/* Email Field */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

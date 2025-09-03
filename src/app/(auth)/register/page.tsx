@@ -22,11 +22,12 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { register } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [agreedToTerms, setAgreedToTerms] = React.useState(false)
+  const [apiError, setApiError] = React.useState("")
 
   // Form data
   const [formData, setFormData] = React.useState({
@@ -57,6 +58,7 @@ export default function RegisterPage() {
     
     // Clear previous errors
     setErrors({})
+    setApiError("")
     
     // Validation
     const newErrors: Record<string, string> = {}
@@ -77,8 +79,8 @@ export default function RegisterPage() {
     
     if (!formData.password) {
       newErrors.password = "Password is required"
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters"
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters"
     }
     
     if (!formData.confirmPassword) {
@@ -96,16 +98,21 @@ export default function RegisterPage() {
       return
     }
     
-    // Simulate registration
+    // Call real API
     setIsLoading(true)
     
-    // Mock API call
-    setTimeout(async () => {
-      // Use the auth context login method (auto-login after registration)
-      await login(formData.email, formData.password)
-      setIsLoading(false)
+    try {
+      await register(
+        formData.email, 
+        formData.password, 
+        formData.firstName, 
+        formData.lastName
+      )
       // The auth context will handle the redirect
-    }, 1500)
+    } catch (error: any) {
+      setApiError(error.message || "Failed to create account. Please try again.")
+      setIsLoading(false)
+    }
   }
 
   const slides = [
@@ -141,6 +148,13 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* API Error Display */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+              {apiError}
+            </div>
+          )}
+
           {/* Name Fields */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
