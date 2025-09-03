@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Plus, Settings, Trash2, Code, Database, Server, Network, Cloud, BookOpen, Briefcase, Edit2, CheckCircle } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
+import { cn } from "@/lib/utils"
 
 type QuestionTopic = "java" | "javascript" | "python" | "golang" | "database" | "postgres" | "mongodb" | "kafka" | "redis" | "computer-science" | "algorithms" | "data-structures" | "network" | "cloud" | "aws" | "docker" | "kubernetes" | "system-design" | "security" | "git"
 
@@ -126,23 +127,8 @@ export default function InterviewConfig() {
     const updatedTopics = [...(formData.topics || [])]
     const topic = updatedTopics[topicIndex]
     
-    // Update the specific difficulty
+    // Simply update the specific difficulty without auto-redistribution
     topic[difficulty] = value
-    
-    // Normalize to 100%
-    const total = topic.easy + topic.medium + topic.hard
-    if (total !== 100) {
-      const scale = 100 / total
-      topic.easy = Math.round(topic.easy * scale)
-      topic.medium = Math.round(topic.medium * scale)
-      topic.hard = Math.round(topic.hard * scale)
-      
-      // Ensure exactly 100%
-      const newTotal = topic.easy + topic.medium + topic.hard
-      if (newTotal !== 100) {
-        topic.medium += 100 - newTotal
-      }
-    }
     
     setFormData({ ...formData, topics: updatedTopics })
   }
@@ -294,7 +280,7 @@ export default function InterviewConfig() {
                                 onValueChange={([value]) => handleUpdateTopicDifficulty(index, "easy", value)}
                                 max={100}
                                 min={0}
-                                step={10}
+                                step={5}
                                 className="mt-1"
                               />
                             </div>
@@ -305,7 +291,7 @@ export default function InterviewConfig() {
                                 onValueChange={([value]) => handleUpdateTopicDifficulty(index, "medium", value)}
                                 max={100}
                                 min={0}
-                                step={10}
+                                step={5}
                                 className="mt-1"
                               />
                             </div>
@@ -316,10 +302,21 @@ export default function InterviewConfig() {
                                 onValueChange={([value]) => handleUpdateTopicDifficulty(index, "hard", value)}
                                 max={100}
                                 min={0}
-                                step={10}
+                                step={5}
                                 className="mt-1"
                               />
                             </div>
+                          </div>
+                          <div className={cn(
+                            "text-xs p-2 rounded",
+                            topic.easy + topic.medium + topic.hard === 100 
+                              ? "bg-green-50 text-green-700" 
+                              : "bg-yellow-50 text-yellow-700"
+                          )}>
+                            Total: {topic.easy + topic.medium + topic.hard}%
+                            {topic.easy + topic.medium + topic.hard !== 100 && 
+                              " (Should be 100%)"
+                            }
                           </div>
                           <div>
                             <Label className="text-xs">Number of Questions</Label>
