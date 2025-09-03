@@ -9,6 +9,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { InterviewLayout } from './interview-layout'
 import { ParticipantCard } from './participant-card'
 import { InterviewControls } from './interview-controls'
+import { ErrorRecovery, AIBotTimeout } from './error-recovery'
+import { PreInterviewCheck } from './pre-interview-check'
+import { InterviewErrorHandler, InterviewErrorType, InterviewError } from '@/lib/interview/error-handler'
+import { interviewApi } from '@/lib/api/interview'
 import { cn } from '@/lib/utils'
 
 // Phase 3: Custom UI Implementation with VTB branding
@@ -23,11 +27,13 @@ interface AudioInterviewProps {
 
 type ConnectionState = 
   | 'idle'
+  | 'pre-check'
   | 'connecting'
   | 'connected'
   | 'error'
   | 'left'
   | 'reconnecting'
+  | 'waiting-ai'
 
 interface ParticipantInfo {
   id: string
@@ -56,9 +62,13 @@ export function AudioInterview({
   const [localParticipant, setLocalParticipant] = useState<ParticipantInfo | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState<string>('')
+  const [interviewError, setInterviewError] = useState<InterviewError | null>(null)
   const [networkQuality, setNetworkQuality] = useState<'good' | 'fair' | 'poor'>('good')
   const [interviewDuration, setInterviewDuration] = useState(0)
   const [localAudioLevel, setLocalAudioLevel] = useState(0)
+  const [showPreCheck, setShowPreCheck] = useState(true)
+  const [aiJoined, setAiJoined] = useState(false)
+  const [aiJoinTimeout, setAiJoinTimeout] = useState<NodeJS.Timeout | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -101,8 +111,17 @@ export function AudioInterview({
         userName: candidateName,
       })
 
-      // Successfully connected
-      setConnectionState('connected')
+      // Successfully connected, now wait for AI
+      setConnectionState('waiting-ai')
+      
+      // Set timeout for AI to join
+      const timeout = setTimeout(() => {
+        const error = InterviewErrorHandler.createError(InterviewErrorType.AI_BOT_TIMEOUT)
+        setInterviewError(error)
+        setConnectionState('error')
+      }, 30000) // 30 second timeout
+      
+      setAiJoinTimeout(timeout)
       
     } catch (err) {
       console.error('Failed to initialize Daily.co:', err)
@@ -117,6 +136,16 @@ export function AudioInterview({
     callObject.on('participant-joined', (event: DailyEventObject) => {
       if (event.participant) {
         handleParticipantUpdate(event.participant)
+        
+        // Check if AI bot joined
+        if (!event.participant.local && !aiJoined) {
+          setAiJoined(true)
+          if (aiJoinTimeout) {
+            clearTimeout(aiJoinTimeout)
+            setAiJoinTimeout(null)
+          }
+          setConnectionState('connected')
+        }
       }
     })
 
@@ -155,8 +184,19 @@ export function AudioInterview({
     // Connection error
     callObject.on('error', (event: DailyEventObject) => {
       console.error('Daily.co error:', event.errorMsg)
-      setError(event.errorMsg || 'An error occurred during the interview')
+      const error = InterviewErrorHandler.handleDailyError(event)
+      setInterviewError(error)
+      setError(error.message)
       setConnectionState('error')
+      
+      // Report critical errors
+      if (error.reportable) {
+        interviewApi.reportIssue(
+          'unknown', // sessionId would come from props
+          'connection',
+          error.details || error.message
+        )
+      }
     })
 
     // Left meeting
@@ -338,17 +378,74 @@ export function AudioInterview({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Handle pre-checks passed
+  const handlePreChecksPassed = () => {
+    setShowPreCheck(false)
+    initializeDaily()
+  }
+
+  // Handle pre-checks failed
+  const handlePreChecksFailed = (errors: InterviewError[]) => {
+    // Show the first critical error
+    const criticalError = errors.find(e => !e.recoverable) || errors[0]
+    setInterviewError(criticalError)
+    setConnectionState('error')
+    setShowPreCheck(false)
+  }
+
+  // Handle error retry
+  const handleErrorRetry = async () => {
+    setInterviewError(null)
+    setError('')
+    
+    if (connectionState === 'error') {
+      // Check what type of error and retry appropriately
+      if (interviewError?.type === InterviewErrorType.AI_BOT_TIMEOUT) {
+        setConnectionState('waiting-ai')
+        // Retry AI connection
+        const timeout = setTimeout(() => {
+          const error = InterviewErrorHandler.createError(InterviewErrorType.AI_BOT_TIMEOUT)
+          setInterviewError(error)
+          setConnectionState('error')
+        }, 30000)
+        setAiJoinTimeout(timeout)
+      } else {
+        // Retry connection
+        await initializeDaily()
+      }
+    }
+  }
+
   // Initialize on mount
   useEffect(() => {
     if (roomUrl && token && connectionState === 'idle') {
-      initializeDaily()
+      // Start with pre-checks
+      setConnectionState('pre-check')
     }
 
     // Cleanup on unmount
     return () => {
       cleanup()
+      if (aiJoinTimeout) {
+        clearTimeout(aiJoinTimeout)
+      }
     }
   }, [roomUrl, token])
+
+  // Render pre-check state
+  if (connectionState === 'pre-check' && showPreCheck) {
+    return (
+      <InterviewLayout interviewDuration={0} sessionTitle={jobTitle}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <PreInterviewCheck
+            onAllChecksPassed={handlePreChecksPassed}
+            onChecksFailed={handlePreChecksFailed}
+            skipAudioTest={false}
+          />
+        </div>
+      </InterviewLayout>
+    )
+  }
 
   // Render loading state
   if (connectionState === 'connecting') {
@@ -367,35 +464,45 @@ export function AudioInterview({
     )
   }
 
-  // Render error state
-  if (connectionState === 'error') {
+  // Render waiting for AI state
+  if (connectionState === 'waiting-ai') {
     return (
       <InterviewLayout interviewDuration={0} sessionTitle={jobTitle}>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="w-full max-w-md p-8">
-            <Alert className="border-red-200 bg-red-50">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <AlertTitle className="text-red-900">Connection Failed</AlertTitle>
-              <AlertDescription className="text-red-700 mt-2">
-                {error}
-              </AlertDescription>
-            </Alert>
-            <div className="mt-6 flex gap-3">
-              <Button 
-                onClick={initializeDaily}
-                className="flex-1"
-              >
-                Try Again
-              </Button>
-              <Button 
-                onClick={() => onInterviewEnd && onInterviewEnd()}
-                variant="outline"
-                className="flex-1"
-              >
-                Cancel Interview
-              </Button>
-            </div>
-          </Card>
+          <AIBotTimeout
+            onRetry={handleErrorRetry}
+            onCancel={() => {
+              cleanup()
+              if (onInterviewEnd) onInterviewEnd()
+            }}
+            timeoutSeconds={30}
+          />
+        </div>
+      </InterviewLayout>
+    )
+  }
+
+  // Render error state with enhanced error recovery
+  if (connectionState === 'error' && interviewError) {
+    return (
+      <InterviewLayout interviewDuration={0} sessionTitle={jobTitle}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <ErrorRecovery
+            error={interviewError}
+            onRetry={handleErrorRetry}
+            onCancel={() => {
+              cleanup()
+              if (onInterviewEnd) onInterviewEnd()
+            }}
+            onReport={(error) => {
+              // Report the error to support
+              interviewApi.reportIssue(
+                'session-id', // Would come from props
+                'other',
+                `${error.type}: ${error.message}`
+              )
+            }}
+          />
         </div>
       </InterviewLayout>
     )
