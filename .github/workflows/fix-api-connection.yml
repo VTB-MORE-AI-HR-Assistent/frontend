@@ -1,0 +1,120 @@
+name: Fix API Connection
+
+on:
+  workflow_dispatch: # Manual trigger only
+
+jobs:
+  check-and-fix:
+    name: Check and Fix API Connection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Current Setup
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "=== Current Docker Containers ==="
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            echo -e "\n=== Frontend Container Environment ==="
+            docker exec vtb-hr-app env | grep -E "(API|NODE_ENV)" || echo "Frontend container not running"
+            
+            echo -e "\n=== Network Configuration ==="
+            docker network inspect app-network --format '{{range .Containers}}{{.Name}}: {{.IPv4Address}}{{println}}{{end}}' || echo "Network not found"
+            
+            echo -e "\n=== Testing API Connectivity ==="
+            echo "1. From host to API Gateway:"
+            curl -f http://localhost:8081/actuator/health && echo "✅ Success" || echo "❌ Failed"
+            
+            echo -e "\n2. From frontend container to API Gateway:"
+            docker exec vtb-hr-app curl -f http://api-gateway:8081/actuator/health && echo "✅ Success" || echo "❌ Failed"
+            
+            echo -e "\n3. External access to API Gateway:"
+            curl -f http://${{ secrets.SERVER_HOST }}:8081/actuator/health && echo "✅ Success" || echo "❌ Failed"
+            
+            echo -e "\n=== Checking Port Exposure ==="
+            docker ps | grep api-gateway | grep -o "0.0.0.0:8081->8081" && echo "✅ Port 8081 is exposed" || echo "❌ Port 8081 not exposed"
+
+      - name: Fix API Connection
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "=== Restarting Frontend with Correct Configuration ==="
+            
+            # Stop current frontend container
+            docker stop vtb-hr-app || true
+            docker rm vtb-hr-app || true
+            
+            # Check if image exists
+            if ! docker images | grep -q vtb-hr-app; then
+              echo "⚠️ Error: vtb-hr-app image not found. Please run the deploy workflow first."
+              exit 1
+            fi
+            
+            # Verify backend is running
+            if ! docker ps | grep -q api-gateway; then
+              echo "⚠️ Warning: api-gateway container not running. Backend may be down."
+            fi
+            
+            # Run frontend container with correct API URL for browser access
+            echo "Starting frontend with browser-accessible API URL: http://${{ secrets.SERVER_HOST }}:8081"
+            docker run -d \
+              --name vtb-hr-app \
+              --network app-network \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -e NODE_ENV=production \
+              -e NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_HOST }}:8081 \
+              vtb-hr-app:latest
+            
+            # Wait for container to start
+            sleep 5
+            
+            # Verify the fix
+            echo -e "\n=== Verifying Fix ==="
+            if docker ps | grep -q vtb-hr-app; then
+              echo "✅ Frontend container running"
+              
+              # Check environment variables
+              echo -e "\n=== New Environment Variables ==="
+              docker exec vtb-hr-app env | grep -E "NEXT_PUBLIC_API_URL"
+              
+              # Test connectivity
+              echo -e "\n=== Testing Connectivity ==="
+              docker exec vtb-hr-app curl -f http://api-gateway:8081/actuator/health && echo "✅ Internal network works" || echo "❌ Internal network failed"
+              
+              # Show logs
+              echo -e "\n=== Container Logs (last 20 lines) ==="
+              docker logs vtb-hr-app --tail 20
+              
+              echo -e "\n✅ Fix applied successfully!"
+              echo "Frontend is now running at: http://${{ secrets.SERVER_HOST }}:3000"
+              echo "API is configured to: http://${{ secrets.SERVER_HOST }}:8081"
+            else
+              echo "❌ Failed to start frontend container"
+              docker logs vtb-hr-app
+              exit 1
+            fi
+
+      - name: Create Summary
+        run: |
+          echo "## 🔧 API Connection Fix Applied" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend URL**: http://${{ secrets.SERVER_HOST }}:3000" >> $GITHUB_STEP_SUMMARY
+          echo "- **API URL (Browser)**: http://${{ secrets.SERVER_HOST }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "- **API URL (Internal)**: http://api-gateway:8081" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Clear your browser cache (Ctrl+Shift+R)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Try the registration again" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check browser console for any errors" >> $GITHUB_STEP_SUMMARY
+          echo "4. Verify network tab shows requests to :8081" >> $GITHUB_STEP_SUMMARY

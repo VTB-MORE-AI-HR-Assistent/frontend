@@ -96,16 +96,25 @@ The application uses different environment files for different deployment scenar
 
 ### API Gateway Connection
 
-The frontend connects to the backend through the API Gateway. In a Docker environment:
+The frontend connects to the backend through the API Gateway. In a Docker environment, there are two scenarios:
 
+#### Server-Side Rendering (SSR) and API Routes
 - **Service Name**: `api-gateway` (Docker internal DNS)
 - **Port**: `8081`
 - **Full URL**: `http://api-gateway:8081`
+- **Used for**: Server Components, API routes, server-side data fetching
+
+#### Client-Side Requests (Browser)
+- **Public Address**: Your server's IP or domain
+- **Port**: `8081` (must be exposed on the host)
+- **Full URL**: `http://YOUR_SERVER_IP:8081` or `http://your-domain.com:8081`
+- **Used for**: Browser API calls, client-side data fetching
 
 This configuration assumes:
 1. Both frontend and backend are in the same Docker network
 2. The API Gateway service is named `api-gateway` in the backend docker-compose
-3. The gateway is exposed on port 8081
+3. The gateway is exposed on port 8081 both internally and externally
+4. Port 8081 is accessible from the internet (check firewall rules)
 
 ### Network Configuration
 
@@ -132,9 +141,27 @@ Key environment variables for production:
 
 ### 1. Cannot Connect to API Gateway
 
-**Error**: Network requests failing with connection refused
+**Error**: Network requests failing with connection refused or "api-gateway" not found
 
-**Solution**:
+**Common Cause**: Browser cannot resolve Docker service names
+
+**Solution for Browser Access**:
+```bash
+# 1. Update .env.production with your server's IP or domain:
+NEXT_PUBLIC_API_URL=http://YOUR_SERVER_IP:8081
+
+# 2. Ensure port 8081 is exposed on the host:
+docker ps  # Check if port 8081 is mapped: 0.0.0.0:8081->8081/tcp
+
+# 3. Check firewall allows port 8081:
+sudo ufw status  # On Ubuntu
+sudo firewall-cmd --list-ports  # On CentOS/RHEL
+
+# 4. Test from browser console:
+fetch('http://YOUR_SERVER_IP:8081/actuator/health').then(r => r.text()).then(console.log)
+```
+
+**Solution for Container-to-Container**:
 ```bash
 # Verify both containers are on the same network
 docker network inspect app-network
@@ -142,8 +169,8 @@ docker network inspect app-network
 # Check if api-gateway is accessible from frontend container
 docker exec vtb-frontend ping api-gateway
 
-# Test API connection
-docker exec vtb-frontend curl http://api-gateway:8081/health
+# Test API connection from container
+docker exec vtb-frontend curl http://api-gateway:8081/actuator/health
 ```
 
 ### 2. CORS Issues

@@ -55,6 +55,7 @@ export default function RegisterPage() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Form submitted', formData)
     
     // Clear previous errors
     setErrors({})
@@ -94,10 +95,12 @@ export default function RegisterPage() {
     }
     
     if (Object.keys(newErrors).length > 0) {
+      console.log('Validation errors:', newErrors)
       setErrors(newErrors)
       return
     }
     
+    console.log('Calling registration API...')
     // Call real API
     setIsLoading(true)
     
@@ -108,8 +111,12 @@ export default function RegisterPage() {
         formData.firstName, 
         formData.lastName
       )
+      console.log('Registration successful')
       // The auth context will handle the redirect
+      // But we should still set loading to false
+      setIsLoading(false)
     } catch (error: any) {
+      console.error('Registration failed:', error)
       setApiError(error.message || "Failed to create account. Please try again.")
       setIsLoading(false)
     }

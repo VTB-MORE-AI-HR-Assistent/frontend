@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testRegistration()">Test Registration API</button>
+    <button onclick="testHealth()">Test Health Check</button>
+    <div id="result"></div>
+    
+    <script>
+        const API_URL = 'http://api-gateway:8081';
+        
+        async function testRegistration() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing registration endpoint...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'Test123!',
+                        firstName: 'Test',
+                        lastName: 'User'
+                    })
+                });
+                
+                const data = await response.text();
+                resultDiv.innerHTML = `
+                    <h3>Response:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Status Text: ${response.statusText}</p>
+                    <p>Headers: ${JSON.stringify([...response.headers.entries()])}</p>
+                    <p>Body: ${data}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Error:</h3>
+                    <p>${error.message}</p>
+                    <p>${error.stack}</p>
+                `;
+            }
+        }
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing health endpoint...';
+            
+            try {
+                const response = await fetch(`${API_URL}/actuator/health`, {
+                    method: 'GET',
+                });
+                
+                const data = await response.text();
+                resultDiv.innerHTML = `
+                    <h3>Health Check Response:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Body: ${data}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        // Also log the current API URL
+        console.log('Testing API at:', API_URL);
+    </script>
+</body>
+</html>
