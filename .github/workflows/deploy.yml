@@ -9,7 +9,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "20"
 
 jobs:
   # Build and prepare for deployment
@@ -100,12 +100,17 @@ jobs:
             # Load Docker image
             docker load < vtb-hr-app.tar.gz
 
-            # Run new container
+            # Ensure app-network exists
+            docker network create app-network 2>/dev/null || true
+            
+            # Run new container with network
             docker run -d \
               --name vtb-hr-app \
+              --network app-network \
               --restart unless-stopped \
               -p 3000:3000 \
               -e NODE_ENV=production \
+              -e NEXT_PUBLIC_API_URL=http://api-gateway:8081 \
               vtb-hr-app:latest
 
             # Health check
@@ -146,12 +151,19 @@ jobs:
               environment:
                 - NODE_ENV=production
                 - NEXT_TELEMETRY_DISABLED=1
+                - NEXT_PUBLIC_API_URL=http://api-gateway:8081
+              networks:
+                - app-network
               restart: unless-stopped
               healthcheck:
                 test: ["CMD", "curl", "-f", "http://localhost:3000"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
+          
+          networks:
+            app-network:
+              external: true
           EOF
 
       - name: Deploy via SSH with Docker Compose

@@ -2,8 +2,16 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { tokenManager } from '../auth/token-manager'
 import { RefreshResponse } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://5.129.236.219:8081'
+// API URL configuration
+// - Production/Docker: http://api-gateway:8081 (uses Docker service name)
+// - Local development: http://localhost:8081
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api-gateway:8081'
 const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10)
+
+// Log the API URL being used (helpful for debugging)
+if (typeof window !== 'undefined') {
+  console.log('API URL configured:', API_URL)
+}
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({

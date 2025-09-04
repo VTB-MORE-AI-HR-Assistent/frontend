@@ -24,7 +24,8 @@ class TokenManager {
       localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken)
       
       // Calculate and store expiry time
-      const expiryTime = Date.now() + (data.expiresIn * 1000)
+      // Backend sends expiresIn in milliseconds (86400000 = 24 hours)
+      const expiryTime = Date.now() + data.expiresIn
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
       
       // Also try to set cookies for better security
@@ -83,8 +84,9 @@ class TokenManager {
     const expiry = parseInt(expiryTime, 10)
     const now = Date.now()
     
-    // Consider token expired if less than 1 minute remaining
-    return now >= expiry - 60000
+    // Consider token expired if less than 5 minutes remaining
+    // This gives us buffer time to refresh before actual expiry
+    return now >= expiry - (5 * 60 * 1000)
   }
 
   // Update access token after refresh
@@ -94,7 +96,8 @@ class TokenManager {
     if (typeof window !== 'undefined') {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
       
-      const expiryTime = Date.now() + (expiresIn * 1000)
+      // Backend sends expiresIn in milliseconds
+      const expiryTime = Date.now() + expiresIn
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
     }
   }
@@ -108,6 +111,7 @@ class TokenManager {
       localStorage.removeItem(ACCESS_TOKEN_KEY)
       localStorage.removeItem(REFRESH_TOKEN_KEY)
       localStorage.removeItem(TOKEN_EXPIRY_KEY)
+      localStorage.removeItem('user') // Also clear user data
       
       Cookies.remove(REFRESH_TOKEN_KEY)
     }

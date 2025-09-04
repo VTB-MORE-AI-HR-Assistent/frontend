@@ -1,11 +1,12 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { User } from '@/types'
 import { ROUTES } from '@/lib/constants'
 import * as authApi from '@/lib/api/auth'
 import { tokenManager } from '@/lib/auth/token-manager'
+import { isTokenExpired } from '@/lib/auth/auth-helpers'
 import { UserDto } from '@/lib/api/types'
 
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   checkAuth: () => void
   error: string | null
 }
@@ -40,13 +41,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const pathname = usePathname()
+  const refreshTimerRef = useRef<NodeJS.Timeout>()
 
-  // Check authentication status on mount
-  useEffect(() => {
-    checkAuth()
+  // Stop token refresh timer
+  const stopTokenRefreshTimer = useCallback(() => {
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current)
+    }
   }, [])
 
-  const checkAuth = async () => {
+  // Logout function
+  const logout = useCallback(async () => {
+    try {
+      // Stop token refresh timer
+      stopTokenRefreshTimer()
+      
+      // Call logout API
+      await authApi.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear all auth data
+      localStorage.removeItem('vtb_user')
+      setUser(null)
+      setError(null)
+      
+      // Redirect to login
+      router.push(ROUTES.LOGIN)
+    }
+  }, [router, stopTokenRefreshTimer])
+
+  // Start token refresh timer
+  const startTokenRefreshTimer = useCallback(() => {
+    // Clear any existing timer
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current)
+    }
+
+    // Check token every 5 minutes
+    refreshTimerRef.current = setInterval(async () => {
+      const token = tokenManager.getAccessToken()
+      if (token && tokenManager.isTokenExpired()) {
+        const refreshToken = tokenManager.getRefreshToken()
+        if (refreshToken) {
+          try {
+            await authApi.refreshToken(refreshToken)
+          } catch (error) {
+            console.error('Token refresh failed:', error)
+            // Logout if refresh fails
+            await logout()
+          }
+        }
+      }
+    }, 5 * 60 * 1000) // 5 minutes
+  }, [logout])
+
+  // Check authentication
+  const checkAuth = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     
@@ -62,6 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Store user data in localStorage for persistence
         localStorage.setItem('vtb_user', JSON.stringify(user))
+        
+        // Start token refresh timer
+        startTokenRefreshTimer()
       } else if (tokenManager.getRefreshToken()) {
         // Try to refresh token if we have refresh token
         const refreshToken = tokenManager.getRefreshToken()
@@ -72,6 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const user = convertUserDtoToUser(userDto)
             setUser(user)
             localStorage.setItem('vtb_user', JSON.stringify(user))
+            
+            // Start token refresh timer after successful refresh
+            startTokenRefreshTimer()
           } catch (error) {
             // Refresh failed, clear everything
             tokenManager.clearTokens()
@@ -100,9 +157,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [startTokenRefreshTimer])
 
-  const login = async (email: string, password: string) => {
+  // Check authentication status on mount
+  useEffect(() => {
+    checkAuth()
+    
+    // Cleanup on unmount
+    return () => {
+      stopTokenRefreshTimer()
+    }
+  }, [checkAuth, stopTokenRefreshTimer])
+
+  // Login function
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true)
     setError(null)
     
@@ -114,6 +182,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user)
       localStorage.setItem('vtb_user', JSON.stringify(user))
       
+      // Start token refresh timer
+      startTokenRefreshTimer()
+      
       // Redirect to dashboard
       router.push(ROUTES.HR_DASHBOARD)
     } catch (error: any) {
@@ -122,9 +193,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [router, startTokenRefreshTimer])
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  // Register function
+  const register = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
     setIsLoading(true)
     setError(null)
     
@@ -136,6 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user)
       localStorage.setItem('vtb_user', JSON.stringify(user))
       
+      // Start token refresh timer
+      startTokenRefreshTimer()
+      
       // Redirect to dashboard
       router.push(ROUTES.HR_DASHBOARD)
     } catch (error: any) {
@@ -144,18 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const logout = () => {
-    // Clear all auth data
-    authApi.logout()
-    localStorage.removeItem('vtb_user')
-    setUser(null)
-    setError(null)
-    
-    // Redirect to login
-    router.push(ROUTES.LOGIN)
-  }
+  }, [router, startTokenRefreshTimer])
 
   const value = {
     user,
