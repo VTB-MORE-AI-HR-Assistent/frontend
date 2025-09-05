@@ -7,7 +7,7 @@ import { tokenManager } from "../auth/token-manager";
 import { RefreshResponse } from "./types";
 
 // API URL configuration
-// - Production: http://5.129.236.219:8081 (direct IP access)
+// - Production: https://5.129.236.219:8081 (direct IP access with HTTPS)
 // - Local development: http://localhost:8081
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
 const API_URL = baseURL;
