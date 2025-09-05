@@ -7,9 +7,10 @@ import { tokenManager } from "../auth/token-manager";
 import { RefreshResponse } from "./types";
 
 // API URL configuration
-// - Production/Docker: http://api-gateway:8081 (uses Docker service name)
+// - Production: https://hraiassistant.ru (with Traefik routing /api/* to API Gateway)
 // - Local development: http://localhost:8081
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
+const API_URL = baseURL.includes('hraiassistant.ru') ? `${baseURL}/api` : baseURL;
 const API_TIMEOUT = parseInt(
   process.env.NEXT_PUBLIC_API_TIMEOUT || "30000",
   10
