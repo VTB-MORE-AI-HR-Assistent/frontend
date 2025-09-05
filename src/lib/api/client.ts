@@ -21,7 +21,10 @@ if (typeof window !== "undefined") {
   console.log("NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
   console.log("NODE_ENV:", process.env.NODE_ENV);
   console.log("API URL configured:", API_URL);
-  console.log("All NEXT_PUBLIC_ vars:", Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')));
+  console.log(
+    "All NEXT_PUBLIC_ vars:",
+    Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_"))
+  );
 }
 
 // Create axios instance
