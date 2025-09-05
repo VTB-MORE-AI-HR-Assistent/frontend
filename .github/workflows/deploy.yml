@@ -28,17 +28,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Build Next.js
-        run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
-          # Build with production API URL for proper optimization
-          NEXT_PUBLIC_API_URL: https://${{ secrets.SERVER_HOST }}:8081
-          NEXT_PUBLIC_APP_URL: https://${{ secrets.SERVER_HOST }}:3000
-
       - name: Build Docker image
         run: |
           docker build -t vtb-hr-app:latest \

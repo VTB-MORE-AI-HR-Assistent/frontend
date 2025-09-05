@@ -27,6 +27,12 @@ ENV NODE_ENV=$NODE_ENV
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
+# Debug: Show environment variables
+RUN echo "🔍 Build environment variables:"
+RUN echo "NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
+RUN echo "NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL"
+RUN echo "NODE_ENV: $NODE_ENV"
+
 # Build the application
 RUN npm run build
 
