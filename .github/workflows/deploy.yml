@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   workflow_dispatch: # Manual trigger
   workflow_run:
-    workflows: ["CI/CD Pipeline"]  # Run after CI/CD Pipeline completes
+    workflows: ["CI/CD Pipeline"] # Run after CI/CD Pipeline completes
     types:
       - completed
     branches: [main]
@@ -110,7 +110,7 @@ jobs:
               echo "Creating network..."
               docker network create app-network
             fi
-            
+
             # Run frontend container
             # IMPORTANT: NEXT_PUBLIC_API_URL must be accessible from user's browser
             docker run -d \
@@ -120,6 +120,7 @@ jobs:
               -p 3000:3000 \
               -e NODE_ENV=production \
               -e NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_HOST }}:8081 \
+              -e NEXT_PUBLIC_APP_URL=http://${{ secrets.SERVER_HOST }}:3000 \
               vtb-hr-app:latest
 
             # Health check
@@ -185,7 +186,7 @@ jobs:
                 interval: 30s
                 timeout: 10s
                 retries: 3
-          
+
           networks:
             app-network:
               external: true
