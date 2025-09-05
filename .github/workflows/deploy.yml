@@ -130,7 +130,7 @@ jobs:
               --restart unless-stopped \
               -p 3000:3000 \
               -l "traefik.enable=true" \
-              -l "traefik.http.routers.frontend.rule=Host(\`hraiassistant.ru\`) && !PathPrefix(\`/api\`)" \
+              -l "traefik.http.routers.frontend.rule=Host(\`hraiassistant.ru\`) && PathPrefix(\`/\`) && !PathPrefix(\`/api\`)" \
               -l "traefik.http.routers.frontend.tls=true" \
               -l "traefik.http.routers.frontend.tls.certresolver=letsencrypt" \
               -l "traefik.http.services.frontend.loadbalancer.server.port=3000" \
