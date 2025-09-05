@@ -10,7 +10,9 @@ import { RefreshResponse } from "./types";
 // - Production: https://hraiassistant.ru (with Traefik routing /api/* to API Gateway)
 // - Local development: http://localhost:8081
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
-const API_URL = baseURL.includes('hraiassistant.ru') ? `${baseURL}/api` : baseURL;
+const API_URL = baseURL.includes("hraiassistant.ru")
+  ? `${baseURL}/api`
+  : baseURL;
 const API_TIMEOUT = parseInt(
   process.env.NEXT_PUBLIC_API_TIMEOUT || "30000",
   10
@@ -21,7 +23,9 @@ if (typeof window !== "undefined") {
   console.log("🔍 Environment variables:");
   console.log("NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
   console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("baseURL:", baseURL);
   console.log("API URL configured:", API_URL);
+  console.log("Contains hraiassistant.ru:", baseURL.includes("hraiassistant.ru"));
   console.log(
     "All NEXT_PUBLIC_ vars:",
     Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_"))
