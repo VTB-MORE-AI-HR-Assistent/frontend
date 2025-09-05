@@ -122,13 +122,19 @@ jobs:
               docker network create app-network
             fi
 
-            # Run frontend container (NO Traefik labels - let API Gateway handle /api/*)
+            # Run frontend container with Traefik labels for root path only
             # Environment variables are already embedded at build time
             docker run -d \
               --name vtb-hr-app \
               --network app-network \
               --restart unless-stopped \
               -p 3000:3000 \
+              -l "traefik.enable=true" \
+              -l "traefik.http.routers.frontend.rule=Host(\`hraiassistant.ru\`) && PathPrefix(\`/\`) && !PathPrefix(\`/api\`)" \
+              -l "traefik.http.routers.frontend.tls=true" \
+              -l "traefik.http.routers.frontend.tls.certresolver=letsencrypt" \
+              -l "traefik.http.services.frontend.loadbalancer.server.port=3000" \
+              -l "traefik.docker.network=app-network" \
               vtb-hr-app:latest
 
             # Health check
