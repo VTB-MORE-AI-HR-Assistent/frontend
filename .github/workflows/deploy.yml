@@ -17,7 +17,7 @@ jobs:
     name: Build Application
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
-    
+
     steps:
       - name: Check deployment trigger
         run: |
@@ -45,8 +45,8 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t vtb-hr-app:latest \
-            --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_HOST }}:8081 \
-            --build-arg NEXT_PUBLIC_APP_URL=https://${{ secrets.SERVER_HOST }}:3000 \
+            --build-arg NEXT_PUBLIC_API_URL=http://5.129.236.219:8081 \
+            --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru:3000 \
             --build-arg NODE_ENV=production .
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
 
