@@ -17,8 +17,22 @@ jobs:
     name: Build Application
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
-
+    
     steps:
+      - name: Check deployment trigger
+        run: |
+          echo "🔍 Deployment Trigger Check:"
+          echo "Event: ${{ github.event_name }}"
+          echo "Workflow Run Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Branch: ${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "✅ Triggered manually"
+          elif [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
+            echo "✅ Triggered by successful CI/CD Pipeline"
+          else
+            echo "❌ Should not run - CI/CD failed or cancelled"
+            exit 1
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
 
