@@ -13,10 +13,7 @@ import {
 // Login user
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>(
-      "/v1/auth/login",
-      data
-    );
+    const response = await apiClient.post<AuthResponse>("/v1/auth/login", data);
 
     // Store tokens and user data
     tokenManager.setTokens({
@@ -71,12 +68,9 @@ export async function refreshToken(
   refreshToken: string
 ): Promise<RefreshResponse> {
   try {
-    const response = await apiClient.post<RefreshResponse>(
-      "/v1/auth/refresh",
-      {
-        refreshToken,
-      } as RefreshRequest
-    );
+    const response = await apiClient.post<RefreshResponse>("/v1/auth/refresh", {
+      refreshToken,
+    } as RefreshRequest);
 
     // Update access token with new expiry
     tokenManager.updateAccessToken(
