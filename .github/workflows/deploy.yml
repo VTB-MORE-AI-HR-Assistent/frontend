@@ -36,8 +36,8 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
           # Build with production API URL for proper optimization
-          NEXT_PUBLIC_API_URL: http://${{ secrets.SERVER_HOST }}:8081
-          NEXT_PUBLIC_APP_URL: http://${{ secrets.SERVER_HOST }}:3000
+          NEXT_PUBLIC_API_URL: https://${{ secrets.SERVER_HOST }}:8081
+          NEXT_PUBLIC_APP_URL: https://${{ secrets.SERVER_HOST }}:3000
 
       - name: Build Docker image
         run: |
@@ -119,8 +119,8 @@ jobs:
               --restart unless-stopped \
               -p 3000:3000 \
               -e NODE_ENV=production \
-              -e NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_HOST }}:8081 \
-              -e NEXT_PUBLIC_APP_URL=http://${{ secrets.SERVER_HOST }}:3000 \
+              -e NEXT_PUBLIC_API_URL=https://${{ secrets.SERVER_HOST }}:8081 \
+              -e NEXT_PUBLIC_APP_URL=https://${{ secrets.SERVER_HOST }}:3000 \
               vtb-hr-app:latest
 
             # Health check
