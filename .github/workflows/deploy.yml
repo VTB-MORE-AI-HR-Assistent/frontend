@@ -48,11 +48,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t vtb-hr-app:latest \
-            --build-arg NEXT_PUBLIC_API_URL=https://hraiassistant.ru/api \
-            --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru \
-            --build-arg NODE_ENV=production \
-            --no-cache .
+                      docker build -t vtb-hr-app:latest \
+              --build-arg NEXT_PUBLIC_API_URL=https://hraiassistant.ru/api \
+              --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru \
+              --build-arg NODE_ENV=production \
+              --no-cache .
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
 
       - name: Upload Docker image
@@ -122,19 +122,13 @@ jobs:
               docker network create app-network
             fi
 
-            # Run frontend container with Traefik labels
+            # Run frontend container (NO Traefik labels - let API Gateway handle /api/*)
             # Environment variables are already embedded at build time
             docker run -d \
               --name vtb-hr-app \
               --network app-network \
               --restart unless-stopped \
               -p 3000:3000 \
-              -l "traefik.enable=true" \
-              -l "traefik.http.routers.frontend.rule=Host(\`hraiassistant.ru\`) && PathPrefix(\`/\`) && !PathPrefix(\`/api\`)" \
-              -l "traefik.http.routers.frontend.tls=true" \
-              -l "traefik.http.routers.frontend.tls.certresolver=letsencrypt" \
-              -l "traefik.http.services.frontend.loadbalancer.server.port=3000" \
-              -l "traefik.docker.network=app-network" \
               vtb-hr-app:latest
 
             # Health check
