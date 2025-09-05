@@ -14,7 +14,7 @@ import {
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   try {
     const response = await apiClient.post<AuthResponse>(
-      "/api/v1/auth/login",
+      "/v1/auth/login",
       data
     );
 
@@ -42,7 +42,7 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
   try {
     const response = await apiClient.post<AuthResponse>(
-      "/api/v1/auth/register",
+      "/v1/auth/register",
       data
     );
 
@@ -72,7 +72,7 @@ export async function refreshToken(
 ): Promise<RefreshResponse> {
   try {
     const response = await apiClient.post<RefreshResponse>(
-      "/api/v1/auth/refresh",
+      "/v1/auth/refresh",
       {
         refreshToken,
       } as RefreshRequest
@@ -97,7 +97,7 @@ export async function refreshToken(
 // Get current user
 export async function getCurrentUser(): Promise<UserDto> {
   try {
-    const response = await apiClient.get<UserDto>("/api/v1/users/me");
+    const response = await apiClient.get<UserDto>("/v1/users/me");
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to get user data");
@@ -111,7 +111,7 @@ export async function logout(): Promise<void> {
   // Try to invalidate token on backend if endpoint exists
   if (refreshToken) {
     try {
-      await apiClient.post("/api/v1/auth/logout", { refreshToken });
+      await apiClient.post("/v1/auth/logout", { refreshToken });
     } catch (error) {
       // Ignore errors - backend might not have logout endpoint
       console.log("Logout endpoint not available, clearing tokens locally");

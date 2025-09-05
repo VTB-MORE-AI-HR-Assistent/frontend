@@ -7,7 +7,7 @@ import { tokenManager } from "../auth/token-manager";
 import { RefreshResponse } from "./types";
 
 // API URL configuration
-// - Production: https://5.129.236.219:8081 (direct IP access with HTTPS)
+// - Production: https://hraiassistant.ru/api (with Traefik routing)
 // - Local development: http://localhost:8081
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
 const API_URL = baseURL;
@@ -127,7 +127,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   try {
     const response = await axios.post<RefreshResponse>(
-      `${API_URL}/api/v1/auth/refresh`,
+      `${API_URL}/v1/auth/refresh`,
       { refreshToken },
       {
         headers: {
