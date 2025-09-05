@@ -25,7 +25,10 @@ if (typeof window !== "undefined") {
   console.log("NODE_ENV:", process.env.NODE_ENV);
   console.log("baseURL:", baseURL);
   console.log("API URL configured:", API_URL);
-  console.log("Contains hraiassistant.ru:", baseURL.includes("hraiassistant.ru"));
+  console.log(
+    "Contains hraiassistant.ru:",
+    baseURL.includes("hraiassistant.ru")
+  );
   console.log(
     "All NEXT_PUBLIC_ vars:",
     Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_"))
