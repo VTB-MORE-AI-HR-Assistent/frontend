@@ -48,11 +48,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-                      docker build -t vtb-hr-app:latest \
-              --build-arg NEXT_PUBLIC_API_URL=https://hraiassistant.ru/api \
-              --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru \
-              --build-arg NODE_ENV=production \
-              --no-cache .
+          docker build -t vtb-hr-app:latest \
+            --build-arg NEXT_PUBLIC_API_URL=https://hraiassistant.ru/api \
+            --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru \
+            --build-arg NODE_ENV=production \
+            --no-cache .
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
 
       - name: Upload Docker image
