@@ -7,7 +7,7 @@ import { tokenManager } from "../auth/token-manager";
 import { RefreshResponse } from "./types";
 
 // API URL configuration
-// - Production: https://hraiassistant.ru/api (with Traefik routing)
+// - Production: https://api.hraiassistant.ru (with proper SSL certificate)
 // - Local development: http://localhost:8081
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081";
 const API_URL = baseURL;

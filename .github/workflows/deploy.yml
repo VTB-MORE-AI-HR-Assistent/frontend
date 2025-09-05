@@ -49,7 +49,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t vtb-hr-app:latest \
-            --build-arg NEXT_PUBLIC_API_URL=https://5.129.236.219:8081/api \
+            --build-arg NEXT_PUBLIC_API_URL=https://api.hraiassistant.ru \
             --build-arg NEXT_PUBLIC_APP_URL=https://hraiassistant.ru \
             --build-arg NODE_ENV=production \
             --no-cache .
