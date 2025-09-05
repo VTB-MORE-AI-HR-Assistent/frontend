@@ -10,6 +10,9 @@ const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10)
 
 // Log the API URL being used (helpful for debugging)
 if (typeof window !== 'undefined') {
+  console.log('🔍 Environment variables:')
+  console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
+  console.log('NODE_ENV:', process.env.NODE_ENV)
   console.log('API URL configured:', API_URL)
 }
 

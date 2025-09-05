@@ -41,7 +41,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t vtb-hr-app:latest .
+          docker build -t vtb-hr-app:latest \
+            --build-arg NEXT_PUBLIC_API_URL=https://${{ secrets.SERVER_HOST }}:8081 \
+            --build-arg NEXT_PUBLIC_APP_URL=https://${{ secrets.SERVER_HOST }}:3000 \
+            --build-arg NODE_ENV=production .
           docker save vtb-hr-app:latest | gzip > vtb-hr-app.tar.gz
 
       - name: Upload Docker image
@@ -112,15 +115,12 @@ jobs:
             fi
 
             # Run frontend container
-            # IMPORTANT: NEXT_PUBLIC_API_URL must be accessible from user's browser
+            # Environment variables are already embedded at build time
             docker run -d \
               --name vtb-hr-app \
               --network app-network \
               --restart unless-stopped \
               -p 3000:3000 \
-              -e NODE_ENV=production \
-              -e NEXT_PUBLIC_API_URL=https://${{ secrets.SERVER_HOST }}:8081 \
-              -e NEXT_PUBLIC_APP_URL=https://${{ secrets.SERVER_HOST }}:3000 \
               vtb-hr-app:latest
 
             # Health check
@@ -177,7 +177,7 @@ jobs:
                 - NODE_ENV=production
                 - NEXT_TELEMETRY_DISABLED=1
                 - NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_HOST }}:8081
-                - API_URL_INTERNAL=http://api-gateway:8081
+                - API_URL_INTERNAL=https://api-gateway:8081
               networks:
                 - app-network
               restart: unless-stopped
