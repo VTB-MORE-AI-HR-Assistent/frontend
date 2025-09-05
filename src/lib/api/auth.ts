@@ -13,7 +13,7 @@ import {
 // Login user
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>('/api/v1/auth/login', data)
+    const response = await apiClient.post<AuthResponse>('/v1/auth/login', data)
     
     // Store tokens and user data
     tokenManager.setTokens({
@@ -38,7 +38,7 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 // Register new user
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>('/api/v1/auth/register', data)
+    const response = await apiClient.post<AuthResponse>('/v1/auth/register', data)
     
     // Store tokens and user data
     tokenManager.setTokens({
@@ -63,7 +63,7 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
 // Refresh access token
 export async function refreshToken(refreshToken: string): Promise<RefreshResponse> {
   try {
-    const response = await apiClient.post<RefreshResponse>('/api/v1/auth/refresh', {
+    const response = await apiClient.post<RefreshResponse>('/v1/auth/refresh', {
       refreshToken,
     } as RefreshRequest)
     
@@ -81,7 +81,7 @@ export async function refreshToken(refreshToken: string): Promise<RefreshRespons
 // Get current user
 export async function getCurrentUser(): Promise<UserDto> {
   try {
-    const response = await apiClient.get<UserDto>('/api/v1/users/me')
+    const response = await apiClient.get<UserDto>('/v1/users/me')
     return response.data
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to get user data')
@@ -95,7 +95,7 @@ export async function logout(): Promise<void> {
   // Try to invalidate token on backend if endpoint exists
   if (refreshToken) {
     try {
-      await apiClient.post('/api/v1/auth/logout', { refreshToken })
+      await apiClient.post('/v1/auth/logout', { refreshToken })
     } catch (error) {
       // Ignore errors - backend might not have logout endpoint
       console.log('Logout endpoint not available, clearing tokens locally')

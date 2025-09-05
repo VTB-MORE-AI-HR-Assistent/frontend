@@ -129,7 +129,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   try {
     const response = await axios.post<RefreshResponse>(
-      `${API_URL}/api/v1/auth/refresh`,
+      `${API_URL}/v1/auth/refresh`,
       { refreshToken },
       {
         headers: {
