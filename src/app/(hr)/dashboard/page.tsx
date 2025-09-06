@@ -48,7 +48,7 @@ import {
   Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "interview-config" | "analysis" | "notification" | "scheduling" | "complete"
+type PipelineStep = "vacancy" | "upload" | "complete"
 
 interface Candidate {
   id: string
@@ -402,7 +402,7 @@ export default function DashboardPage() {
 
 
   const getStepNumber = (step: PipelineStep) => {
-    const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "notification", "interview-config", "scheduling", "complete"]
+    const steps: PipelineStep[] = ["vacancy", "upload", "complete"]
     return steps.indexOf(step) + 1
   }
 
@@ -498,18 +498,14 @@ export default function DashboardPage() {
                 {/* Progress Line */}
                 <div 
                   className="absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500"
-                  style={{ width: `${((currentStepNumber - 1) / 6) * 100}%` }}
+                  style={{ width: `${((currentStepNumber - 1) / 2) * 100}%` }}
                 ></div>
                 
                 {/* Steps */}
                 <div className="relative flex items-center justify-between">
                   {[
-                    { label: "Vacancy", icon: "📋" },
+                    { label: "Upload Vacancy", icon: "📋" },
                     { label: "Upload CVs", icon: "📄" },
-                    { label: "Configure AI", icon: "⚙️" },
-                    { label: "AI Analysis", icon: "🤖" },
-                    { label: "Select", icon: "✅" },
-                    { label: "Schedule", icon: "📅" },
                     { label: "Complete", icon: "🎯" }
                   ].map((step, index) => (
                     <div key={step.label} className="flex flex-col items-center">
@@ -861,10 +857,10 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={() => setCurrentStep("interview-config")}
+                      onClick={() => setCurrentStep("complete")}
                       disabled={uploadedCVs.length === 0}
                     >
-                      Configure Interview
+                      Complete
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -872,7 +868,7 @@ export default function DashboardPage() {
               )}
 
               {/* Step 4: AI Analysis */}
-              {currentStep === "analysis" && (
+              {false && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 4: AI Analysis in Progress</h3>
                   
@@ -920,7 +916,7 @@ export default function DashboardPage() {
               )}
 
               {/* Step 3: Interview Configuration */}
-              {currentStep === "interview-config" && (
+              {false && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 3: Configure AI Interview</h3>
 
@@ -1206,7 +1202,7 @@ export default function DashboardPage() {
               )}
 
               {/* Step 5: Notification */}
-              {currentStep === "notification" && (
+              {false && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 5: Select & Notify Candidates</h3>
                   
@@ -1326,7 +1322,7 @@ export default function DashboardPage() {
 
               {/* Step 6: Scheduling */}
 
-              {currentStep === "scheduling" && (
+              {false && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 6: Share Scheduling Links</h3>
                   
