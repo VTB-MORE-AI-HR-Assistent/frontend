@@ -283,7 +283,7 @@ export default function DashboardPage() {
   }
 
   const startAnalysis = async () => {
-    setCurrentStep("complete")
+    // Don't immediately jump to complete - let the user see the process
     setIsProcessing(true)
     setAnalysisProgress(0)
 
@@ -1167,7 +1167,7 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={startAnalysis}
+                      onClick={() => setCurrentStep("complete")}
                       disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
                     >
                       Complete Setup
