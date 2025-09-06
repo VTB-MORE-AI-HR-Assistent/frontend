@@ -283,7 +283,7 @@ export default function DashboardPage() {
   }
 
   const startAnalysis = async () => {
-    setCurrentStep("analysis")
+    setCurrentStep("complete")
     setIsProcessing(true)
     setAnalysisProgress(0)
 
@@ -891,9 +891,9 @@ export default function DashboardPage() {
               )}
 
               {/* Step 3: Interview Configuration */}
-              {false && (
+              {currentStep === "interview-config" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 3: Configure AI Interview</h3>
+                  <h3 className="text-lg font-semibold">Step 3: Configure Question Distribution</h3>
 
                   {/* Visual Question Distribution with Diagram */}
                   <Card>
@@ -1169,8 +1169,8 @@ export default function DashboardPage() {
                       onClick={startAnalysis}
                       disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
                     >
-                      Start AI Analysis
-                      <Sparkles className="ml-2 h-4 w-4" />
+                      Complete Setup
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
