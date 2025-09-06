@@ -833,10 +833,10 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={() => setCurrentStep("complete")}
+                      onClick={() => setCurrentStep("interview-config")}
                       disabled={uploadedCVs.length === 0}
                     >
-                      Complete
+                      Next: Configure Questions
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
