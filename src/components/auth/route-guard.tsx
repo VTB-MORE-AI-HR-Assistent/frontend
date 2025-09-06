@@ -43,6 +43,11 @@ export function RouteGuard({ children }: RouteGuardProps) {
     // Wait for auth check to complete
     if (isLoading) return;
 
+    // Check if user is authenticated for protected routes
+    // Also check localStorage as fallback
+    const storedUser = localStorage.getItem("vtb_user");
+    const hasUser = user || storedUser;
+
     // Check if route is public (exact match or prefix match)
     const isPublicRoute =
       publicRoutes.includes(pathname) ||
@@ -65,11 +70,6 @@ export function RouteGuard({ children }: RouteGuardProps) {
 
       return;
     }
-
-    // Check if user is authenticated for protected routes
-    // Also check localStorage as fallback
-    const storedUser = localStorage.getItem("vtb_user");
-    const hasUser = user || storedUser;
 
     console.log("🔍 RouteGuard: Auth check", {
       user,
