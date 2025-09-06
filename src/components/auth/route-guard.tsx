@@ -57,7 +57,17 @@ export function RouteGuard({ children }: RouteGuardProps) {
     }
 
     // Check if user is authenticated for protected routes
-    if (!user) {
+    // Also check localStorage as fallback
+    const storedUser = localStorage.getItem("vtb_user");
+    const hasUser = user || storedUser;
+
+    console.log("🔍 RouteGuard: Auth check", {
+      user,
+      storedUser: !!storedUser,
+      hasUser,
+    });
+
+    if (!hasUser) {
       console.log("🔍 RouteGuard: No user, redirecting to login");
       // Redirect to login if not authenticated
       router.push(ROUTES.LOGIN);
@@ -78,7 +88,10 @@ export function RouteGuard({ children }: RouteGuardProps) {
     publicRoutePrefixes.some((prefix) => pathname.startsWith(prefix));
 
   // For protected routes, ensure user is authenticated
-  if (!isPublicRoute && !user) {
+  const storedUser = localStorage.getItem("vtb_user");
+  const hasUser = user || storedUser;
+
+  if (!isPublicRoute && !hasUser) {
     // Don't render protected content if not authenticated
     return null;
   }
