@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { ROUTES } from "@/lib/constants";
@@ -32,6 +32,7 @@ export function RouteGuard({ children }: RouteGuardProps) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
     console.log("🔍 RouteGuard: useEffect triggered", {
@@ -60,11 +61,14 @@ export function RouteGuard({ children }: RouteGuardProps) {
       console.log("🔍 RouteGuard: Public route, allowing access");
 
       // BUT if user is authenticated and on login/register page, redirect to dashboard
-      if (hasUser && (pathname === "/login" || pathname === "/register")) {
+      // Only redirect once to avoid loops
+      if (hasUser && (pathname === "/login" || pathname === "/register") && !hasRedirected) {
         console.log(
           "🔍 RouteGuard: Authenticated user on auth page, redirecting to dashboard"
         );
-        router.push(ROUTES.HR_DASHBOARD);
+        setHasRedirected(true);
+        // Use window.location for a hard redirect to ensure it works
+        window.location.href = ROUTES.HR_DASHBOARD;
         return;
       }
 
@@ -77,8 +81,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
       hasUser,
     });
 
-    if (!hasUser) {
+    if (!hasUser && !hasRedirected) {
       console.log("🔍 RouteGuard: No user, redirecting to login");
+      setHasRedirected(true);
       // Redirect to login if not authenticated
       router.push(ROUTES.LOGIN);
       return;
