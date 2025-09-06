@@ -508,6 +508,7 @@ export default function DashboardPage() {
                   {[
                     { label: "Upload Vacancy", icon: "📋" },
                     { label: "Upload CVs", icon: "📄" },
+                    { label: "Configure Questions", icon: "⚙️" },
                     { label: "Complete", icon: "🎯" }
                   ].map((step, index) => (
                     <div key={step.label} className="flex flex-col items-center">
