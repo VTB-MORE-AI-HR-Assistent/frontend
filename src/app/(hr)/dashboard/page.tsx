@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
 import { useDropzone } from "react-dropzone"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,7 @@ interface Candidate {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<PipelineStep>("vacancy")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -418,7 +420,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, John
+            Welcome back, {user?.firstName || 'there'}
           </h1>
           <p className="text-muted-foreground">
             Here&apos;s what&apos;s happening with your recruitment today
