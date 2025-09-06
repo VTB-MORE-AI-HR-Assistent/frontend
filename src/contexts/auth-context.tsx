@@ -217,12 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         startTokenRefreshTimer();
 
         // Redirect to dashboard
-        console.log("🔍 AuthContext: Redirecting to dashboard");
-        if (typeof window !== "undefined") {
-          window.location.href = ROUTES.HR_DASHBOARD;
-        } else {
-          router.push(ROUTES.HR_DASHBOARD);
-        }
+        console.log("🔍 AuthContext: Preparing redirect to dashboard");
+        console.log("🔍 AuthContext: Target route:", ROUTES.HR_DASHBOARD);
+        
+        // Use router.replace to ensure proper navigation
+        router.replace(ROUTES.HR_DASHBOARD);
       } catch (error: unknown) {
         console.error("🔍 AuthContext: Login error", error);
         setError(error instanceof Error ? error.message : "Failed to login");
@@ -262,11 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         startTokenRefreshTimer();
 
         // Redirect to dashboard
-        if (typeof window !== "undefined") {
-          window.location.href = ROUTES.HR_DASHBOARD;
-        } else {
-          router.push(ROUTES.HR_DASHBOARD);
-        }
+        router.replace(ROUTES.HR_DASHBOARD);
       } catch (error: unknown) {
         setError(error instanceof Error ? error.message : "Failed to register");
         throw error;
