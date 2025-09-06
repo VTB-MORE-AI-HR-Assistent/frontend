@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
-  const refreshTimerRef = useRef<NodeJS.Timeout>();
+  const refreshTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Stop token refresh timer
   const stopTokenRefreshTimer = useCallback(() => {
@@ -110,12 +110,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check authentication
   const checkAuth = useCallback(async () => {
+    console.log("🔍 AuthContext: Starting checkAuth");
     setIsLoading(true);
     setError(null);
 
     try {
+      // First check localStorage for user data
+      const storedUser = localStorage.getItem("vtb_user");
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          console.log("🔍 AuthContext: Found user in localStorage", parsed);
+          setUser(parsed);
+          // Start token refresh timer
+          startTokenRefreshTimer();
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.log(
+            "🔍 AuthContext: Invalid user data in localStorage, clearing"
+          );
+          localStorage.removeItem("vtb_user");
+        }
+      }
+
       // Check if we have a token
       const token = tokenManager.getAccessToken();
+      console.log("🔍 AuthContext: Token check", {
+        hasToken: !!token,
+        isExpired: token ? tokenManager.isTokenExpired() : null,
+      });
 
       if (token && !tokenManager.isTokenExpired()) {
         // Try to get current user data
@@ -149,19 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        // No tokens, check localStorage for cached user data
-        const storedUser = localStorage.getItem("vtb_user");
-        if (storedUser) {
-          try {
-            const parsed = JSON.parse(storedUser);
-            // If we have user data but no token, clear it
-            localStorage.removeItem("vtb_user");
-            setUser(null);
-          } catch (e) {
-            localStorage.removeItem("vtb_user");
-            setUser(null);
-          }
-        }
+        // No tokens, no user data
+        setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -210,9 +223,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           router.push(ROUTES.HR_DASHBOARD);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("🔍 AuthContext: Login error", error);
-        setError(error.message || "Failed to login");
+        setError(error instanceof Error ? error.message : "Failed to login");
         throw error;
       } finally {
         setIsLoading(false);
@@ -254,8 +267,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           router.push(ROUTES.HR_DASHBOARD);
         }
-      } catch (error: any) {
-        setError(error.message || "Failed to register");
+      } catch (error: unknown) {
+        setError(error instanceof Error ? error.message : "Failed to register");
         throw error;
       } finally {
         setIsLoading(false);
