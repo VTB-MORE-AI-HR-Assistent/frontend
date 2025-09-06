@@ -53,6 +53,16 @@ export function RouteGuard({ children }: RouteGuardProps) {
     if (isPublicRoute) {
       // Public routes are always accessible
       console.log("🔍 RouteGuard: Public route, allowing access");
+
+      // BUT if user is authenticated and on login/register page, redirect to dashboard
+      if (hasUser && (pathname === "/login" || pathname === "/register")) {
+        console.log(
+          "🔍 RouteGuard: Authenticated user on auth page, redirecting to dashboard"
+        );
+        router.push(ROUTES.HR_DASHBOARD);
+        return;
+      }
+
       return;
     }
 
