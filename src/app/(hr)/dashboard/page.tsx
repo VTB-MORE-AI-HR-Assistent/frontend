@@ -540,10 +540,9 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 1: Upload Vacancy</h3>
                   <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                       <TabsTrigger value="file">Upload File</TabsTrigger>
-                      <TabsTrigger value="link">From URL</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="manual" className="space-y-4 max-h-[500px] overflow-y-auto">
@@ -758,30 +757,6 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </TabsContent>
-                    
-                    <TabsContent value="link" className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Job Posting URL</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            placeholder="https://example.com/job/12345" 
-                            value={vacancyData.jobUrl}
-                            onChange={(e) => setVacancyData({...vacancyData, jobUrl: e.target.value})}
-                          />
-                          <Button type="button">
-                            <LinkIcon className="mr-2 h-4 w-4" />
-                            Import
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {["HeadHunter", "LinkedIn", "Indeed"].map(site => (
-                          <div key={site} className="p-2 border rounded text-center text-sm">
-                            {site}
-                          </div>
-                        ))}
-                      </div>
-                    </TabsContent>
                   </Tabs>
                   
                   <div className="flex justify-end">
@@ -790,9 +765,7 @@ export default function DashboardPage() {
                       disabled={
                         currentTab === 'manual' 
                           ? !vacancyData.title || !vacancyData.department || !vacancyData.location || !vacancyData.experience || !vacancyData.deadline || !vacancyData.description
-                          : currentTab === 'file' 
-                            ? !vacancyData.uploadedFile
-                            : !vacancyData.jobUrl
+                          : !vacancyData.uploadedFile
                       }
                     >
                       Next: Upload CVs
@@ -1423,29 +1396,8 @@ export default function DashboardPage() {
                   </div>
                   <h3 className="text-xl font-semibold">Process Complete!</h3>
                   <p className="text-muted-foreground">
-                    Interviews have been scheduled with top candidates
+                    Your vacancy and CVs have been successfully uploaded
                   </p>
-                  
-                  <div className="grid grid-cols-3 gap-4 mt-6">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">{uploadedCVs.length}</div>
-                        <p className="text-xs text-muted-foreground">CVs Analyzed</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">{selectedCandidates.length}</div>
-                        <p className="text-xs text-muted-foreground">Interviews Scheduled</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">85%</div>
-                        <p className="text-xs text-muted-foreground">Time Saved</p>
-                      </CardContent>
-                    </Card>
-                  </div>
                   
                   <Button 
                     onClick={() => {
