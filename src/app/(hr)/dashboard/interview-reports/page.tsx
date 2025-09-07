@@ -601,9 +601,6 @@ export default function InterviewReportsPage() {
                         <Send className="mr-2 h-3 w-3" />
                         Send to Candidate
                       </Button>
-                      <Button variant="outline" size="sm">
-                        Edit Feedback
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
