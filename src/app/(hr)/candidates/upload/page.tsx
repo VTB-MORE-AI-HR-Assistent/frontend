@@ -50,6 +50,7 @@ interface UploadedFile {
   candidateId?: number
   candidateName?: string
   email?: string
+  file: File  // Сохраняем оригинальный File объект
 }
 
 interface Vacancy {
@@ -86,7 +87,8 @@ export default function UploadResumePage() {
       name: file.name,
       size: file.size,
       status: "pending" as const,
-      vacancyId: selectedVacancy
+      vacancyId: selectedVacancy,
+      file: file  // Сохраняем оригинальный File объект
     }))
 
     setUploadedFiles(prev => [...prev, ...newFiles])
@@ -109,15 +111,10 @@ export default function UploadResumePage() {
         return
       }
 
-      // Создаем File объекты (это упрощение - в реальности нужно сохранять оригинальные файлы)
-      const filesArray: File[] = []
-      for (const fileInfo of pendingFiles) {
-        // Создаем пустой файл для демонстрации - в реальной реализации файлы должны сохраняться
-        const emptyFile = new File([""], fileInfo.name, { type: "application/pdf" })
-        filesArray.push(emptyFile)
-      }
+      // Получаем оригинальные File объекты
+      const filesArray: File[] = pendingFiles.map(fileInfo => fileInfo.file)
 
-      // Upload files to candidate-service
+      // Upload files to candidate-service  
       const jobId = selectedVacancy === "" ? null : parseInt(selectedVacancy)
       const response = await uploadCVs(filesArray, jobId)
       
@@ -395,29 +392,20 @@ export default function UploadResumePage() {
               }
             `}
           >
-            {selectedVacancy && <input {...getInputProps()} />}
-            <Upload className={`mx-auto h-12 w-12 ${!selectedVacancy ? 'text-gray-300' : isDragActive ? 'text-[#1B4F8C]' : 'text-gray-400'}`} />
+            <input {...getInputProps()} />
+            <Upload className={`mx-auto h-12 w-12 ${isDragActive ? 'text-[#1B4F8C]' : 'text-gray-400'}`} />
             <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              {!selectedVacancy 
-                ? 'Select a vacancy first' 
-                : isDragActive 
-                  ? 'Drop files here' 
-                  : 'Drag & drop resumes here'
-              }
+              {isDragActive ? 'Drop files here' : 'Drag & drop resumes here'}
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              {!selectedVacancy 
-                ? 'You must select a vacancy before uploading resumes'
-                : 'or click to browse files'
-              }
+              or click to browse files
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Supports PDF, DOC, and DOCX files (Max 10MB each)
+              Supports PDF, DOC, DOCX, RTF, and TXT files (Max 20MB each)
             </p>
             <Button 
               className="mt-4" 
               variant={isDragActive ? "default" : "outline"}
-              disabled={!selectedVacancy}
             >
               <Upload className="mr-2 h-4 w-4" />
               Select Files
