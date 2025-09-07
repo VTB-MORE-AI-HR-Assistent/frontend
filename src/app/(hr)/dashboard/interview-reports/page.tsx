@@ -333,10 +333,6 @@ export default function InterviewReportsPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Recording
-                </Button>
                 <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
                   <Download className="mr-2 h-4 w-4" />
                   Export PDF
