@@ -43,7 +43,7 @@ jobs:
   build-and-deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' # Only deploy from main branch or manual trigger
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/candidate' || github.event_name == 'workflow_dispatch' # Deploy from main, candidate branches or manual trigger
 
     steps:
       - name: Checkout code
@@ -179,7 +179,7 @@ jobs:
   docker-validation:
     name: Docker Build Validation
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main' # Only run for non-main branches
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/candidate' # Only run for non-deploy branches
     needs: lint
 
     steps:
