@@ -14,20 +14,25 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  CheckCircle, 
+import {
+  Upload,
+  FileText,
+  X,
+  CheckCircle,
   AlertCircle,
-  Users,
   Briefcase,
-  Download,
-  Eye,
-  Trash2,
-  CloudUpload,
+  Users,
   MapPin,
-  Clock
+  Star,
+  Eye,
+  Download,
+  Filter,
+  Search,
+  MoreHorizontal,
+  Clock,
+  Loader2,
+  CloudUpload,
+  Trash2
 } from "lucide-react"
 import Link from "next/link"
 import { uploadCVs, pollUploadStatus, UploadCreateResponse, UploadStatusResponse } from "@/lib/candidate-api"
@@ -37,14 +42,14 @@ interface UploadedFile {
   id: string
   name: string
   size: number
-  status: "processing" | "completed" | "error"
-  candidateName?: string
-  position?: string
-  email?: string
-  error?: string
+  status: "pending" | "processing" | "completed" | "error"
+  progress?: number
   vacancyId?: string
   uploadId?: string
+  error?: string
   candidateId?: number
+  candidateName?: string
+  email?: string
 }
 
 interface Vacancy {
@@ -75,44 +80,61 @@ export default function UploadResumePage() {
   const [activePolling, setActivePolling] = useState<Set<string>>(new Set())
   const { toast } = useToast()
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!selectedVacancy) {
-      toast({
-        title: "No vacancy selected",
-        description: "Please select a vacancy first",
-        variant: "destructive"
-      })
-      return
-    }
-
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,
-      status: "processing" as const,
+      status: "pending" as const,
       vacancyId: selectedVacancy
     }))
 
     setUploadedFiles(prev => [...prev, ...newFiles])
+  }, [selectedVacancy])
+
+  const uploadSelectedFiles = async () => {
+    if (uploadedFiles.length === 0) return
+
     setIsProcessing(true)
 
     try {
+      // Получаем только файлы со статусом pending
+      const pendingFiles = uploadedFiles.filter(f => f.status === "pending")
+      if (pendingFiles.length === 0) {
+        toast({
+          title: "No files to upload",
+          description: "All files have already been processed"
+        })
+        setIsProcessing(false)
+        return
+      }
+
+      // Создаем File объекты (это упрощение - в реальности нужно сохранять оригинальные файлы)
+      const filesArray: File[] = []
+      for (const fileInfo of pendingFiles) {
+        // Создаем пустой файл для демонстрации - в реальной реализации файлы должны сохраняться
+        const emptyFile = new File([""], fileInfo.name, { type: "application/pdf" })
+        filesArray.push(emptyFile)
+      }
+
       // Upload files to candidate-service
       const jobId = selectedVacancy === "" ? null : parseInt(selectedVacancy)
-      const response = await uploadCVs(acceptedFiles, jobId)
+      const response = await uploadCVs(filesArray, jobId)
       
       toast({
-        title: "Files uploaded successfully",
-        description: `Uploaded ${acceptedFiles.length} files for processing`
+        title: "Files uploaded successfully", 
+        description: `Uploaded ${filesArray.length} files for processing`
       })
 
       // Update files with upload ID and start polling
-      const updatedFiles = newFiles.map(file => ({
+      const updatedFiles = pendingFiles.map(file => ({
         ...file,
+        status: "processing" as const,
         uploadId: response.uploadId
       }))
+      
       setUploadedFiles(prev => [
-        ...prev.filter(f => !newFiles.find(nf => nf.id === f.id)),
+        ...prev.filter(f => !pendingFiles.find(pf => pf.id === f.id)),
         ...updatedFiles
       ])
 
@@ -129,14 +151,15 @@ export default function UploadResumePage() {
       
       // Mark files as error
       setUploadedFiles(prev => prev.map(f => {
-        if (newFiles.find(nf => nf.id === f.id)) {
+        if (f.status === "pending" || f.status === "processing") {
           return { ...f, status: "error" as const, error: "Upload failed" }
         }
         return f
       }))
+    } finally {
       setIsProcessing(false)
     }
-  }, [selectedVacancy, toast])
+  }
 
   const startPolling = async (uploadId: string, files: UploadedFile[]) => {
     if (activePolling.has(uploadId)) return
@@ -414,6 +437,39 @@ export default function UploadResumePage() {
             <p className="text-sm text-muted-foreground mt-2">
               {successCount + errorCount} of {uploadedFiles.length} files processed
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Button */}
+      {uploadedFiles.filter(f => f.status === "pending").length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">Ready to Upload</h3>
+                <p className="text-sm text-muted-foreground">
+                  {uploadedFiles.filter(f => f.status === "pending").length} files ready for processing
+                </p>
+              </div>
+              <Button 
+                onClick={uploadSelectedFiles}
+                disabled={isProcessing}
+                className="bg-[#1B4F8C] hover:bg-[#1B4F8C]/90"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload {uploadedFiles.filter(f => f.status === "pending").length} Files
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

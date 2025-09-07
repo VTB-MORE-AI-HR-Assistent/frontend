@@ -35,8 +35,14 @@ export interface UploadStatusResponse {
   items: UploadItemView[]
 }
 
-const getBaseUrl = () =>
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api"
+const getBaseUrl = () => {
+  // В production используем внутреннее имя сервиса Docker
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081/api"
+  }
+  // В браузере используем внешний адрес
+  return process.env.NEXT_PUBLIC_API_URL || "http://5.129.236.219:8081/api"
+}
 
 export async function uploadCVs(files: File[], jobId?: number | null): Promise<UploadCreateResponse> {
   if (!files || files.length === 0) throw new Error("No files provided")
