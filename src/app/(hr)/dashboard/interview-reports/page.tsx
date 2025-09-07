@@ -437,7 +437,7 @@ export default function InterviewReportsPage() {
                 </Alert>
 
                 {/* Interview Details */}
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 gap-4 text-xs">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">
@@ -446,24 +446,6 @@ export default function InterviewReportsPage() {
                       <span className="font-medium">
                         {selectedReport.interviewDate}
                       </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Duration</span>
-                      <span className="font-medium">
-                        {selectedReport.interviewDuration}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Interview Type
-                      </span>
-                      <span className="font-medium">AI Video Interview</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Language</span>
-                      <span className="font-medium">Russian</span>
                     </div>
                   </div>
                 </div>
