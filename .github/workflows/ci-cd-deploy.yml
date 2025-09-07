@@ -2,9 +2,9 @@ name: CI/CD & Deploy
 
 on:
   push:
-    branches: [main, master, dev]
+    branches: [main, master, dev, candidate]
   pull_request:
-    branches: [main, master, dev]
+    branches: [main, master, dev, candidate]
   workflow_dispatch: # Allow manual trigger
 
 env:

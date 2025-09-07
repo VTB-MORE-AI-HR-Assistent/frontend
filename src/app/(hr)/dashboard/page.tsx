@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { useDropzone } from "react-dropzone"
+import { uploadCVs, UploadCreateResponse } from "@/lib/candidate-api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +50,7 @@ import {
   Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "complete"
+type PipelineStep = "vacancy" | "upload" | "interview-config" | "complete"
 
 interface Candidate {
   id: string
@@ -104,7 +105,11 @@ export default function DashboardPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
-  
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadJobId, setUploadJobId] = useState<string | null>(null)
+  const [uploadCreateResponse, setUploadCreateResponse] = useState<UploadCreateResponse | null>(null)
+
   // Question distribution state
   const [questionDistribution, setQuestionDistribution] = useState({
     technical: 50,
@@ -261,7 +266,10 @@ export default function DashboardPage() {
     accept: {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/rtf': ['.rtf'],
+      'text/rtf': ['.rtf'],
+      'text/plain': ['.txt']
     },
     multiple: true
   })
@@ -280,6 +288,22 @@ export default function DashboardPage() {
 
   const submitVacancy = () => {
     setCurrentStep("upload")
+  }
+
+  const uploadSelectedCVs = async () => {
+    if (uploadedCVs.length === 0) return
+    setUploadError(null)
+    setUploading(true)
+    try {
+      const resp = await uploadCVs(uploadedCVs, null)
+      setUploadCreateResponse(resp)
+      setUploadJobId(resp.uploadId)
+      setCurrentStep("interview-config")
+    } catch (e: any) {
+      setUploadError(e?.message ?? "Upload failed")
+    } finally {
+      setUploading(false)
+    }
   }
 
   const startAnalysis = async () => {
@@ -404,7 +428,7 @@ export default function DashboardPage() {
 
 
   const getStepNumber = (step: PipelineStep) => {
-    const steps: PipelineStep[] = ["vacancy", "upload", "complete"]
+    const steps: PipelineStep[] = ["vacancy", "upload", "interview-config", "complete"]
     return steps.indexOf(step) + 1
   }
 
@@ -500,7 +524,7 @@ export default function DashboardPage() {
                 {/* Progress Line */}
                 <div 
                   className="absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500"
-                  style={{ width: `${((currentStepNumber - 1) / 2) * 100}%` }}
+                  style={{ width: `${((currentStepNumber - 1) / 3) * 100}%` }}
                 ></div>
                 
                 {/* Steps */}
@@ -782,7 +806,13 @@ export default function DashboardPage() {
               {currentStep === "upload" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 2: Upload Candidate CVs</h3>
-                  
+                  {uploadError && (
+                    <Alert variant="destructive">
+                      <AlertTitle>Upload error</AlertTitle>
+                      <AlertDescription>{uploadError}</AlertDescription>
+                    </Alert>
+                  )}
+
                   <div
                     {...getCVRootProps()}
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
@@ -832,12 +862,18 @@ export default function DashboardPage() {
                     <Button variant="outline" onClick={() => setCurrentStep("vacancy")}>
                       Back
                     </Button>
-                    <Button 
-                      onClick={() => setCurrentStep("interview-config")}
-                      disabled={uploadedCVs.length === 0}
+                    <Button
+                      onClick={uploadSelectedCVs}
+                      disabled={uploadedCVs.length === 0 || uploading}
                     >
-                      Next: Configure Questions
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {uploading ? (
+                        <>Uploading...</>
+                      ) : (
+                        <>
+                          Configure Interview
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -1401,7 +1437,7 @@ export default function DashboardPage() {
                   <p className="text-muted-foreground">
                     Your vacancy and CVs have been successfully uploaded
                   </p>
-                  
+
                   <Button 
                     onClick={() => {
                       setCurrentStep("vacancy")
