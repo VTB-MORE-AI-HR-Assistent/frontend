@@ -23,6 +23,7 @@ if (typeof window !== "undefined") {
   console.log("NODE_ENV:", process.env.NODE_ENV);
   console.log("baseURL:", baseURL);
   console.log("API URL configured:", API_URL);
+  console.log("Final axios baseURL:", API_URL);
   console.log(
     "Contains hraiassistant.ru:",
     baseURL.includes("hraiassistant.ru")
