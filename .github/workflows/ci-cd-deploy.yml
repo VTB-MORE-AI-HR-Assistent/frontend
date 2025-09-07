@@ -78,7 +78,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t vtb-hr-app:latest \
-            --build-arg NEXT_PUBLIC_API_URL=http://5.129.236.219:8081 \
+            --build-arg NEXT_PUBLIC_API_URL=http://5.129.236.219:8081/api \
             --build-arg NEXT_PUBLIC_APP_URL=http://5.129.236.219:3000 \
             --build-arg NODE_ENV=production \
             --no-cache .

@@ -87,13 +87,13 @@ export interface SaveReportResponse {
 export const reportsApi = {
   // Save ML Report
   saveMLReport: async (data: MLReportDTO): Promise<SaveReportResponse> => {
-    const response = await apiClient.post("/api/v1/reports", data);
+    const response = await apiClient.post("/v1/reports", data);
     return response.data;
   },
 
   // Get Candidate Report
   getCandidateReport: async (candidateId: number): Promise<CandidateReport> => {
-    const response = await apiClient.get("/api/v1/reports/candidate", {
+    const response = await apiClient.get("/v1/reports/candidate", {
       params: { candidateId },
     });
     return response.data;
@@ -103,7 +103,7 @@ export const reportsApi = {
   getCandidateRecommendation: async (
     candidateId: number
   ): Promise<CandidateRecommendation> => {
-    const response = await apiClient.get("/api/v1/reports/recommendations", {
+    const response = await apiClient.get("/v1/reports/recommendations", {
       params: { candidateId },
     });
     return response.data;
@@ -111,7 +111,7 @@ export const reportsApi = {
 
   // Download PDF Report
   downloadCandidateReportPdf: async (candidateId: number): Promise<Blob> => {
-    const response = await apiClient.get("/api/v1/reports/pdf", {
+    const response = await apiClient.get("/v1/reports/pdf", {
       params: { candidateId },
       responseType: "blob",
     });
@@ -120,7 +120,7 @@ export const reportsApi = {
 
   // Download Test PDF
   downloadTestPdf: async (): Promise<Blob> => {
-    const response = await apiClient.get("/api/v1/reports/pdf/test", {
+    const response = await apiClient.get("/v1/reports/pdf/test", {
       responseType: "blob",
     });
     return response.data;
