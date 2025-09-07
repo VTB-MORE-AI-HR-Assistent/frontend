@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,8 @@ import {
   Clock
 } from "lucide-react"
 import Link from "next/link"
+import { uploadCVs, pollUploadStatus, UploadCreateResponse, UploadStatusResponse } from "@/lib/candidate-api"
+import { useToast } from "@/hooks/use-toast"
 
 interface UploadedFile {
   id: string
@@ -38,9 +40,11 @@ interface UploadedFile {
   status: "processing" | "completed" | "error"
   candidateName?: string
   position?: string
-  matchScore?: number
+  email?: string
   error?: string
   vacancyId?: string
+  uploadId?: string
+  candidateId?: number
 }
 
 interface Vacancy {
@@ -68,10 +72,16 @@ export default function UploadResumePage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedVacancy, setSelectedVacancy] = useState<string>("")
+  const [activePolling, setActivePolling] = useState<Set<string>>(new Set())
+  const { toast } = useToast()
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!selectedVacancy) {
-      alert("Please select a vacancy first")
+      toast({
+        title: "No vacancy selected",
+        description: "Please select a vacancy first",
+        variant: "destructive"
+      })
       return
     }
 
@@ -86,52 +96,116 @@ export default function UploadResumePage() {
     setUploadedFiles(prev => [...prev, ...newFiles])
     setIsProcessing(true)
 
-    // Simulate file processing
-    newFiles.forEach((file, index) => {
-      setTimeout(() => {
-        setUploadedFiles(prev => prev.map(f => {
-          if (f.id === file.id) {
-            // Simulate random success/error
-            const isSuccess = Math.random() > 0.1
-            if (isSuccess) {
-              return {
-                ...f,
-                status: "completed",
-                candidateName: `Candidate ${Math.floor(Math.random() * 1000)}`,
-                position: ["Frontend Developer", "Backend Developer", "Product Manager", "DevOps Engineer"][Math.floor(Math.random() * 4)],
-                matchScore: Math.floor(Math.random() * 30) + 70
-              }
-            } else {
-              return {
-                ...f,
-                status: "error",
-                error: "Failed to parse resume. Please ensure it's a valid PDF or DOCX file."
-              }
+    try {
+      // Upload files to candidate-service
+      const jobId = selectedVacancy === "" ? null : parseInt(selectedVacancy)
+      const response = await uploadCVs(acceptedFiles, jobId)
+      
+      toast({
+        title: "Files uploaded successfully",
+        description: `Uploaded ${acceptedFiles.length} files for processing`
+      })
+
+      // Update files with upload ID and start polling
+      const updatedFiles = newFiles.map(file => ({
+        ...file,
+        uploadId: response.uploadId
+      }))
+      setUploadedFiles(prev => [
+        ...prev.filter(f => !newFiles.find(nf => nf.id === f.id)),
+        ...updatedFiles
+      ])
+
+      // Start polling for status
+      startPolling(response.uploadId, updatedFiles)
+      
+    } catch (error) {
+      console.error('Upload failed:', error)
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload files",
+        variant: "destructive"
+      })
+      
+      // Mark files as error
+      setUploadedFiles(prev => prev.map(f => {
+        if (newFiles.find(nf => nf.id === f.id)) {
+          return { ...f, status: "error" as const, error: "Upload failed" }
+        }
+        return f
+      }))
+      setIsProcessing(false)
+    }
+  }, [selectedVacancy, toast])
+
+  const startPolling = async (uploadId: string, files: UploadedFile[]) => {
+    if (activePolling.has(uploadId)) return
+    
+    setActivePolling(prev => new Set([...prev, uploadId]))
+    
+    try {
+      const result = await pollUploadStatus(uploadId)
+      
+      // Update files with results
+      setUploadedFiles(prev => prev.map(f => {
+        if (f.uploadId === uploadId) {
+          const item = result.items.find(item => item.filename === f.name)
+          if (item) {
+            return {
+              ...f,
+              status: item.status === "COMPLETED" ? "completed" : 
+                      item.status === "FAILED" ? "error" : "processing",
+              candidateId: item.candidateId,
+              email: item.email,
+              error: item.errorMessage,
+              candidateName: item.email ? item.email.split('@')[0] : undefined
             }
           }
-          return f
-        }))
-
-        // Check if all files are processed
-        setUploadedFiles(prev => {
-          const allProcessed = prev.every(f => f.status !== "processing")
-          if (allProcessed) {
-            setIsProcessing(false)
-          }
-          return prev
-        })
-      }, 1500 + index * 500)
-    })
-  }, [selectedVacancy])
+        }
+        return f
+      }))
+      
+      toast({
+        title: "Processing completed",
+        description: `Processed ${result.items.length} files`
+      })
+      
+    } catch (error) {
+      console.error('Polling failed:', error)
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "Failed to process files",
+        variant: "destructive"
+      })
+      
+      // Mark files as error
+      setUploadedFiles(prev => prev.map(f => {
+        if (f.uploadId === uploadId) {
+          return { ...f, status: "error" as const, error: "Processing failed" }
+        }
+        return f
+      }))
+    } finally {
+      setActivePolling(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(uploadId)
+        return newSet
+      })
+      setIsProcessing(false)
+    }
+  }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/rtf': ['.rtf'],
+      'text/plain': ['.txt']
     },
-    multiple: true
+    multiple: true,
+    maxSize: 20 * 1024 * 1024 // 20MB
   })
 
   const removeFile = (id: string) => {
@@ -378,12 +452,20 @@ export default function UploadResumePage() {
                       {file.status === "completed" && (
                         <div className="space-y-1 mt-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{file.candidateName}</span>
-                            <span className="text-sm text-muted-foreground">•</span>
-                            <span className="text-sm text-muted-foreground">{file.position}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {file.matchScore}% match
-                            </Badge>
+                            {file.candidateName && (
+                              <span className="text-sm font-medium">{file.candidateName}</span>
+                            )}
+                            {file.email && (
+                              <>
+                                <span className="text-sm text-muted-foreground">•</span>
+                                <span className="text-sm text-muted-foreground">{file.email}</span>
+                              </>
+                            )}
+                            {file.candidateId && (
+                              <Badge variant="outline" className="text-xs">
+                                ID: {file.candidateId}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Briefcase className="h-3 w-3" />
@@ -405,7 +487,7 @@ export default function UploadResumePage() {
                     )}
                     {file.status === "completed" && (
                       <>
-                        <Badge variant="default" className="bg-green-100 text-green-800">
+                        <Badge className="bg-green-100 text-green-800 border-green-200">
                           <CheckCircle className="mr-1 h-3 w-3" />
                           Imported
                         </Badge>
@@ -415,7 +497,7 @@ export default function UploadResumePage() {
                       </>
                     )}
                     {file.status === "error" && (
-                      <Badge variant="destructive">
+                      <Badge className="bg-red-100 text-red-800 border-red-200">
                         <AlertCircle className="mr-1 h-3 w-3" />
                         Failed
                       </Badge>
