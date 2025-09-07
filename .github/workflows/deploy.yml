@@ -3,12 +3,12 @@ name: Deploy to Server
 on:
   workflow_dispatch: # Manual trigger
   push:
-    branches: [main] # Deploy directly on push to main
+    branches: [test] # Deploy directly on push to main
   workflow_run:
     workflows: ["CI/CD Pipeline"] # Run after CI/CD Pipeline completes
     types:
       - completed
-    branches: [main]
+    branches: [test]
 
 env:
   NODE_VERSION: "20"
