@@ -40,6 +40,7 @@
     "critters": "^0.0.25",
     "date-fns": "^4.1.0",
     "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "react": "19.1.0",
@@ -50,6 +51,7 @@
     "recharts": "^3.1.2",
     "tailwind-merge": "^3.3.1",
     "web-vitals": "^5.1.0",
+    "ws": "^8.18.3",
     "zod": "^4.1.5"
   },
   "devDependencies": {

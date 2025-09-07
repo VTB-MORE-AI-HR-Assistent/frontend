@@ -56,11 +56,13 @@ class JWTService {
       
       const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'))
       
-      // Check expiration
-      if (payload.exp && payload.exp < Date.now()) {
+      // Check expiration (convert to milliseconds for comparison)
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        console.log('Token expired:', new Date(payload.exp * 1000), 'Current:', new Date())
         return null
       }
       
+      console.log('Token decoded successfully:', payload)
       return payload
     } catch (error) {
       console.error('Token decode error:', error)

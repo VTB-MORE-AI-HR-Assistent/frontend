@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone Debug - Direct Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 15px 25px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .start { background: #28a745; color: white; }
+        .stop { background: #dc3545; color: white; }
+        .start:disabled, .stop:disabled { opacity: 0.6; cursor: not-allowed; }
+        canvas {
+            border: 2px solid #e9ecef;
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 2px solid #bee5eb; }
+        .level {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .debug {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Microphone Debug - Direct HTML Test</h1>
+        <p>This page tests microphone access using the EXACT same code as your working index (2).html</p>
+        
+        <div class="status info" id="browser-info">
+            Loading browser information...
+        </div>
+
+        <button id="startBtn" class="start">🎤 Start Recording</button>
+        <button id="stopBtn" class="stop" disabled>⏹️ Stop Recording</button>
+
+        <canvas id="audioCanvas" width="800" height="120"></canvas>
+        
+        <div class="level" id="audioLevel">Audio Level: 0%</div>
+        
+        <div class="status" id="status">Ready to test microphone</div>
+        
+        <div class="debug" id="debug">Debug log will appear here...</div>
+    </div>
+
+    <script>
+        // EXACT COPY of working index (2).html code
+        let mediaRecorder;
+        let audioChunks = [];
+        let socket;
+        let isRecording = false;
+        let audioContext;
+        let analyser;
+        let canvasCtx;
+        let animationFrame;
+
+        // Elements
+        const statusElement = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const audioCanvas = document.getElementById('audioCanvas');
+        const audioLevel = document.getElementById('audioLevel');
+        const debugDiv = document.getElementById('debug');
+
+        // Debug logging
+        function debugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.textContent += `[${timestamp}] ${message}\n`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+            console.log(message);
+        }
+
+        // Initialize canvas
+        canvasCtx = audioCanvas.getContext('2d');
+        audioCanvas.width = 800;
+        audioCanvas.height = 120;
+
+        // Browser info
+        document.getElementById('browser-info').innerHTML = `
+            <strong>Browser:</strong> ${navigator.userAgent.split(' ').pop()}<br>
+            <strong>MediaDevices:</strong> ${!!navigator.mediaDevices ? '✅' : '❌'}<br>
+            <strong>getUserMedia:</strong> ${!!navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}<br>
+            <strong>AudioContext:</strong> ${!!window.AudioContext ? '✅' : '❌'}<br>
+            <strong>MediaRecorder:</strong> ${!!window.MediaRecorder ? '✅' : '❌'}
+        `;
+
+        // EXACT startRecording function from working HTML
+        async function startRecording() {
+            try {
+                debugLog('🎯 Starting recording (EXACT working HTML code)...');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+
+                debugLog('✅ Microphone access granted');
+
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                        debugLog(`📦 Audio chunk received: ${event.data.size} bytes`);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    debugLog(`🎵 Recording stopped. Total size: ${audioBlob.size} bytes`);
+                };
+
+                mediaRecorder.start(1000);
+                isRecording = true;
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+
+                // Audio visualization
+                setupAudioVisualization(stream);
+
+                statusElement.className = 'status success';
+                statusElement.textContent = '🟢 Recording active';
+                debugLog('🎤 Recording started successfully');
+
+            } catch (error) {
+                debugLog(`❌ Recording error: ${error.name} - ${error.message}`);
+                statusElement.className = 'status error';
+                statusElement.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function stopRecording() {
+            debugLog('⏹️ Stopping recording...');
+            
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => {
+                    track.stop();
+                    debugLog(`🔇 Stopped track: ${track.kind}`);
+                });
+                isRecording = false;
+
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+
+                // Stop visualization
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+                if (audioContext) {
+                    audioContext.close();
+                }
+
+                // Clear canvas
+                canvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
+                audioLevel.textContent = 'Audio Level: 0%';
+                
+                statusElement.className = 'status info';
+                statusElement.textContent = '⏹️ Recording stopped';
+                debugLog('✅ Recording stopped successfully');
+            }
+        }
+
+        // EXACT setupAudioVisualization function from working HTML
+        function setupAudioVisualization(stream) {
+            debugLog('🎨 Setting up audio visualization...');
+            
+            audioContext = new AudioContext();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+
+            source.connect(analyser);
+            analyser.fftSize = 256;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            debugLog(`📊 Visualization setup: fftSize=${analyser.fftSize}, bufferLength=${bufferLength}`);
+
+            function draw() {
+                if (!isRecording) return;
+
+                animationFrame = requestAnimationFrame(draw);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                // Clear canvas
+                canvasCtx.fillStyle = '#f8fafc';
+                canvasCtx.fillRect(0, 0, audioCanvas.width, audioCanvas.height);
+
+                // Calculate and display audio level
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const avgLevel = sum / bufferLength / 255;
+                audioLevel.textContent = `Audio Level: ${Math.round(avgLevel * 100)}%`;
+
+                // Draw wave
+                const barWidth = (audioCanvas.width / bufferLength) * 2.5;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * audioCanvas.height;
+
+                    const gradient = canvasCtx.createLinearGradient(0, 0, 0, audioCanvas.height);
+                    gradient.addColorStop(0, '#667eea');
+                    gradient.addColorStop(1, '#764ba2');
+
+                    canvasCtx.fillStyle = gradient;
+                    canvasCtx.fillRect(x, audioCanvas.height - barHeight, barWidth, barHeight);
+
+                    x += barWidth + 1;
+                }
+            }
+
+            draw();
+            debugLog('✅ Audio visualization active');
+        }
+
+        // Event listeners
+        startBtn.onclick = startRecording;
+        stopBtn.onclick = stopRecording;
+
+        // Initial setup
+        debugLog('🚀 Page loaded - Ready to test microphone');
+        debugLog(`🌐 URL: ${window.location.href}`);
+        debugLog(`📱 User Agent: ${navigator.userAgent}`);
+
+        // Test microphone permissions on load
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                debugLog('✅ Initial permission check: GRANTED');
+                stream.getTracks().forEach(track => track.stop());
+            })
+            .catch(error => {
+                debugLog(`❌ Initial permission check: ${error.name} - ${error.message}`);
+            });
+    </script>
+</body>
+</html>

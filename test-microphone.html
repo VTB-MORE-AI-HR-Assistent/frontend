@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone Test - React vs HTML</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .start { background: #28a745; color: white; }
+        .stop { background: #dc3545; color: white; }
+        canvas {
+            border: 1px solid #ddd;
+            width: 100%;
+            height: 80px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🎙️ Microphone Test - Debugging React vs HTML</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic getUserMedia</h2>
+        <button id="test1-start" class="start">Test Basic Microphone Access</button>
+        <div id="test1-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: MediaRecorder + Visualization</h2>
+        <button id="test2-start" class="start">Start Recording</button>
+        <button id="test2-stop" class="stop" disabled>Stop Recording</button>
+        <canvas id="test2-canvas" width="600" height="80"></canvas>
+        <div id="test2-status" class="status"></div>
+        <div id="test2-level">Audio Level: 0%</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Exact React Component Logic</h2>
+        <button id="test3-start" class="start">Start React-Style Recording</button>
+        <button id="test3-stop" class="stop" disabled>Stop React-Style Recording</button>
+        <canvas id="test3-canvas" width="600" height="80"></canvas>
+        <div id="test3-status" class="status"></div>
+        <div id="test3-level">Audio Level: 0%</div>
+    </div>
+
+    <script>
+        // Test 1: Basic getUserMedia
+        document.getElementById('test1-start').onclick = async () => {
+            const status = document.getElementById('test1-status');
+            try {
+                console.log('[Test1] Requesting microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                status.className = 'status success';
+                status.textContent = '✅ Microphone access granted!';
+                console.log('[Test1] Success:', stream);
+                
+                // Stop tracks
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Error: ' + error.message;
+                console.error('[Test1] Error:', error);
+            }
+        };
+
+        // Test 2: MediaRecorder + Visualization (Working HTML style)
+        let test2Stream, test2Recorder, test2Context, test2Analyser, test2Animation;
+        
+        document.getElementById('test2-start').onclick = async () => {
+            const status = document.getElementById('test2-status');
+            const canvas = document.getElementById('test2-canvas');
+            const ctx = canvas.getContext('2d');
+            const levelDiv = document.getElementById('test2-level');
+            
+            try {
+                console.log('[Test2] Starting recording...');
+                test2Stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+
+                test2Recorder = new MediaRecorder(test2Stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                // Audio visualization
+                test2Context = new AudioContext();
+                test2Analyser = test2Context.createAnalyser();
+                const source = test2Context.createMediaStreamSource(test2Stream);
+                source.connect(test2Analyser);
+                test2Analyser.fftSize = 256;
+
+                const bufferLength = test2Analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                function draw() {
+                    test2Animation = requestAnimationFrame(draw);
+                    test2Analyser.getByteFrequencyData(dataArray);
+
+                    // Clear canvas
+                    ctx.fillStyle = '#f8f9fa';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Calculate audio level
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    const avgLevel = sum / bufferLength / 255;
+                    levelDiv.textContent = `Audio Level: ${Math.round(avgLevel * 100)}%`;
+
+                    // Draw bars
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = (dataArray[i] / 255) * canvas.height;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        gradient.addColorStop(0, '#667eea');
+                        gradient.addColorStop(1, '#764ba2');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                }
+
+                test2Recorder.start(1000);
+                draw();
+
+                status.className = 'status success';
+                status.textContent = '✅ Recording started (HTML style)';
+                document.getElementById('test2-start').disabled = true;
+                document.getElementById('test2-stop').disabled = false;
+
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Error: ' + error.message;
+                console.error('[Test2] Error:', error);
+            }
+        };
+
+        document.getElementById('test2-stop').onclick = () => {
+            if (test2Recorder) test2Recorder.stop();
+            if (test2Stream) test2Stream.getTracks().forEach(track => track.stop());
+            if (test2Context) test2Context.close();
+            if (test2Animation) cancelAnimationFrame(test2Animation);
+            
+            document.getElementById('test2-start').disabled = false;
+            document.getElementById('test2-stop').disabled = true;
+            document.getElementById('test2-status').textContent = '⏹️ Recording stopped';
+            document.getElementById('test2-level').textContent = 'Audio Level: 0%';
+        };
+
+        // Test 3: React Component Style (with refs simulation)
+        let test3Stream, test3Recorder, test3Context, test3Analyser, test3Animation;
+        let test3IsRecording = false;
+
+        const test3StartRecording = async () => {
+            const status = document.getElementById('test3-status');
+            const canvas = document.getElementById('test3-canvas');
+            const ctx = canvas.getContext('2d');
+            const levelDiv = document.getElementById('test3-level');
+            
+            try {
+                console.log('[Test3] Starting React-style recording...');
+                
+                // Check if getUserMedia is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia is not supported in this browser');
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+
+                console.log('[Test3] Microphone access granted');
+
+                test3Stream = stream;
+                test3Recorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                test3Recorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        console.log('[Test3] Audio data received:', event.data.size, 'bytes');
+                    }
+                };
+
+                test3Recorder.onstop = () => {
+                    console.log('[Test3] Recording stopped');
+                };
+
+                test3Recorder.start(1000);
+                test3IsRecording = true;
+
+                // Setup audio visualization (React style)
+                test3Context = new AudioContext();
+                test3Analyser = test3Context.createAnalyser();
+                const source = test3Context.createMediaStreamSource(stream);
+
+                source.connect(test3Analyser);
+                test3Analyser.fftSize = 256;
+
+                const bufferLength = test3Analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                const draw = () => {
+                    if (!test3IsRecording) return;
+
+                    test3Animation = requestAnimationFrame(draw);
+                    test3Analyser?.getByteFrequencyData(dataArray);
+
+                    if (!canvas) return;
+                    if (!ctx) return;
+
+                    // Clear canvas
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw audio bars
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+
+                    // Calculate average audio level
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    const avgLevel = sum / bufferLength / 255;
+                    levelDiv.textContent = `Audio Level: ${Math.round(avgLevel * 100)}%`;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = (dataArray[i] / 255) * canvas.height;
+
+                        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        gradient.addColorStop(0, '#667eea');
+                        gradient.addColorStop(1, '#764ba2');
+
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+                        x += barWidth + 1;
+                    }
+                };
+
+                draw();
+
+                status.className = 'status success';
+                status.textContent = '✅ Recording started (React style)';
+                document.getElementById('test3-start').disabled = true;
+                document.getElementById('test3-stop').disabled = false;
+
+            } catch (error) {
+                console.error('[Test3] Recording error:', error);
+                
+                if (error instanceof Error) {
+                    if (error.name === 'NotAllowedError') {
+                        status.textContent = '❌ Microphone access denied';
+                    } else if (error.name === 'NotFoundError') {
+                        status.textContent = '❌ No microphone found';
+                    } else if (error.name === 'NotSupportedError') {
+                        status.textContent = '❌ Browser does not support audio recording';
+                    } else {
+                        status.textContent = `❌ Microphone error: ${error.message}`;
+                    }
+                } else {
+                    status.textContent = '❌ Failed to access microphone';
+                }
+                status.className = 'status error';
+            }
+        };
+
+        const test3StopRecording = () => {
+            if (test3Recorder && test3IsRecording) {
+                test3Recorder.stop();
+                test3Stream?.getTracks().forEach(track => track.stop());
+                test3IsRecording = false;
+
+                if (test3Animation) {
+                    cancelAnimationFrame(test3Animation);
+                }
+                if (test3Context) {
+                    test3Context.close();
+                }
+
+                const canvas = document.getElementById('test3-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx?.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            document.getElementById('test3-start').disabled = false;
+            document.getElementById('test3-stop').disabled = true;
+            document.getElementById('test3-status').textContent = '⏹️ Recording stopped';
+            document.getElementById('test3-level').textContent = 'Audio Level: 0%';
+        };
+
+        document.getElementById('test3-start').onclick = test3StartRecording;
+        document.getElementById('test3-stop').onclick = test3StopRecording;
+
+        // Log browser info
+        console.log('Browser:', navigator.userAgent);
+        console.log('MediaDevices support:', !!navigator.mediaDevices);
+        console.log('getUserMedia support:', !!navigator.mediaDevices?.getUserMedia);
+        console.log('AudioContext support:', !!window.AudioContext);
+        console.log('MediaRecorder support:', !!window.MediaRecorder);
+    </script>
+</body>
+</html>
