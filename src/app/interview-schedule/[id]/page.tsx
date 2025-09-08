@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
+import interviewsApi from "@/lib/api/interviews"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,30 +26,17 @@ interface TimeSlot {
   available: boolean
 }
 
-// Mock data - in production this would come from API based on interview ID
-const mockInterviewData = {
-  candidateName: "Alexander Smirnov",
-  candidateEmail: "alex@email.com",
-  position: "Product Manager",
-  company: "VTB Bank",
-  department: "Digital Products",
-  location: "Moscow, Russia",
-  interviewType: "Video Interview",
-  duration: "60 minutes",
-  description: "First round technical interview for Product Manager position. The interview will cover your experience with agile methodologies, product strategy, and analytics.",
+interface InterviewData {
+  candidateName: string
+  candidateEmail: string
+  position: string
+  company: string
+  department: string
+  location: string
+  interviewType: string
+  duration: string
+  description: string
 }
-
-// Mock available time slots - would come from backend
-const mockTimeSlots: TimeSlot[] = [
-  { date: "2025-01-15", time: "10:00 AM", available: true },
-  { date: "2025-01-15", time: "2:00 PM", available: true },
-  { date: "2025-01-16", time: "11:00 AM", available: true },
-  { date: "2025-01-16", time: "3:00 PM", available: false },
-  { date: "2025-01-17", time: "10:00 AM", available: true },
-  { date: "2025-01-17", time: "4:00 PM", available: true },
-  { date: "2025-01-18", time: "9:00 AM", available: true },
-  { date: "2025-01-18", time: "1:00 PM", available: true },
-]
 
 export default function InterviewSchedulePage() {
   const params = useParams()
@@ -56,8 +44,95 @@ export default function InterviewSchedulePage() {
   const [selectedSlot, setSelectedSlot] = useState<string>("")
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [interviewData, setInterviewData] = useState<InterviewData | null>(null)
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadInterviewData()
+  }, [interviewId])
+
+  const loadInterviewData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // Load interview details and available time slots
+      const [interview, slots] = await Promise.all([
+        interviewsApi.getInterview(interviewId),
+        interviewsApi.getAvailableTimeSlots(interviewId)
+      ])
+      
+      setInterviewData({
+        candidateName: interview.candidateName,
+        candidateEmail: interview.candidateEmail,
+        position: interview.jobTitle,
+        company: "VTB Bank",
+        department: interview.department || "HR Department",
+        location: "Moscow, Russia",
+        interviewType: "Video Interview",
+        duration: `${interview.duration} minutes`,
+        description: interview.jobDescription || "Technical interview for the selected position."
+      })
+      
+      setTimeSlots(slots)
+    } catch (error) {
+      console.error('Failed to load interview data:', error)
+      setError('Failed to load interview details')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleConfirm = async () => {
+    if (!selectedSlot || !interviewData) return
+    
+    try {
+      setIsSubmitting(true)
+      
+      // Schedule the interview with selected time slot
+      await interviewsApi.scheduleInterview(interviewId, {
+        timeSlot: selectedSlot,
+        candidateEmail: interviewData.candidateEmail
+      })
+      
+      setIsConfirmed(true)
+    } catch (error) {
+      console.error('Failed to schedule interview:', error)
+      setError('Failed to schedule interview. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading interview details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !interviewData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Error Loading Interview</h2>
+            <p className="text-slate-600 mb-4">{error || 'Interview not found'}</p>
+            <Button onClick={() => window.history.back()}>Go Back</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const originalHandleConfirm = async () => {
     setIsSubmitting(true)
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
@@ -105,7 +180,7 @@ export default function InterviewSchedulePage() {
                 </div>
               </div>
               <div className="space-y-3 text-sm text-slate-600">
-                <p>A confirmation email has been sent to <strong>{mockInterviewData.candidateEmail}</strong></p>
+                <p>A confirmation email has been sent to <strong>{interviewData.candidateEmail}</strong></p>
                 <p>You will receive a video interview link 24 hours before the interview.</p>
               </div>
               <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
@@ -147,7 +222,7 @@ export default function InterviewSchedulePage() {
           <CardHeader>
             <CardTitle className="text-2xl">Schedule Your Interview</CardTitle>
             <CardDescription className="text-base">
-              Hello {mockInterviewData.candidateName}, please select a convenient time for your interview
+              Hello {interviewData.candidateName}, please select a convenient time for your interview
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -158,35 +233,35 @@ export default function InterviewSchedulePage() {
                   <Briefcase className="h-4 w-4 text-slate-500" />
                   <span className="text-sm text-slate-600">Position</span>
                 </div>
-                <p className="font-medium text-slate-900">{mockInterviewData.position}</p>
+                <p className="font-medium text-slate-900">{interviewData.position}</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-slate-500" />
                   <span className="text-sm text-slate-600">Department</span>
                 </div>
-                <p className="font-medium text-slate-900">{mockInterviewData.department}</p>
+                <p className="font-medium text-slate-900">{interviewData.department}</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-slate-500" />
                   <span className="text-sm text-slate-600">Location</span>
                 </div>
-                <p className="font-medium text-slate-900">{mockInterviewData.location}</p>
+                <p className="font-medium text-slate-900">{interviewData.location}</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Video className="h-4 w-4 text-slate-500" />
                   <span className="text-sm text-slate-600">Interview Type</span>
                 </div>
-                <p className="font-medium text-slate-900">{mockInterviewData.interviewType}</p>
+                <p className="font-medium text-slate-900">{interviewData.interviewType}</p>
               </div>
             </div>
 
             {/* Interview Description */}
             <Alert className="border-blue-200 bg-blue-50">
               <AlertDescription className="text-slate-700">
-                <strong>About this interview:</strong> {mockInterviewData.description}
+                <strong>About this interview:</strong> {interviewData.description}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -197,19 +272,19 @@ export default function InterviewSchedulePage() {
           <CardHeader>
             <CardTitle>Available Time Slots</CardTitle>
             <CardDescription>
-              Select your preferred interview time (Duration: {mockInterviewData.duration})
+              Select your preferred interview time (Duration: {interviewData.duration})
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {/* Group slots by date */}
-              {Array.from(new Set(mockTimeSlots.map(slot => slot.date))).map(date => (
+              {Array.from(new Set(timeSlots.map(slot => slot.date))).map(date => (
                 <div key={date} className="space-y-3">
                   <h3 className="font-medium text-slate-900 text-sm">
                     {formatDate(date)}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {mockTimeSlots
+                    {timeSlots
                       .filter(slot => slot.date === date)
                       .map((slot) => {
                         const slotId = `${slot.date}-${slot.time}`

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
 import { useDropzone } from "react-dropzone"
 import { 
@@ -46,96 +46,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-
-// Mock vacancies data
-const mockVacancies = [
-  { id: "none", title: "No Vacancy (General Pool)" },
-  { id: "1", title: "Senior Frontend Developer" },
-  { id: "2", title: "Product Manager" },
-  { id: "3", title: "Backend Developer" },
-  { id: "4", title: "UX/UI Designer" },
-  { id: "5", title: "Data Analyst" },
-  { id: "6", title: "DevOps Engineer" }
-]
-
-// Mock CVs data
-const mockCVs = [
-  {
-    id: "1",
-    candidateName: "Maria Petrova",
-    email: "maria.petrova@email.com",
-    phone: "+7 (999) 123-45-67",
-    position: "Senior Frontend Developer",
-    experience: "7 years",
-    skills: ["React", "TypeScript", "Next.js", "Redux"],
-    matchScore: 95,
-    uploadedAt: "2024-01-20T10:30:00",
-    status: "interview",
-    vacancyId: "1",
-    vacancyTitle: "Senior Frontend Developer",
-    cvUrl: "cv_maria_petrova.pdf"
-  },
-  {
-    id: "2",
-    candidateName: "Alexander Smirnov",
-    email: "alex.smirnov@email.com",
-    phone: "+7 (999) 234-56-78",
-    position: "Product Manager",
-    experience: "5 years",
-    skills: ["Product Strategy", "Agile", "Analytics", "User Research"],
-    matchScore: 87,
-    uploadedAt: "2024-01-19T14:20:00",
-    status: "reviewing",
-    vacancyId: "2",
-    vacancyTitle: "Product Manager",
-    cvUrl: "cv_alexander_smirnov.pdf"
-  },
-  {
-    id: "3",
-    candidateName: "Elena Kozlova",
-    email: "elena.k@email.com",
-    phone: "+7 (999) 345-67-89",
-    position: "Backend Developer",
-    experience: "6 years",
-    skills: ["Node.js", "Python", "MongoDB", "Docker"],
-    matchScore: 92,
-    uploadedAt: "2024-01-18T09:15:00",
-    status: "shortlisted",
-    vacancyId: "3",
-    vacancyTitle: "Backend Developer",
-    cvUrl: "cv_elena_kozlova.pdf"
-  },
-  {
-    id: "4",
-    candidateName: "Ivan Petrov",
-    email: "ivan.petrov@email.com",
-    phone: "+7 (999) 456-78-90",
-    position: "Full Stack Developer",
-    experience: "4 years",
-    skills: ["React", "Node.js", "MongoDB", "AWS"],
-    matchScore: 78,
-    uploadedAt: "2024-01-17T16:45:00",
-    status: "new",
-    vacancyId: "none",
-    vacancyTitle: "No Vacancy (General Pool)",
-    cvUrl: "cv_ivan_petrov.pdf"
-  },
-  {
-    id: "5",
-    candidateName: "Natalia Volkova",
-    email: "natalia.v@email.com",
-    phone: "+7 (999) 567-89-01",
-    position: "UX/UI Designer",
-    experience: "3 years",
-    skills: ["Figma", "Sketch", "Adobe XD", "Prototyping"],
-    matchScore: 85,
-    uploadedAt: "2024-01-16T11:30:00",
-    status: "interview",
-    vacancyId: "4",
-    vacancyTitle: "UX/UI Designer",
-    cvUrl: "cv_natalia_volkova.pdf"
-  }
-]
+import candidatesApi from "@/lib/api/candidates"
+import vacanciesApi from "@/lib/api/vacancies"
 
 interface UploadedFile {
   id: string
@@ -149,7 +61,8 @@ interface UploadedFile {
 }
 
 export default function CandidatesPage() {
-  const [cvs, setCvs] = useState(mockCVs)
+  const [candidates, setCandidates] = useState<any[]>([])
+  const [vacancies, setVacancies] = useState<any[]>([])
   const [selectedVacancy, setSelectedVacancy] = useState<string>("all")
   const [uploadVacancy, setUploadVacancy] = useState<string>("none")
   const [searchTerm, setSearchTerm] = useState("")
@@ -157,37 +70,48 @@ export default function CandidatesPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Filter CVs based on selected vacancy and other filters
-  const filteredCVs = cvs.filter(cv => {
-    const matchesVacancy = selectedVacancy === "all" || cv.vacancyId === selectedVacancy
-    const matchesSearch = 
-      cv.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cv.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cv.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cv.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesStatus = statusFilter === "all" || cv.status === statusFilter
-    
-    return matchesVacancy && matchesSearch && matchesStatus
-  })
+  // Load real data from APIs
+  useEffect(() => {
+    loadData()
+  }, [selectedVacancy, searchTerm, statusFilter, sortBy])
 
-  // Sort CVs
-  const sortedCVs = [...filteredCVs].sort((a, b) => {
-    switch (sortBy) {
-      case "newest":
-        return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-      case "oldest":
-        return new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime()
-      case "match":
-        return b.matchScore - a.matchScore
-      case "name":
-        return a.candidateName.localeCompare(b.candidateName)
-      default:
-        return 0
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Load vacancies and candidates in parallel
+      const [vacanciesResponse, candidatesResponse] = await Promise.all([
+        vacanciesApi.getVacancies(),
+        candidatesApi.getCandidates({
+          vacancyId: selectedVacancy !== 'all' ? selectedVacancy : undefined,
+          search: searchTerm || undefined,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          sortBy: sortBy
+        })
+      ])
+      
+      // Add "No Vacancy" option to vacancies list
+      const vacanciesList = [
+        { id: "none", title: "No Vacancy (General Pool)" },
+        ...vacanciesResponse.vacancies
+      ]
+      
+      setVacancies(vacanciesList)
+      setCandidates(candidatesResponse.candidates)
+      
+    } catch (error) {
+      console.error('Failed to load data:', error)
+    } finally {
+      setIsLoading(false)
     }
-  })
+  }
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  // Use candidates directly from API (already filtered and sorted)
+  const sortedCVs = candidates
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
@@ -199,58 +123,52 @@ export default function CandidatesPage() {
     setUploadedFiles(prev => [...prev, ...newFiles])
     setIsProcessing(true)
 
-    // Simulate file processing
-    newFiles.forEach((file, index) => {
-      setTimeout(() => {
+    // Process files using real API
+    for (const fileData of newFiles) {
+      try {
+        // Upload CV using real API
+        const result = await candidatesApi.uploadCV({
+          file: fileData.file,
+          vacancyId: uploadVacancy !== 'none' ? uploadVacancy : undefined
+        })
+        
+        // Update file status to completed
         setUploadedFiles(prev => prev.map(f => {
-          if (f.id === file.id) {
-            const isSuccess = Math.random() > 0.1
-            if (isSuccess) {
-              // Add to CVs list
-              const newCV = {
-                id: Math.random().toString(36).substr(2, 9),
-                candidateName: `Candidate ${Math.floor(Math.random() * 1000)}`,
-                email: `candidate${Math.floor(Math.random() * 1000)}@email.com`,
-                phone: `+7 (999) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 90) + 10}-${Math.floor(Math.random() * 90) + 10}`,
-                position: ["Frontend Developer", "Backend Developer", "Product Manager", "Designer"][Math.floor(Math.random() * 4)],
-                experience: `${Math.floor(Math.random() * 10) + 1} years`,
-                skills: ["React", "TypeScript", "Node.js", "Python"].slice(0, Math.floor(Math.random() * 4) + 1),
-                matchScore: Math.floor(Math.random() * 30) + 70,
-                uploadedAt: new Date().toISOString(),
-                status: "new" as const,
-                vacancyId: uploadVacancy,
-                vacancyTitle: mockVacancies.find(v => v.id === uploadVacancy)?.title || "No Vacancy",
-                cvUrl: file.name
-              }
-              setCvs(prev => [newCV, ...prev])
-              
-              return {
-                ...f,
-                status: "completed",
-                candidateName: newCV.candidateName,
-                matchScore: newCV.matchScore
-              }
-            } else {
-              return {
-                ...f,
-                status: "error",
-                error: "Failed to parse CV. Please ensure it's a valid PDF or DOCX file."
-              }
+          if (f.id === fileData.id) {
+            return {
+              ...f,
+              status: "completed",
+              candidateName: result.candidate.name,
+              matchScore: result.candidate.matchScore
             }
           }
           return f
         }))
-
-        // Check if all files are processed
-        if (index === newFiles.length - 1) {
-          setTimeout(() => {
-            setIsProcessing(false)
-            setUploadedFiles([])
-          }, 2000)
-        }
-      }, 1500 + index * 500)
-    })
-  }, [uploadVacancy])
+        
+      } catch (error) {
+        console.error('Failed to upload CV:', error)
+        // Update file status to error
+        setUploadedFiles(prev => prev.map(f => {
+          if (f.id === fileData.id) {
+            return {
+              ...f,
+              status: "error",
+              error: "Failed to parse CV. Please ensure it's a valid PDF or DOCX file."
+            }
+          }
+          return f
+        }))
+      }
+    }
+    
+    // Reload candidates data after upload
+    setTimeout(() => {
+      loadData()
+      setIsProcessing(false)
+      setUploadedFiles([])
+    }, 1000)
+    
+  }, [uploadVacancy, loadData])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -313,7 +231,7 @@ export default function CandidatesPage() {
                   <SelectValue placeholder="Select vacancy" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockVacancies.map((vacancy) => (
+                  {vacancies.map((vacancy) => (
                     <SelectItem key={vacancy.id} value={vacancy.id}>
                       {vacancy.title}
                     </SelectItem>
@@ -416,7 +334,7 @@ export default function CandidatesPage() {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>My CVs</CardTitle>
-                <CardDescription>{filteredCVs.length} total</CardDescription>
+                <CardDescription>{candidates.length} total</CardDescription>
               </div>
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
@@ -444,7 +362,7 @@ export default function CandidatesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Vacancies</SelectItem>
-                  {mockVacancies.map((vacancy) => (
+                  {vacancies.map((vacancy) => (
                     <SelectItem key={vacancy.id} value={vacancy.id}>
                       {vacancy.title}
                     </SelectItem>
@@ -479,7 +397,12 @@ export default function CandidatesPage() {
             </div>
 
             {/* Table */}
-            {sortedCVs.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading candidates...</p>
+              </div>
+            ) : sortedCVs.length === 0 ? (
               <div className="text-center py-16 border rounded-lg bg-gray-50">
                 <FileText className="mx-auto h-16 w-16 text-gray-300 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Welcome! Let's get started</h3>
@@ -519,11 +442,11 @@ export default function CandidatesPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
                             <AvatarFallback className="text-xs">
-                              {cv.candidateName.split(' ').map(n => n[0]).join('')}
+                              {cv.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{cv.candidateName}</div>
+                            <div className="font-medium">{cv.name}</div>
                             <div className="text-sm text-muted-foreground">{cv.email}</div>
                           </div>
                         </div>
@@ -535,12 +458,12 @@ export default function CandidatesPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {cv.vacancyId !== "none" ? (
-                          <Link href={`/vacancies/${cv.vacancyId}`} className="text-blue-600 hover:underline">
-                            {cv.vacancyTitle}
+                        {cv.vacancyId && cv.vacancyId !== "none" ? (
+                          <Link href={`/hr/vacancies/${cv.vacancyId}`} className="text-blue-600 hover:underline">
+                            {cv.vacancyTitle || 'Assigned Vacancy'}
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground">{cv.vacancyTitle}</span>
+                          <span className="text-muted-foreground">No Vacancy (General Pool)</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -558,15 +481,28 @@ export default function CandidatesPage() {
                       <TableCell>{getStatusBadge(cv.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(cv.uploadedAt).toLocaleDateString()}
+                          {new Date(cv.createdAt || cv.uploadedAt).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Link href={`/hr/candidates/${cv.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={async () => {
+                              try {
+                                await candidatesApi.downloadCV(cv.id)
+                              } catch (error) {
+                                console.error('Failed to download CV:', error)
+                              }
+                            }}
+                          >
                             <Download className="h-4 w-4" />
                           </Button>
                         </div>

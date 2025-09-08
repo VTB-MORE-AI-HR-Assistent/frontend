@@ -2,60 +2,6 @@ import { useState, useEffect } from "react";
 import { reportsApi, CandidateReport } from "@/lib/api/reports";
 import { InterviewReport, transformReportData } from "@/types/reports";
 
-// Mock candidate data - ВСЕГДА показываем этих кандидатов
-const mockCandidateData = [
-  {
-    id: 123,
-    name: "Maria Petrova",
-    position: "Senior Frontend Developer",
-    vacancy: "Frontend Developer - React",
-  },
-  {
-    id: 124,
-    name: "Alexander Smirnov",
-    position: "Backend Developer",
-    vacancy: "Backend Developer - Python",
-  },
-  {
-    id: 125,
-    name: "Elena Kozlova",
-    position: "Product Manager",
-    vacancy: "Senior Product Manager",
-  },
-  {
-    id: 126,
-    name: "Ivan Petrov",
-    position: "DevOps Engineer",
-    vacancy: "DevOps Engineer - AWS",
-  },
-];
-
-// Fallback report data для кандидатов без реальных отчетов
-const createMockReport = (
-  candidate: (typeof mockCandidateData)[0]
-): InterviewReport => ({
-  id: candidate.id,
-  candidateId: candidate.id,
-  candidateName: candidate.name,
-  position: candidate.position,
-  vacancy: candidate.vacancy,
-  interviewDate: new Date().toISOString().split("T")[0],
-  interviewDuration: "45 min",
-  overallCompliance: 0,
-  aiRecommendation: "clarification",
-  status: "pending",
-  experienceRelevance: 0,
-  competencies: {
-    technical: { score: 0, strengths: [], gaps: ["No data available"] },
-    behavioral: { score: 0, strengths: [], gaps: ["No data available"] },
-    cultural: { score: 0, strengths: [], gaps: ["No data available"] },
-  },
-  redFlags: [],
-  contradictions: [],
-  personalizedFeedback:
-    "Interview report not yet available. Please check back later.",
-});
-
 export const useReports = () => {
   const [reports, setReports] = useState<InterviewReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,37 +12,24 @@ export const useReports = () => {
       setLoading(true);
       setError(null);
 
-      // Создаем отчеты для ВСЕХ замоканных кандидатов
-      const allReports: InterviewReport[] = [];
-
-      for (const candidate of mockCandidateData) {
-        try {
-          // Пытаемся получить реальный отчет из API
-          const apiReport = await reportsApi.getCandidateReport(candidate.id);
-          const realReport = transformReportData(
-            apiReport,
-            candidate.name,
-            candidate.position,
-            candidate.vacancy
-          );
-          allReports.push(realReport);
-        } catch (err) {
-          // Если отчета нет - создаем mock отчет для кандидата
-          console.warn(
-            `No report found for candidate ${candidate.id}, using mock data`
-          );
-          const mockReport = createMockReport(candidate);
-          allReports.push(mockReport);
-        }
-      }
-
-      setReports(allReports);
+      // Get all reports from real API
+      const allReports = await reportsApi.getAllReports();
+      
+      // Transform the reports to the expected format
+      const transformedReports: InterviewReport[] = allReports.map(report => 
+        transformReportData(
+          report,
+          report.candidateName,
+          report.position,
+          report.vacancy
+        )
+      );
+      
+      setReports(transformedReports);
     } catch (err) {
       console.error("Error fetching reports:", err);
-      // Если общая ошибка - показываем всех кандидатов с mock данными
-      const fallbackReports = mockCandidateData.map(createMockReport);
-      setReports(fallbackReports);
-      setError("Failed to fetch some reports, showing mock data");
+      setError("Failed to fetch reports");
+      setReports([]);
     } finally {
       setLoading(false);
     }

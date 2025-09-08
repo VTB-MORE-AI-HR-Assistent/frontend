@@ -77,107 +77,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// Mock data for vacancies with candidates and custom questions
-const mockVacancies = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    department: "Engineering",
-    location: "Moscow",
-    type: "Full-time",
-    experience: "5-10 years",
-    salaryMin: 250000,
-    salaryMax: 350000,
-    currency: "RUB",
-    status: "active",
-    priority: "high",
-    created: "2024-01-15",
-    deadline: "2024-02-15",
-    description: "We are looking for an experienced Frontend Developer to join our team...",
-    interviewDuration: 60,
-    technicalWeight: 40,
-    behavioralWeight: 35,
-    softSkillsWeight: 25,
-    candidates: [
-      { id: "c1", name: "Maria Petrova", position: "Frontend Dev", matchScore: 95, status: "interview", uploadDate: "2024-01-20" },
-      { id: "c2", name: "Ivan Sidorov", position: "React Developer", matchScore: 88, status: "new", uploadDate: "2024-01-21" },
-      { id: "c3", name: "Elena Kozlova", position: "UI Developer", matchScore: 82, status: "review", uploadDate: "2024-01-19" },
-      { id: "c4", name: "Dmitry Volkov", position: "Frontend Engineer", matchScore: 79, status: "new", uploadDate: "2024-01-22" },
-      { id: "c5", name: "Anna Mikhailova", position: "Web Developer", matchScore: 75, status: "rejected", uploadDate: "2024-01-18" },
-    ],
-    customQuestions: [
-      { id: "q1", question: "Describe your experience with React performance optimization", type: "technical", required: true },
-      { id: "q2", question: "How do you handle state management in large applications?", type: "technical", required: true },
-      { id: "q3", question: "Tell us about a challenging project you've worked on", type: "behavioral", required: false },
-    ]
-  },
-  {
-    id: "2",
-    title: "Product Manager",
-    department: "Product",
-    location: "St. Petersburg",
-    type: "Full-time",
-    experience: "3-5 years",
-    salaryMin: 200000,
-    salaryMax: 280000,
-    currency: "RUB",
-    status: "active",
-    priority: "medium",
-    created: "2024-01-10",
-    deadline: "2024-02-10",
-    description: "Seeking a talented Product Manager to lead our digital banking initiatives...",
-    interviewDuration: 45,
-    technicalWeight: 30,
-    behavioralWeight: 45,
-    softSkillsWeight: 25,
-    candidates: [
-      { id: "c6", name: "Alexander Smirnov", position: "Senior PM", matchScore: 91, status: "interview", uploadDate: "2024-01-15" },
-      { id: "c7", name: "Natalia Ivanova", position: "Product Manager", matchScore: 85, status: "review", uploadDate: "2024-01-16" },
-      { id: "c8", name: "Sergey Popov", position: "PM", matchScore: 78, status: "new", uploadDate: "2024-01-17" },
-    ],
-    customQuestions: [
-      { id: "q4", question: "How do you prioritize features in a product roadmap?", type: "behavioral", required: true },
-      { id: "q5", question: "Describe your experience with agile methodologies", type: "experience", required: true },
-    ]
-  },
-  {
-    id: "3",
-    title: "Backend Developer",
-    department: "Engineering",
-    location: "Moscow",
-    type: "Full-time",
-    experience: "3-5 years",
-    salaryMin: 220000,
-    salaryMax: 300000,
-    currency: "RUB",
-    status: "active",
-    priority: "high",
-    created: "2024-01-12",
-    deadline: "2024-02-20",
-    description: "Join our backend team to build scalable banking solutions...",
-    interviewDuration: 90,
-    technicalWeight: 60,
-    behavioralWeight: 25,
-    softSkillsWeight: 15,
-    candidates: [
-      { id: "c9", name: "Pavel Fedorov", position: "Backend Engineer", matchScore: 93, status: "interview", uploadDate: "2024-01-14" },
-      { id: "c10", name: "Olga Sokolova", position: "Python Developer", matchScore: 87, status: "review", uploadDate: "2024-01-15" },
-      { id: "c11", name: "Viktor Petrov", position: "Java Developer", matchScore: 84, status: "new", uploadDate: "2024-01-16" },
-      { id: "c12", name: "Marina Lebedeva", position: "Backend Dev", matchScore: 76, status: "new", uploadDate: "2024-01-17" },
-    ],
-    customQuestions: [
-      { id: "q6", question: "Explain your approach to microservices architecture", type: "technical", required: true },
-      { id: "q7", question: "How do you ensure API security?", type: "technical", required: true },
-    ]
-  },
-];
+import vacanciesApi from "@/lib/api/vacancies";
+import candidatesApi from "@/lib/api/candidates";
+// All mock data removed - using real API
 
 export default function VacanciesPage() {
   const [isLoading, setIsLoading] = useState(true)
-  const [vacancies, setVacancies] = useState(mockVacancies)
-  const [expandedVacancies, setExpandedVacancies] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
+  const [filterDepartment, setFilterDepartment] = useState("all")
+  const [showInactive, setShowInactive] = useState(false)
+  const [vacancies, setVacancies] = useState<any[]>([])
+  const [stats, setStats] = useState({ total: 0, active: 0, paused: 0, closed: 0 })
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
   const [selectedVacancyForQuestion, setSelectedVacancyForQuestion] = useState<string | null>(null)
@@ -206,24 +117,41 @@ export default function VacanciesPage() {
     softSkillsWeight: 30
   })
 
-  // Simulate data loading
+  // Load real data from API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
-  }, [])
+    loadVacancies()
+  }, [searchQuery, filterStatus, filterDepartment])
 
-  // Filter logic
-  const filteredVacancies = useMemo(() => {
-    return vacancies.filter(vacancy => {
-      const matchesSearch = vacancy.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           vacancy.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           vacancy.location.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = filterStatus === "all" || vacancy.status === filterStatus
-      return matchesSearch && matchesStatus
-    })
-  }, [vacancies, searchQuery, filterStatus])
+  const loadVacancies = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Prepare filters
+      const filters: any = {}
+      if (searchQuery) filters.search = searchQuery
+      if (filterStatus !== 'all') filters.status = filterStatus
+      if (filterDepartment !== 'all') filters.department = filterDepartment
+      
+      // Load vacancies and stats
+      const [vacanciesResponse, vacancyStats] = await Promise.all([
+        vacanciesApi.getVacancies(filters),
+        vacanciesApi.getVacancyStats()
+      ])
+
+      setVacancies(vacanciesResponse.vacancies)
+      setStats(vacancyStats)
+      
+    } catch (error) {
+      console.error('Failed to load vacancies:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Filtering now handled by API - using vacancies directly from state
+  const filteredVacancies = vacancies
+  
+  const [expandedVacancies, setExpandedVacancies] = useState<string[]>([])
 
   const toggleVacancyExpansion = (vacancyId: string) => {
     setExpandedVacancies(prev => 
@@ -233,106 +161,106 @@ export default function VacanciesPage() {
     )
   }
 
-  const handleRemoveCandidate = (vacancyId: string, candidateId: string) => {
-    setVacancies(prev => prev.map(vacancy => {
-      if (vacancy.id === vacancyId) {
-        return {
-          ...vacancy,
-          candidates: vacancy.candidates.filter(c => c.id !== candidateId)
-        }
-      }
-      return vacancy
-    }))
+  const handleRemoveCandidate = async (vacancyId: string, candidateId: string) => {
+    try {
+      await vacanciesApi.removeCandidateFromVacancy(vacancyId, candidateId)
+      // Refresh vacancies to get updated data
+      loadVacancies()
+    } catch (error) {
+      console.error('Failed to remove candidate:', error)
+    }
   }
 
-  const handleAddQuestion = (vacancyId: string, question: any) => {
-    setVacancies(prev => prev.map(vacancy => {
-      if (vacancy.id === vacancyId) {
-        return {
-          ...vacancy,
-          customQuestions: [...vacancy.customQuestions, { ...question, id: `q${Date.now()}` }]
-        }
-      }
-      return vacancy
-    }))
-    setIsAddQuestionOpen(false)
-    setSelectedVacancyForQuestion(null)
+  const handleAddQuestion = async (vacancyId: string, question: any) => {
+    try {
+      await vacanciesApi.addCustomQuestion(vacancyId, question)
+      // Refresh vacancies to get updated data
+      loadVacancies()
+      setIsAddQuestionOpen(false)
+      setSelectedVacancyForQuestion(null)
+    } catch (error) {
+      console.error('Failed to add question:', error)
+    }
   }
 
-  const handleRemoveQuestion = (vacancyId: string, questionId: string) => {
-    setVacancies(prev => prev.map(vacancy => {
-      if (vacancy.id === vacancyId) {
-        return {
-          ...vacancy,
-          customQuestions: vacancy.customQuestions.filter(q => q.id !== questionId)
-        }
-      }
-      return vacancy
-    }))
+  const handleRemoveQuestion = async (vacancyId: string, questionId: string) => {
+    try {
+      await vacanciesApi.removeCustomQuestion(vacancyId, questionId)
+      // Refresh vacancies to get updated data
+      loadVacancies()
+    } catch (error) {
+      console.error('Failed to remove question:', error)
+    }
   }
 
-  const handleUpdateVacancyConfig = () => {
+  const handleUpdateVacancyConfig = async () => {
     if (editingVacancyConfig) {
-      setVacancies(prev => prev.map(vacancy => {
-        if (vacancy.id === editingVacancyConfig.id) {
-          return {
-            ...vacancy,
-            interviewDuration: editingVacancyConfig.interviewDuration,
-            technicalWeight: editingVacancyConfig.technicalWeight,
-            behavioralWeight: editingVacancyConfig.behavioralWeight,
-            softSkillsWeight: editingVacancyConfig.softSkillsWeight
-          }
+      try {
+        const updateData = {
+          interviewDuration: editingVacancyConfig.interviewDuration,
+          technicalWeight: editingVacancyConfig.technicalWeight,
+          behavioralWeight: editingVacancyConfig.behavioralWeight,
+          softSkillsWeight: editingVacancyConfig.softSkillsWeight
         }
-        return vacancy
-      }))
-      setIsEditConfigOpen(false)
-      setEditingVacancyConfig(null)
-    }
-  }
-
-  const handleCreateVacancy = () => {
-    if (newVacancy.title && newVacancy.department && newVacancy.location) {
-      const vacancy = {
-        ...newVacancy,
-        id: `v-${Date.now()}`,
-        created: new Date().toISOString().split('T')[0],
-        candidates: [],
-        customQuestions: []
+        await vacanciesApi.updateVacancy(editingVacancyConfig.id, updateData)
+        // Refresh vacancies to get updated data
+        loadVacancies()
+        setIsEditConfigOpen(false)
+        setEditingVacancyConfig(null)
+      } catch (error) {
+        console.error('Failed to update vacancy config:', error)
       }
-      setVacancies(prev => [vacancy, ...prev])
-      setIsCreateVacancyOpen(false)
-      setCreateMethod("manual")
-      setImportLink("")
-      setNewVacancy({
-        title: "",
-        department: "",
-        location: "",
-        type: "Full-time",
-        experience: "",
-        salaryMin: 0,
-        salaryMax: 0,
-        currency: "RUB",
-        status: "draft",
-        priority: "medium",
-        deadline: "",
-        description: "",
-        interviewDuration: 60,
-        technicalWeight: 40,
-        behavioralWeight: 30,
-        softSkillsWeight: 30
-      })
     }
   }
 
-  const handleFileUpload = useCallback((acceptedFiles: File[]) => {
+  const handleCreateVacancy = async () => {
+    if (newVacancy.title && newVacancy.department && newVacancy.location) {
+      try {
+        await vacanciesApi.createVacancy(newVacancy)
+        // Refresh vacancies to get updated data
+        loadVacancies()
+        setIsCreateVacancyOpen(false)
+        setCreateMethod("manual")
+        setImportLink("")
+        setNewVacancy({
+          title: "",
+          department: "",
+          location: "",
+          type: "Full-time",
+          experience: "",
+          salaryMin: 0,
+          salaryMax: 0,
+          currency: "RUB",
+          status: "draft",
+          priority: "medium",
+          deadline: "",
+          description: "",
+          interviewDuration: 60,
+          technicalWeight: 40,
+          behavioralWeight: 30,
+          softSkillsWeight: 30
+        })
+      } catch (error) {
+        console.error('Failed to create vacancy:', error)
+      }
+    }
+  }
+
+  const handleFileUpload = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0]
       setIsImporting(true)
       
-      // Simulate file parsing
-      setTimeout(() => {
-        // Mock parsed data from file
-        const parsedVacancy = {
+      try {
+        // Use real API to parse file
+        const parsedVacancy = await vacanciesApi.importVacancyFromFile(file)
+        setNewVacancy(parsedVacancy)
+        // Switch to manual tab to show imported data
+        setCreateMethod("manual")
+      } catch (error) {
+        console.error('Failed to import file:', error)
+        // Fallback to default values on error
+        setNewVacancy({
           title: "Imported: " + file.name.replace(/\.[^/.]+$/, ""),
           department: "Engineering",
           location: "Moscow",
@@ -349,24 +277,29 @@ export default function VacanciesPage() {
           technicalWeight: 40,
           behavioralWeight: 30,
           softSkillsWeight: 30
-        }
-        
-        setNewVacancy(parsedVacancy)
-        setIsImporting(false)
-        // Switch to manual tab to show imported data
+        })
         setCreateMethod("manual")
-      }, 1500)
+      } finally {
+        setIsImporting(false)
+      }
     }
   }, [])
 
-  const handleLinkImport = () => {
+  const handleLinkImport = async () => {
     if (importLink) {
       setIsImporting(true)
       
-      // Simulate fetching from link
-      setTimeout(() => {
-        // Mock data from link
-        const importedVacancy = {
+      try {
+        // Use real API to import from link
+        const importedVacancy = await vacanciesApi.importVacancyFromLink(importLink)
+        setNewVacancy(importedVacancy)
+        setImportLink("")
+        // Switch to manual tab to show imported data
+        setCreateMethod("manual")
+      } catch (error) {
+        console.error('Failed to import from link:', error)
+        // Fallback to default values on error
+        setNewVacancy({
           title: "Senior Full Stack Developer",
           department: "Engineering",
           location: "Remote",
@@ -383,14 +316,12 @@ export default function VacanciesPage() {
           technicalWeight: 50,
           behavioralWeight: 30,
           softSkillsWeight: 20
-        }
-        
-        setNewVacancy(importedVacancy)
-        setIsImporting(false)
+        })
         setImportLink("")
-        // Switch to manual tab to show imported data
         setCreateMethod("manual")
-      }, 2000)
+      } finally {
+        setIsImporting(false)
+      }
     }
   }
 

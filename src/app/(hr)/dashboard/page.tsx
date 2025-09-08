@@ -19,6 +19,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import vacanciesApi from "@/lib/api/vacancies";
+import candidatesApi from "@/lib/api/candidates";
+import interviewsApi from "@/lib/api/interviews";
+import reportsApi from "@/lib/api/reports";
 import { 
   Brain,
   Clock,
@@ -119,130 +123,106 @@ export default function DashboardPage() {
   const [customQuestions, setCustomQuestions] = useState<string[]>([])
   const [currentQuestion, setCurrentQuestion] = useState<string>("")
 
-  // Simulate data loading
+  // State for real data
+  const [stats, setStats] = useState({
+    openPositions: 0,
+    totalCandidates: 0,
+    interviewsToday: 0,
+    pendingReviews: 0
+  })
+  const [topCandidates, setTopCandidates] = useState<any[]>([])
+  const [recentReports, setRecentReports] = useState<any[]>([])
+
+  // Load real data from APIs
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    return () => clearTimeout(timer)
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Load stats from all services
+        const [vacancyStats, candidateStats, interviewStats, reportStats] = await Promise.all([
+          vacanciesApi.getVacancyStats(),
+          candidatesApi.getCandidateStats(),
+          interviewsApi.getInterviewStats(),
+          reportsApi.getRecentReports({ limit: 5 })
+        ])
+
+        setStats({
+          openPositions: vacancyStats.active,
+          totalCandidates: candidateStats.total,
+          interviewsToday: interviewStats.scheduled,
+          pendingReviews: reportStats.total
+        })
+
+        // Load top candidates
+        const candidatesResponse = await candidatesApi.getCandidates({
+          sortBy: 'matchScore',
+          sortOrder: 'desc',
+          limit: 10
+        })
+        setTopCandidates(candidatesResponse.candidates)
+        
+        setRecentReports(reportStats.reports || [])
+        
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadDashboardData()
   }, [])
 
-  // Mock data - in real app would come from backend
-  const quickStats = {
-    openPositions: 12,
-    totalCandidates: 347,
-    interviewsToday: 3,
-    pendingReviews: 18
-  }
+  // All candidate data now loaded from real API
 
-  const topMatchCandidates = [
-    {
-      id: 1,
-      name: "Maria Petrova",
-      position: "Senior Frontend Developer",
-      matchScore: 95,
-      vacancy: "Senior React Developer",
-      skills: ["React", "TypeScript", "Next.js"],
-      experience: "7 years",
-      status: "new",
-      avatar: null
-    },
-    {
-      id: 2,
-      name: "Alexander Smirnov",
-      position: "Product Manager",
-      matchScore: 92,
-      vacancy: "Product Manager",
-      skills: ["Agile", "Analytics", "Strategy"],
-      experience: "5 years",
-      status: "reviewing",
-      avatar: null
-    },
-    {
-      id: 3,
-      name: "Elena Kozlova",
-      position: "Backend Developer",
-      matchScore: 89,
-      vacancy: "Backend Developer",
-      skills: ["Node.js", "Python", "MongoDB"],
-      experience: "4 years",
-      status: "interview",
-      avatar: null
-    },
-    {
-      id: 4,
-      name: "Ivan Petrov",
-      position: "DevOps Engineer",
-      matchScore: 87,
-      vacancy: "DevOps Engineer",
-      skills: ["Docker", "K8s", "AWS"],
-      experience: "6 years",
-      status: "new",
-      avatar: null
-    },
-    {
-      id: 5,
-      name: "Natalia Volkova",
-      position: "UX/UI Designer",
-      matchScore: 85,
-      vacancy: "UX/UI Designer",
-      skills: ["Figma", "Prototyping", "Research"],
-      experience: "3 years",
-      status: "reviewing",
-      avatar: null
+  // AI Interview Schedule - loaded from real API
+  const [todayInterviews, setTodayInterviews] = useState<any[]>([])
+
+  // Load today's interviews
+  useEffect(() => {
+    const loadTodayInterviews = async () => {
+      try {
+        const today = new Date()
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0))
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999))
+        
+        const interviewsResponse = await interviewsApi.getInterviews({
+          dateFrom: startOfDay.toISOString(),
+          dateTo: endOfDay.toISOString(),
+          sortBy: 'scheduledAt',
+          sortOrder: 'asc'
+        })
+        
+        setTodayInterviews(interviewsResponse.interviews)
+      } catch (error) {
+        console.error('Failed to load today interviews:', error)
+      }
     }
-  ]
 
-  // AI Interview Schedule - These are interviews being conducted by AI
-  const aiInterviews = [
-    {
-      id: 1,
-      time: "10:00 AM",
-      candidateName: "Ivan Petrov",
-      position: "Frontend Developer",
-      interviewType: "Technical",
-      status: "scheduled",
-      duration: "45 min",
-      matchScore: 92
-    },
-    {
-      id: 2,
-      time: "11:00 AM",
-      candidateName: "Maria Kozlova",
-      position: "Backend Developer",
-      interviewType: "Behavioral",
-      status: "in-progress",
-      duration: "30 min",
-      matchScore: 88
-    },
-    {
-      id: 3,
-      time: "2:30 PM",
-      candidateName: "Alexander Smirnov",
-      position: "Data Scientist",
-      interviewType: "Technical",
-      status: "scheduled",
-      duration: "60 min",
-      matchScore: 95
-    },
-    {
-      id: 4,
-      time: "4:00 PM",
-      candidateName: "Elena Volkova",
-      position: "Frontend Developer",
-      interviewType: "Experience",
-      status: "scheduled",
-      duration: "45 min",
-      matchScore: 85
+    loadTodayInterviews()
+  }, [])
+
+  // Load top vacancies
+  const [topVacancies, setTopVacancies] = useState<any[]>([])
+  
+  useEffect(() => {
+    const loadTopVacancies = async () => {
+      try {
+        const vacanciesResponse = await vacanciesApi.getVacancies({
+          status: 'active',
+          sortBy: 'applicants',
+          sortOrder: 'desc',
+          limit: 4
+        })
+        setTopVacancies(vacanciesResponse.vacancies)
+      } catch (error) {
+        console.error('Failed to load top vacancies:', error)
+      }
     }
-  ]
 
-  const topVacancies = [
-    { id: 1, title: "Senior React Developer", uploadedCVs: 45, new: 12, status: "active" },
-    { id: 2, title: "Product Manager", uploadedCVs: 23, new: 5, status: "active" },
-    { id: 3, title: "DevOps Engineer", uploadedCVs: 31, new: 8, status: "active" },
-    { id: 4, title: "QA Automation Engineer", uploadedCVs: 18, new: 3, status: "paused" }
-  ]
+    loadTopVacancies()
+  }, [])
 
 
   const onDropCVs = useCallback((acceptedFiles: File[]) => {
@@ -1432,12 +1412,12 @@ export default function DashboardPage() {
               </div>
             </CardTitle>
             <CardDescription className="text-xs">
-              Next {Math.min(5, aiInterviews.length)} interviews • {aiInterviews.filter(i => i.status === 'in-progress').length} in progress
+              Next {Math.min(5, todayInterviews.length)} interviews • {todayInterviews.filter(i => i.status === 'in_progress').length} in progress
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col pt-2">
             <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {aiInterviews.slice(0, 5).map((interview) => (
+              {todayInterviews.slice(0, 5).map((interview) => (
                 <div 
                   key={interview.id} 
                   onClick={() => document.getElementById('calendar-trigger')?.click()}
@@ -1505,9 +1485,10 @@ export default function DashboardPage() {
                       { time: '6:00 PM', hour: 18 }
                     ].map((slot, index) => {
                       // Find interviews for this time slot
-                      const slotInterviews = aiInterviews.filter(interview => {
-                        // Match the time format
-                        return interview.time.replace(' ', '') === slot.time.replace(' ', '');
+                      const slotInterviews = todayInterviews.filter(interview => {
+                        // Match the scheduled time with slot time
+                        const interviewTime = new Date(interview.scheduledAt);
+                        return interviewTime.getHours() === slot.hour;
                       });
                       
                       return (
@@ -1565,12 +1546,12 @@ export default function DashboardPage() {
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-center">
                       <div className="text-sm">
-                        <span className="font-medium">Total interviews today:</span> {aiInterviews.length}
+                        <span className="font-medium">Total interviews today:</span> {todayInterviews.length}
                       </div>
                       <div className="text-sm">
-                        <span className="font-medium">Average match score:</span> {
-                          aiInterviews.length > 0 
-                            ? Math.round(aiInterviews.reduce((sum, i) => sum + i.matchScore, 0) / aiInterviews.length)
+                        <span className="font-medium">Average score:</span> {
+                          todayInterviews.length > 0 
+                            ? Math.round(todayInterviews.reduce((sum, i) => sum + (i.score || 0), 0) / todayInterviews.length)
                             : 0
                         }%
                       </div>
@@ -1595,7 +1576,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col pt-2">
             <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {topMatchCandidates.slice(0, 4).map((candidate) => (
+              {topCandidates.slice(0, 4).map((candidate) => (
                 <Link key={candidate.id} href={`/candidates/${candidate.id}`} className="block group">
                   <div className="flex items-center gap-2 p-2 rounded-lg border hover:bg-gray-50 hover:border-[#1B4F8C]/20 transition-all cursor-pointer">
                     {/* Avatar - simple without badge */}

@@ -126,6 +126,23 @@ export const reportsApi = {
     return response.data;
   },
 
+  // Get Recent Reports
+  getRecentReports: async (params: { limit?: number } = {}): Promise<CandidateReport[]> => {
+    try {
+      const response = await apiClient.get("/v1/reports", {
+        params: {
+          limit: params.limit || 10,
+          sortBy: "createdAt",
+          sortOrder: "desc"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.warn("Recent reports endpoint not available, returning empty array");
+      return [];
+    }
+  },
+
   // Get All Reports (custom endpoint - you might need to add this to backend)
   getAllReports: async (): Promise<CandidateReport[]> => {
     try {
@@ -139,6 +156,9 @@ export const reportsApi = {
     }
   },
 };
+
+// Default export for easier imports
+export default reportsApi;
 
 // Helper function to download PDF file
 export const downloadPdfFile = (blob: Blob, filename: string) => {

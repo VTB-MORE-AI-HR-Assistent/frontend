@@ -9,8 +9,8 @@ import { RefreshResponse } from "./types";
 // API URL configuration
 // - Production: https://api.hraiassistant.ru (with proper SSL certificate)
 // - Local development: http://localhost:8081
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "http://api-gateway:8081/api";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+const baseURL = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
 const API_URL = baseURL;
 const API_TIMEOUT = parseInt(
   process.env.NEXT_PUBLIC_API_TIMEOUT || "30000",

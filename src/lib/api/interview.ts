@@ -1,5 +1,7 @@
-// Phase 4.1: Interview API Service with Mock Implementation
-// Note: Using mock data until backend is ready
+// Real Interview API Service - integrated with backend microservices
+// This replaces the previous mock implementation
+
+import interviewsApi from './interviews'
 
 // TypeScript Interfaces
 export interface InterviewSession {
@@ -59,33 +61,8 @@ export interface ApiResponse<T> {
   }
 }
 
-// Mock session store for testing
+// Test session store for backward compatibility (can be removed when no longer needed)
 const testSessions = new Map<string, InterviewSession>()
-
-// Mock data generator utilities
-const generateMockSession = (sessionId: string): InterviewSession => {
-  // Check if we have a test session stored
-  const testSession = testSessions.get(sessionId)
-  if (testSession) {
-    return testSession
-  }
-  
-  // Generate default mock session
-  return {
-    sessionId,
-    candidateId: `candidate_${Math.random().toString(36).substr(2, 9)}`,
-    candidateName: ['John Doe', 'Jane Smith', 'Alex Johnson', 'Maria Garcia'][Math.floor(Math.random() * 4)],
-    candidateEmail: `candidate${Math.floor(Math.random() * 100)}@example.com`,
-    jobTitle: ['Senior Frontend Developer', 'Backend Engineer', 'Full Stack Developer', 'DevOps Engineer'][Math.floor(Math.random() * 4)],
-    jobDescription: 'We are looking for an experienced developer to join our team...',
-    department: 'Engineering',
-    scheduledTime: new Date(Date.now() + 5 * 60000), // 5 minutes from now
-    duration: 30,
-    status: 'scheduled',
-    interviewType: 'technical',
-    difficulty: 'senior'
-  }
-}
 
 // Helper function to register test sessions
 export function registerTestSession(data: {
@@ -119,77 +96,48 @@ export function getTestSession(sessionId: string): InterviewSession | undefined 
   return testSessions.get(sessionId)
 }
 
-const generateMockToken = (): string => {
-  // Generate a mock JWT-like token
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = btoa(JSON.stringify({ 
-    exp: Date.now() + 3600000,
-    sessionId: Math.random().toString(36).substr(2, 9),
-    role: 'participant'
-  }))
-  const signature = Math.random().toString(36).substr(2, 20)
-  return `${header}.${payload}.${signature}`
+// Helper functions for backward compatibility
+const convertToLegacyFormat = (session: any): InterviewSession => {
+  return {
+    sessionId: session.id,
+    candidateId: session.candidateId,
+    candidateName: session.candidateName,
+    candidateEmail: session.candidateEmail,
+    jobTitle: session.jobTitle,
+    jobDescription: session.jobDescription,
+    department: session.department,
+    scheduledTime: new Date(session.scheduledTime),
+    duration: session.duration,
+    status: session.status,
+    interviewType: session.interviewType,
+    difficulty: session.difficulty
+  }
 }
 
-// Mock delay to simulate network latency
-const mockDelay = (ms: number = 800) => new Promise(resolve => setTimeout(resolve, ms))
-
-// Interview API Service
+// Interview API Service - now using real backend
 export const interviewApi = {
   /**
    * Validate interview session
    * GET /api/interviews/validate/:sessionId
    */
   validateSession: async (sessionId: string, token?: string): Promise<ApiResponse<InterviewValidation>> => {
-    console.log('[Mock API] Validating session:', sessionId)
-    await mockDelay()
-
-    if (!token) {
-      return {
-        success: false,
-        error: {
-          code: 'MISSING_TOKEN',
-          message: 'Authentication token is required'
-        }
-      }
-    }
-
-    // Always succeed for test sessions
-    const isTestSession = sessionId.startsWith('test-')
-    if (isTestSession) {
+    try {
+      const result = await interviewsApi.validateSession(sessionId, token)
       return {
         success: true,
         data: {
-          isValid: true,
-          session: generateMockSession(sessionId),
-          remainingTime: 30 // 30 minutes until expiry
+          isValid: result.isValid,
+          session: result.session ? convertToLegacyFormat(result.session) : undefined,
+          remainingTime: result.remainingTime
         }
       }
-    }
-
-    // Mock validation logic for non-test sessions
-    const isValid = Math.random() > 0.2 // 80% success rate
-    
-    if (!isValid) {
-      const errorTypes = [
-        { code: 'SESSION_EXPIRED', message: 'This interview session has expired' },
-        { code: 'INVALID_TOKEN', message: 'Invalid or expired authentication token' },
-        { code: 'SESSION_NOT_FOUND', message: 'Interview session not found' }
-      ]
-      const error = errorTypes[Math.floor(Math.random() * errorTypes.length)]
-      
+    } catch (error: any) {
       return {
         success: false,
-        error
-      }
-    }
-
-    return {
-      success: true,
-      data: {
-        isValid: true,
-        session: generateMockSession(sessionId),
-        remainingTime: 30 // 30 minutes until expiry
+        error: {
+          code: error.code || 'VALIDATION_ERROR',
+          message: error.message || 'Failed to validate session'
+        }
       }
     }
   },
@@ -199,23 +147,20 @@ export const interviewApi = {
    * GET /api/interviews/:sessionId
    */
   getInterviewDetails: async (sessionId: string): Promise<ApiResponse<InterviewSession>> => {
-    console.log('[Mock API] Getting interview details:', sessionId)
-    await mockDelay(600)
-
-    // 90% success rate for getting details
-    if (Math.random() > 0.9) {
+    try {
+      const session = await interviewsApi.getInterview(sessionId)
+      return {
+        success: true,
+        data: convertToLegacyFormat(session)
+      }
+    } catch (error: any) {
       return {
         success: false,
         error: {
-          code: 'NOT_FOUND',
-          message: 'Interview session not found'
+          code: error.code || 'NOT_FOUND',
+          message: error.message || 'Interview session not found'
         }
       }
-    }
-
-    return {
-      success: true,
-      data: generateMockSession(sessionId)
     }
   },
 
@@ -224,32 +169,26 @@ export const interviewApi = {
    * POST /api/interviews/:sessionId/join
    */
   joinInterview: async (sessionId: string): Promise<ApiResponse<RoomCredentials>> => {
-    console.log('[Mock API] Joining interview:', sessionId)
-    await mockDelay(1000)
-
-    // 95% success rate for joining
-    if (Math.random() > 0.95) {
+    try {
+      const credentials = await interviewsApi.joinInterview(sessionId)
+      return {
+        success: true,
+        data: {
+          roomUrl: credentials.roomUrl,
+          token: credentials.token,
+          expiresAt: new Date(credentials.expiresAt),
+          enableRecording: credentials.enableRecording,
+          maxDuration: credentials.maxDuration
+        }
+      }
+    } catch (error: any) {
       return {
         success: false,
         error: {
-          code: 'ROOM_CREATION_FAILED',
-          message: 'Failed to create interview room. Please try again.'
+          code: error.code || 'ROOM_CREATION_FAILED',
+          message: error.message || 'Failed to create interview room. Please try again.'
         }
       }
-    }
-
-    // Generate mock Daily.co room credentials
-    const roomCredentials: RoomCredentials = {
-      roomUrl: `https://vtbaihr.daily.co/interview-${sessionId}`,
-      token: generateMockToken(),
-      expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
-      enableRecording: true,
-      maxDuration: 60 // 60 minutes max
-    }
-
-    return {
-      success: true,
-      data: roomCredentials
     }
   },
 
@@ -258,21 +197,26 @@ export const interviewApi = {
    * POST /api/interviews/:sessionId/end
    */
   endInterview: async (sessionId: string, duration: number): Promise<ApiResponse<InterviewResult>> => {
-    console.log('[Mock API] Ending interview:', sessionId, 'Duration:', duration)
-    await mockDelay(500)
-
-    // Always succeed for ending interview
-    const result: InterviewResult = {
-      sessionId,
-      duration,
-      completedAt: new Date(),
-      status: 'completed',
-      nextSteps: 'Thank you for participating. We will contact you within 2-3 business days with the results.'
-    }
-
-    return {
-      success: true,
-      data: result
+    try {
+      const result = await interviewsApi.endInterview(sessionId, { duration })
+      return {
+        success: true,
+        data: {
+          sessionId: result.sessionId,
+          duration: result.duration,
+          completedAt: new Date(result.completedAt),
+          status: result.status,
+          nextSteps: result.nextSteps
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.code || 'END_FAILED',
+          message: error.message || 'Failed to end interview'
+        }
+      }
     }
   },
 
@@ -285,27 +229,24 @@ export const interviewApi = {
     issueType: TechnicalIssue['issueType'], 
     description: string
   ): Promise<ApiResponse<{ ticketId: string }>> => {
-    console.log('[Mock API] Reporting issue:', { sessionId, issueType, description })
-    await mockDelay(400)
-
-    // Always succeed for issue reporting
-    const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`
-
-    // Store the issue (in real implementation, this would go to backend)
-    const issue: TechnicalIssue = {
-      sessionId,
-      issueType,
-      description,
-      timestamp: new Date(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-      resolved: false
-    }
-
-    console.log('[Mock API] Issue logged:', issue)
-
-    return {
-      success: true,
-      data: { ticketId }
+    try {
+      const result = await interviewsApi.reportIssue(sessionId, {
+        issueType,
+        description,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
+      })
+      return {
+        success: true,
+        data: { ticketId: result.ticketId }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.code || 'REPORT_FAILED',
+          message: error.message || 'Failed to report issue'
+        }
+      }
     }
   },
 
@@ -317,16 +258,23 @@ export const interviewApi = {
     participantCount: number,
     aiBotJoined: boolean 
   }>> => {
-    console.log('[Mock API] Checking room status:', sessionId)
-    await mockDelay(300)
-
-    // Mock room status
-    return {
-      success: true,
-      data: {
-        isActive: Math.random() > 0.3,
-        participantCount: Math.floor(Math.random() * 2) + 1,
-        aiBotJoined: Math.random() > 0.2
+    try {
+      const status = await interviewsApi.getRoomStatus(sessionId)
+      return {
+        success: true,
+        data: {
+          isActive: status.isActive,
+          participantCount: status.participantCount,
+          aiBotJoined: status.aiBotJoined
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.code || 'STATUS_ERROR',
+          message: error.message || 'Failed to check room status'
+        }
       }
     }
   },
@@ -343,53 +291,27 @@ export const interviewApi = {
       expectedDuration: number
     }>
   }>> => {
-    console.log('[Mock API] Getting interview questions:', sessionId)
-    await mockDelay(700)
-
-    const mockQuestions = [
-      {
-        id: 'q1',
-        question: 'Tell me about yourself and your experience',
-        category: 'introduction',
-        difficulty: 'easy',
-        expectedDuration: 120
-      },
-      {
-        id: 'q2',
-        question: 'What are your key technical skills?',
-        category: 'technical',
-        difficulty: 'medium',
-        expectedDuration: 180
-      },
-      {
-        id: 'q3',
-        question: 'Describe a challenging project you worked on',
-        category: 'behavioral',
-        difficulty: 'medium',
-        expectedDuration: 240
-      },
-      {
-        id: 'q4',
-        question: 'Where do you see yourself in 5 years?',
-        category: 'cultural',
-        difficulty: 'easy',
-        expectedDuration: 120
+    try {
+      const questions = await interviewsApi.getQuestions(sessionId)
+      return {
+        success: true,
+        data: { questions }
       }
-    ]
-
-    return {
-      success: true,
-      data: { questions: mockQuestions }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.code || 'QUESTIONS_ERROR',
+          message: error.message || 'Failed to get interview questions'
+        }
+      }
     }
   }
 }
 
-// Export a mock-aware version that can be toggled
-export const createInterviewApi = (useMock: boolean = true) => {
-  if (!useMock) {
-    // In future, this would return the real API implementation
-    console.warn('Real API not implemented yet, using mock')
-  }
+// Export real API implementation (no longer mock)
+export const createInterviewApi = (useMock: boolean = false) => {
+  // Always use real API now
   return interviewApi
 }
 
