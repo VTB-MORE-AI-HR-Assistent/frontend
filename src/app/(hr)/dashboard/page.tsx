@@ -291,6 +291,33 @@ export default function DashboardPage() {
 
   const onDropCVs = useCallback((acceptedFiles: File[]) => {
     setUploadedCVs(prev => [...prev, ...acceptedFiles])
+    
+    // Если загружается резюме, автоматически добавляем Журавлева Александра в список кандидатов
+    if (acceptedFiles.length > 0) {
+      const newCandidate: Candidate = {
+        id: "cand-uploaded",
+        name: "Журавлев Александр Александрович",
+        email: "a_zhuravlev_9785@mail.ru",
+        phone: "+7 (978) 555-12-34",
+        position: "Senior Full-Stack Developer",
+        experience: 5,
+        skills: ["React", "TypeScript", "Next.js", "Node.js", "JavaScript", "HTML/CSS", "Git", "REST API"],
+        matchScore: 94,
+        status: "analyzing",
+        resumeUrl: acceptedFiles[0].name,
+        appliedAt: new Date()
+      }
+      
+      // Добавляем кандидата в список, если его еще нет, и сортируем по убыванию рейтинга
+      setTopCandidates(prev => {
+        const exists = prev.some(candidate => candidate.id === "cand-uploaded")
+        if (!exists) {
+          const updatedList = [...prev, newCandidate]
+          return updatedList.sort((a, b) => b.matchScore - a.matchScore)
+        }
+        return prev.sort((a, b) => b.matchScore - a.matchScore)
+      })
+    }
   }, [])
 
   const onDropVacancy = useCallback((acceptedFiles: File[]) => {
@@ -577,7 +604,7 @@ export default function DashboardPage() {
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Сегодня</p>
-          <p className="font-semibold">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+          <p className="font-semibold">{new Date().toLocaleDateString('ru-RU', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
 
@@ -593,10 +620,10 @@ export default function DashboardPage() {
                     <div className="h-10 w-10 rounded-full bg-[#1B4F8C] flex items-center justify-center">
                       <Brain className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold">Start Hiring with AI</h3>
+                    <h3 className="text-lg font-semibold">Начать подбор с ИИ</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Upload vacancy → AI screens CVs → Schedule top candidates
+                    Загрузить вакансию → ИИ анализирует резюме → Запланировать интервью
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -624,7 +651,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Button className="bg-[#1B4F8C] hover:bg-[#163c6e] group-hover:scale-105 transition-transform">
-                    Start Now
+                    Начать
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -1080,7 +1107,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-1 flex flex-col h-full">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-base">
-              <span>Top Match Candidates</span>
+              <span>Лучшие кандидаты</span>
               <Sparkles className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
             <CardDescription className="text-xs">

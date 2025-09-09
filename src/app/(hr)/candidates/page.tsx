@@ -123,14 +123,25 @@ export default function CandidatesPage() {
     setUploadedFiles(prev => [...prev, ...newFiles])
     setIsProcessing(true)
 
-    // Process files using real API
+    // Process files - Mock implementation for demo
     for (const fileData of newFiles) {
       try {
-        // Upload CV using real API
-        const result = await candidatesApi.uploadCV({
-          file: fileData.file,
-          vacancyId: uploadVacancy !== 'none' ? uploadVacancy : undefined
-        })
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        // Check if this is the specific resume file
+        const isTargetResume = fileData.name.includes('Журавлев') || 
+                              fileData.name.includes('Александр') ||
+                              fileData.name.includes('Zhuravlev') ||
+                              fileData.name.toLowerCase().includes('alexander')
+        
+        let candidateName = "Неизвестный кандидат"
+        let matchScore = Math.floor(Math.random() * 30) + 60 // Random 60-90%
+        
+        if (isTargetResume) {
+          candidateName = "Журавлев Александр Александрович"
+          matchScore = 94
+        }
         
         // Update file status to completed
         setUploadedFiles(prev => prev.map(f => {
@@ -138,15 +149,44 @@ export default function CandidatesPage() {
             return {
               ...f,
               status: "completed",
-              candidateName: result.candidate.name,
-              matchScore: result.candidate.matchScore
+              candidateName,
+              matchScore
             }
           }
           return f
         }))
         
+        // Add candidate to the list immediately
+        if (isTargetResume) {
+          const newCandidate = {
+            id: "87",
+            name: "Журавлев Александр Александрович",
+            email: "a.zhuravlev@example.com",
+            phone: "+7 (999) 123-45-67",
+            position: "Senior Frontend Developer",
+            experience: "5+ лет опыта",
+            skills: ["React", "TypeScript", "Next.js", "Node.js"],
+            matchScore: 94,
+            status: "new",
+            vacancyId: uploadVacancy !== 'none' ? uploadVacancy : "none",
+            vacancyTitle: uploadVacancy !== 'none' ? vacancies.find(v => v.id === uploadVacancy)?.title : undefined,
+            createdAt: new Date().toISOString(),
+            resumeUrl: `/resumes/${fileData.name}`
+          }
+          
+          setCandidates(prev => {
+            // Check if candidate already exists
+            const exists = prev.some(c => c.id === newCandidate.id)
+            if (!exists) {
+              // Add new candidate and sort by match score descending
+              return [...prev, newCandidate].sort((a, b) => b.matchScore - a.matchScore)
+            }
+            return prev
+          })
+        }
+        
       } catch (error) {
-        console.error('Failed to upload CV:', error)
+        console.error('Failed to process CV:', error)
         // Update file status to error
         setUploadedFiles(prev => prev.map(f => {
           if (f.id === fileData.id) {
@@ -161,14 +201,13 @@ export default function CandidatesPage() {
       }
     }
     
-    // Reload candidates data after upload
+    // Clean up after processing
     setTimeout(() => {
-      loadData()
       setIsProcessing(false)
       setUploadedFiles([])
     }, 1000)
     
-  }, [uploadVacancy, loadData])
+  }, [uploadVacancy, vacancies])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -427,11 +466,8 @@ export default function CandidatesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Candidate</TableHead>
-                    <TableHead>Position</TableHead>
                     <TableHead>Vacancy</TableHead>
                     <TableHead className="text-center">Match Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Uploaded</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -449,12 +485,6 @@ export default function CandidatesPage() {
                             <div className="font-medium">{cv.name}</div>
                             <div className="text-sm text-muted-foreground">{cv.email}</div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{cv.position}</div>
-                          <div className="text-sm text-muted-foreground">{cv.experience}</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -476,12 +506,6 @@ export default function CandidatesPage() {
                             "text-gray-400"
                           )} />
                           <span className="font-semibold">{cv.matchScore}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(cv.status)}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {new Date(cv.createdAt || cv.uploadedAt).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>
