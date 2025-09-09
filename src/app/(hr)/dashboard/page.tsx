@@ -53,7 +53,7 @@ import {
   Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "complete"
+type PipelineStep = "vacancy" | "upload" | "interview-config" | "complete"
 
 interface Candidate {
   id: string
@@ -108,6 +108,7 @@ export default function DashboardPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   
   // Question distribution state
   const [questionDistribution, setQuestionDistribution] = useState({
@@ -119,7 +120,7 @@ export default function DashboardPage() {
   // Question selection state
   const [questionSelectionMode, setQuestionSelectionMode] = useState<"auto" | "role" | "custom">("auto")
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
-  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([])
+  const [selectedQuestions, setSelectedQuestions] = useState<Record<string, unknown>[]>([])
   const [customQuestions, setCustomQuestions] = useState<string[]>([])
   const [currentQuestion, setCurrentQuestion] = useState<string>("")
 
@@ -130,8 +131,8 @@ export default function DashboardPage() {
     interviewsToday: 0,
     pendingReviews: 0
   })
-  const [topCandidates, setTopCandidates] = useState<any[]>([])
-  const [recentReports, setRecentReports] = useState<any[]>([])
+  const [topCandidates, setTopCandidates] = useState<Record<string, unknown>[]>([])
+  const [recentReports, setRecentReports] = useState<Record<string, unknown>[]>([])
 
   // Load real data from APIs
   useEffect(() => {
@@ -204,7 +205,7 @@ export default function DashboardPage() {
   // All candidate data now loaded from real API
 
   // AI Interview Schedule - loaded from real API
-  const [todayInterviews, setTodayInterviews] = useState<any[]>([])
+  const [todayInterviews, setTodayInterviews] = useState<Record<string, unknown>[]>([])
 
   // Load today's interviews
   useEffect(() => {
@@ -246,7 +247,7 @@ export default function DashboardPage() {
   }, [])
 
   // Load top vacancies
-  const [topVacancies, setTopVacancies] = useState<any[]>([])
+  const [topVacancies, setTopVacancies] = useState<Record<string, unknown>[]>([])
   
   useEffect(() => {
     const loadTopVacancies = async () => {
@@ -316,8 +317,41 @@ export default function DashboardPage() {
     multiple: false
   })
 
-  const submitVacancy = () => {
-    setCurrentStep("upload")
+  const submitVacancy = async () => {
+    if (currentTab === 'file' && vacancyData.uploadedFile) {
+      try {
+        setIsProcessing(true)
+        setUploadError(null)
+        
+        // Вызываем API для загрузки и парсинга файла вакансии
+        const parsedVacancy = await vacanciesApi.uploadVacancyFile(vacancyData.uploadedFile)
+        
+        // Обновляем данные вакансии из распарсенного файла
+        setVacancyData(prev => ({
+          ...prev,
+          title: parsedVacancy.title || prev.title,
+          description: parsedVacancy.description || prev.description,
+          department: parsedVacancy.department || prev.department,
+          location: parsedVacancy.location || prev.location,
+          type: parsedVacancy.type || prev.type,
+          salaryMin: parsedVacancy.salary?.min?.toString() || prev.salaryMin,
+          salaryMax: parsedVacancy.salary?.max?.toString() || prev.salaryMax,
+          currency: parsedVacancy.salary?.currency || prev.currency,
+        }))
+        
+        console.log('Vacancy parsed successfully:', parsedVacancy)
+        setCurrentStep("upload")
+      } catch (error: unknown) {
+        console.error('Error uploading vacancy file:', error)
+        const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || 'Ошибка при загрузке файла вакансии'
+        setUploadError(errorMessage)
+      } finally {
+        setIsProcessing(false)
+      }
+    } else {
+      // Для ручного ввода просто переходим к следующему шагу
+      setCurrentStep("upload")
+    }
   }
 
   const startAnalysis = async () => {
@@ -800,17 +834,39 @@ export default function DashboardPage() {
                     </TabsContent>
                   </Tabs>
                   
+                  {/* Error Alert */}
+                  {uploadError && (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertTitle className="text-red-800">Ошибка загрузки</AlertTitle>
+                      <AlertDescription className="text-red-700">
+                        {uploadError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="flex justify-end">
                     <Button 
                       onClick={submitVacancy} 
                       disabled={
-                        currentTab === 'manual' 
-                          ? !vacancyData.title || !vacancyData.department || !vacancyData.location || !vacancyData.experience || !vacancyData.deadline || !vacancyData.description
-                          : !vacancyData.uploadedFile
+                        isProcessing || (
+                          currentTab === 'manual' 
+                            ? !vacancyData.title || !vacancyData.department || !vacancyData.location || !vacancyData.experience || !vacancyData.deadline || !vacancyData.description
+                            : !vacancyData.uploadedFile
+                        )
                       }
                     >
-                      Next: Upload CVs
-                      <ChevronRight className="ml-2 h-4 w-4" />
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Next: Upload CVs
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

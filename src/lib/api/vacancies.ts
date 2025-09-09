@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { Vacancy, CreateVacancyRequest, UpdateVacancyRequest } from '@/types';
+import { Vacancy } from '@/types';
 
 export interface VacanciesResponse {
   vacancies: Vacancy[];
@@ -41,14 +41,14 @@ export const vacanciesApi = {
     return response.data;
   },
 
-  // Создать новую вакансию
-  createVacancy: async (vacancy: CreateVacancyRequest): Promise<Vacancy> => {
+  // Создать новую вакансию (из JSON данных)
+  createVacancy: async (vacancy: Omit<Vacancy, 'id' | 'createdAt' | 'applicants' | 'interviewed'>): Promise<Vacancy> => {
     const response = await apiClient.post('/v1/vacancies', vacancy);
     return response.data;
   },
 
   // Обновить вакансию
-  updateVacancy: async (id: string, vacancy: UpdateVacancyRequest): Promise<Vacancy> => {
+  updateVacancy: async (id: string, vacancy: Partial<Omit<Vacancy, 'id' | 'createdAt'>>): Promise<Vacancy> => {
     const response = await apiClient.put(`/v1/vacancies/${id}`, vacancy);
     return response.data;
   },
@@ -59,7 +59,7 @@ export const vacanciesApi = {
   },
 
   // Поиск вакансий (используя POST /search как в backend)
-  searchVacancies: async (criteria: any): Promise<Vacancy[]> => {
+  searchVacancies: async (criteria: Record<string, unknown>): Promise<Vacancy[]> => {
     const response = await apiClient.post('/v1/vacancies/search', criteria);
     return response.data;
   },
@@ -87,7 +87,7 @@ export const vacanciesApi = {
   },
 
   // Получить кандидатов по вакансии
-  getVacancyCandidates: async (id: string): Promise<any[]> => {
+  getVacancyCandidates: async (id: string): Promise<Record<string, unknown>[]> => {
     const response = await apiClient.get(`/v1/vacancies/${id}/candidates`);
     return response.data;
   },
@@ -105,6 +105,32 @@ export const vacanciesApi = {
   // Приостановить вакансию
   pauseVacancy: async (id: string): Promise<void> => {
     await apiClient.post(`/v1/vacancies/${id}/pause`);
+  },
+
+  // Загрузить и распарсить файл вакансии
+  uploadVacancyFile: async (file: File): Promise<Vacancy> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post('/v1/vacancies/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Предварительный просмотр парсинга файла вакансии (без сохранения)
+  previewVacancyFile: async (file: File): Promise<Record<string, unknown>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post('/v1/vacancies/parse-pdf', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 };
 
