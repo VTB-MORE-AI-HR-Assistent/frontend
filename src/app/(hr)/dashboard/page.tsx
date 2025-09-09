@@ -8,17 +8,17 @@ import { useDropzone } from "react-dropzone"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton"
-import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import vacanciesApi from "@/lib/api/vacancies";
 import candidatesApi from "@/lib/api/candidates";
 import interviewsApi from "@/lib/api/interviews";
@@ -53,13 +53,14 @@ import {
   Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "complete"
+type PipelineStep = "vacancy" | "upload" | "analysis" | "complete"
 
 interface Candidate {
   id: string
   name: string
   email: string
   phone: string
+  position: string
   matchScore: number
   skills: string[]
   experience: string
@@ -406,6 +407,7 @@ export default function DashboardPage() {
           name: candidateNames[index] || `Candidate ${index + 1}`,
           email: candidateEmails[index] || `candidate${index + 1}@email.com`,
           phone: "+7 (999) 123-45-67",
+          position: "Software Developer",
           matchScore,
           skills: ["React", "TypeScript", "Node.js", "Python", "MongoDB"],
           experience: `${Math.floor(Math.random() * 5) + 3} years`,
@@ -423,10 +425,10 @@ export default function DashboardPage() {
       })
       
       setCandidates(mockCandidates)
-      // Pre-select top 3 candidates by default
-      setSelectedCandidates(mockCandidates.slice(0, 3).map(c => c.id))
+      // Auto-select candidates with 80%+ match score
+      const autoSelectedCandidates = mockCandidates.filter(c => c.matchScore >= 80).map(c => c.id)
+      setSelectedCandidates(autoSelectedCandidates)
       setIsProcessing(false)
-      setCurrentStep("notification")
     }, 5500)
   }
 
@@ -441,7 +443,7 @@ export default function DashboardPage() {
           : c
       ))
       setIsProcessing(false)
-      setCurrentStep("scheduling")
+      setCurrentStep("complete")
     }, 2000)
   }
 
@@ -477,14 +479,18 @@ export default function DashboardPage() {
 
 
   const getStepNumber = (step: PipelineStep) => {
-    const steps: PipelineStep[] = ["vacancy", "upload", "complete"]
+    const steps: PipelineStep[] = ["vacancy", "upload", "analysis", "complete"]
     return steps.indexOf(step) + 1
   }
 
   const currentStepNumber = getStepNumber(currentStep)
 
   if (isLoading) {
-    return <DashboardSkeleton />
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -573,7 +579,7 @@ export default function DashboardPage() {
                 {/* Progress Line */}
                 <div 
                   className="absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500"
-                  style={{ width: `${((currentStepNumber - 1) / 2) * 100}%` }}
+                  style={{ width: `${((currentStepNumber - 1) / 3) * 100}%` }}
                 ></div>
                 
                 {/* Steps */}
@@ -744,83 +750,131 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={uploadCVs}
-                      disabled={uploadedCVs.length === 0 || isProcessing}
+                      onClick={() => {
+                        setCurrentStep("analysis")
+                        startAnalysis()
+                      }}
+                      disabled={uploadedCVs.length === 0}
                     >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing CVs...
-                        </>
-                      ) : (
-                        <>
-                          Process CVs
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      )}
+                      Start AI Analysis
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Step 4: AI Analysis */}
-              {false && (
+              {/* Step 3: AI Analysis */}
+              {currentStep === "analysis" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 4: AI Analysis in Progress</h3>
+                  <h3 className="text-lg font-semibold">Step 3: AI Analysis Results</h3>
                   
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Analyzing {uploadedCVs.length} CVs</span>
-                      <span className="text-sm font-medium">{analysisProgress}%</span>
-                    </div>
-                    <Progress value={analysisProgress} className="h-2" />
-                    
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-2xl font-bold text-blue-600">
-                            {uploadedCVs.length}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Total CVs</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-2xl font-bold text-green-600">
-                            {Math.floor(analysisProgress / 100 * uploadedCVs.length)}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Analyzed</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-2xl font-bold text-purple-600">
-                            {analysisProgress >= 100 ? "3" : "..."}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Qualified</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {isProcessing && (
+                  {analysisProgress < 100 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Analyzing {uploadedCVs.length} CVs with OpenAI</span>
+                        <span className="text-sm font-medium">{analysisProgress}%</span>
+                      </div>
+                      <Progress value={analysisProgress} className="h-2" />
+                      
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-4 text-center mb-6">
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {candidates.length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Total CVs</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-2xl font-bold text-green-600">
+                              {candidates.filter(c => c.matchScore >= 80).length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Auto-Selected</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {selectedCandidates.length}
+                            </div>
+                            <p className="text-xs text-muted-foreground">For Interview</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>Candidate Analysis Results</Label>
+                        <div className="max-h-64 overflow-y-auto space-y-2">
+                          {candidates.map((candidate, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  checked={selectedCandidates.includes(candidate.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedCandidates(prev => [...prev, candidate.id]);
+                                    } else {
+                                      setSelectedCandidates(prev => prev.filter(id => id !== candidate.id));
+                                    }
+                                  }}
+                                />
+                                <div>
+                                  <div className="font-medium">{candidate.name}</div>
+                                  <div className="text-sm text-muted-foreground">{candidate.position}</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className={`px-2 py-1 rounded text-xs font-medium ${
+                                  candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
+                                  candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
+                                  candidate.matchScore >= 70 ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                  {candidate.matchScore}% match
+                                </div>
+                                {candidate.matchScore >= 80 && (
+                                  <Badge variant="secondary" className="text-xs">Auto-selected</Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <Button variant="outline" onClick={() => setCurrentStep("upload")}>
+                          Back
+                        </Button>
+                        <Button 
+                          onClick={() => setCurrentStep("complete")}
+                          disabled={selectedCandidates.length === 0}
+                        >
+                          Send Invitations ({selectedCandidates.length})
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
 
 
 
-              {/* Complete */}
+              {/* Step 4: Complete */}
               {currentStep === "complete" && (
                 <div className="space-y-4 text-center py-8">
                   <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold">Process Complete!</h3>
+                  <h3 className="text-xl font-semibold">Step 4: Process Complete!</h3>
                   <p className="text-muted-foreground">
                     Your vacancy and CVs have been successfully uploaded
                   </p>
