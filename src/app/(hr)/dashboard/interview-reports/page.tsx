@@ -141,7 +141,7 @@ export default function InterviewReportsPage() {
         <div className="text-center space-y-4">
           <Brain className="h-12 w-12 mx-auto text-[#1B4F8C] animate-pulse" />
           <p className="text-muted-foreground">
-            Loading AI Interview Reports...
+            Загрузка ИИ Отчетов Интервью...
           </p>
         </div>
       </div>
@@ -154,11 +154,11 @@ export default function InterviewReportsPage() {
         <div className="text-center space-y-4">
           <AlertCircle className="h-12 w-12 mx-auto text-red-500" />
           <p className="text-muted-foreground">
-            Error loading reports: {error}
+            Ошибка загрузки отчетов: {error}
           </p>
           <Button onClick={refetch} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Retry
+            Повторить
           </Button>
         </div>
       </div>
@@ -170,10 +170,10 @@ export default function InterviewReportsPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <FileText className="h-12 w-12 mx-auto text-gray-400" />
-          <p className="text-muted-foreground">No interview reports found</p>
+          <p className="text-muted-foreground">Отчеты интервью не найдены</p>
           <Button onClick={refetch} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            Обновить
           </Button>
         </div>
       </div>
@@ -190,26 +190,28 @@ export default function InterviewReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
-            AI Interview Reports
+            ИИ Отчеты Интервью
           </h2>
           <p className="text-sm text-muted-foreground">
-            Review AI-conducted interviews and assessment results
+            Просмотр интервью, проведенных ИИ, и результатов оценки
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search candidates..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-48 h-9"
-            prefix={<Search className="h-4 w-4" />}
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Поиск кандидатов..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-48 h-9 pl-10"
+            />
+          </div>
           <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
             <SelectTrigger className="w-48 h-9">
-              <SelectValue placeholder="Filter by vacancy" />
+              <SelectValue placeholder="Фильтр по вакансии" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Vacancies</SelectItem>
+              <SelectItem value="all">Все вакансии</SelectItem>
               {vacancies.map((vacancy) => (
                 <SelectItem key={vacancy} value={vacancy}>
                   {vacancy}
@@ -219,7 +221,7 @@ export default function InterviewReportsPage() {
           </Select>
           <Button variant="outline" size="sm" className="h-9">
             <Filter className="mr-2 h-3 w-3" />
-            Filter
+            Фильтр
           </Button>
           <Button
             variant="outline"
@@ -228,7 +230,7 @@ export default function InterviewReportsPage() {
             onClick={downloadTestPdf}
           >
             <Download className="mr-2 h-3 w-3" />
-            Test PDF
+            Тест PDF
           </Button>
         </div>
       </div>
@@ -237,9 +239,9 @@ export default function InterviewReportsPage() {
         {/* Interview List */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent Interviews</CardTitle>
+            <CardTitle className="text-base">Последние интервью</CardTitle>
             <CardDescription className="text-xs">
-              AI-conducted interview sessions
+              Сессии интервью, проведенные ИИ
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,7 +281,7 @@ export default function InterviewReportsPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                          Compliance
+                          Соответствие
                         </span>
                         <span
                           className={`font-semibold text-sm ${getComplianceColor(
@@ -302,10 +304,10 @@ export default function InterviewReportsPage() {
                           )}`}
                         >
                           {report.aiRecommendation === "next-stage" &&
-                            "Next Stage"}
+                            "Следующий этап"}
                           {report.aiRecommendation === "clarification" &&
-                            "Needs Clarification"}
-                          {report.aiRecommendation === "rejection" && "Reject"}
+                            "Требует уточнения"}
+                          {report.aiRecommendation === "rejection" && "Отклонить"}
                         </Badge>
                         <span className="text-[10px] text-muted-foreground">
                           {report.interviewDate}
@@ -325,17 +327,17 @@ export default function InterviewReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base">
-                  Interview Assessment Report
+                  Отчет Оценки Интервью
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  AI analysis for {selectedReport.candidateName} -{" "}
+                  ИИ анализ для {selectedReport.candidateName} -{" "}
                   {selectedReport.position}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
                   <Download className="mr-2 h-4 w-4" />
-                  Export PDF
+                  Экспорт PDF
                 </Button>
               </div>
             </div>
@@ -343,10 +345,10 @@ export default function InterviewReportsPage() {
           <CardContent>
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="competencies">Competencies</TabsTrigger>
-                <TabsTrigger value="redflags">Red Flags</TabsTrigger>
-                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                <TabsTrigger value="overview">Обзор</TabsTrigger>
+                <TabsTrigger value="competencies">Компетенции</TabsTrigger>
+                <TabsTrigger value="redflags">Красные флаги</TabsTrigger>
+                <TabsTrigger value="feedback">Обратная связь</TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -356,7 +358,7 @@ export default function InterviewReportsPage() {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium">
-                        Position Compliance
+                        Соответствие Позиции
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -384,7 +386,7 @@ export default function InterviewReportsPage() {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium">
-                        Experience Relevance
+                        Релевантность Опыта
                       </CardTitle>
                     </CardHeader>
                     <CardContent>

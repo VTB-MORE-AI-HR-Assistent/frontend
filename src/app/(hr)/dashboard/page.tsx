@@ -132,7 +132,7 @@ export default function DashboardPage() {
     interviewsToday: 0,
     pendingReviews: 0
   })
-  const [topCandidates, setTopCandidates] = useState<Record<string, unknown>[]>([])
+  const [topCandidates, setTopCandidates] = useState<Candidate[]>([])
   const [recentReports, setRecentReports] = useState<Record<string, unknown>[]>([])
 
   // Load real data from APIs
@@ -499,14 +499,14 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {user?.firstName || 'there'}
+            Добро пожаловать, {user?.firstName || 'коллега'}
           </h1>
           <p className="text-muted-foreground">
-            Here&apos;s what&apos;s happening with your recruitment today
+            Вот что происходит с вашим подбором персонала сегодня
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-muted-foreground">Today</p>
+          <p className="text-sm text-muted-foreground">Сегодня</p>
           <p className="font-semibold">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
@@ -585,10 +585,10 @@ export default function DashboardPage() {
                 {/* Steps */}
                 <div className="relative flex items-center justify-between">
                   {[
-                    { label: "Upload Vacancy", icon: "📋" },
-                    { label: "Upload CVs", icon: "📄" },
-                    { label: "AI Analysis", icon: "🤖" },
-                    { label: "Complete", icon: "🎯" }
+                    { label: "Загрузка вакансии", icon: "" },
+                    { label: "Загрузка резюме", icon: "" },
+                    { label: "ИИ Анализ", icon: "" },
+                    { label: "Завершение", icon: "" }
                   ].map((step, index) => (
                     <div key={step.label} className="flex flex-col items-center">
                       <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
@@ -620,7 +620,7 @@ export default function DashboardPage() {
               {/* Step 1: Vacancy Upload */}
               {currentStep === "vacancy" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 1: Upload Vacancy</h3>
+                  <h3 className="text-lg font-semibold">Шаг 1: Загрузка вакансии</h3>
                   <div className="space-y-4">
                         <div
                           {...getVacancyRootProps()}
@@ -633,12 +633,15 @@ export default function DashboardPage() {
                             isVacancyDragActive ? "text-blue-500" : "text-gray-400"
                           }`} />
                           <p className="font-medium text-gray-900 mb-1">
-                            {isVacancyDragActive ? "Drop the vacancy file here" : "Drop your vacancy file here"}
+                            Перетащите файл вакансии сюда
                           </p>
-                          <p className="text-sm text-muted-foreground">or click to browse</p>
+                          <p className="text-sm text-blue-600">или нажмите для выбора</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            PDF, DOC, DOCX • Поддерживаются описания вакансий
+                          </p>
                           <Button variant="outline" className="mt-4" type="button">
                             <Upload className="mr-2 h-4 w-4" />
-                            Select File
+                            Выберите файл
                           </Button>
                         </div>
                         
@@ -698,7 +701,7 @@ export default function DashboardPage() {
               {/* Step 2: CV Upload */}
               {currentStep === "upload" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 2: Upload Candidate CVs</h3>
+                  <h3 className="text-lg font-semibold">Шаг 2: Загрузка резюме</h3>
                   
                   <div
                     {...getCVRootProps()}
@@ -711,17 +714,17 @@ export default function DashboardPage() {
                       isCVDragActive ? "text-blue-500" : "text-gray-400"
                     }`} />
                     <p className="font-medium text-gray-900 mb-1">
-                      Drop CV files here
+                      Перетащите файлы резюме сюда
                     </p>
-                    <p className="text-sm text-blue-600">or click to browse</p>
+                    <p className="text-sm text-blue-600">или нажмите для выбора</p>
                     <p className="text-xs text-gray-500 mt-2">
-                      PDF, DOC, DOCX • Multiple files supported
+                      PDF, DOC, DOCX • Поддерживаются описания вакансий
                     </p>
                   </div>
 
                   {uploadedCVs.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Uploaded CVs ({uploadedCVs.length})</Label>
+                      <Label>Загруженные резюме ({uploadedCVs.length})</Label>
                       <div className="max-h-48 overflow-y-auto space-y-2">
                         {uploadedCVs.map((file, index) => (
                           <div key={index} className="flex items-center justify-between p-2 border rounded">
@@ -742,121 +745,18 @@ export default function DashboardPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("vacancy")}>
-                      Back
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        setCurrentStep("analysis")
-                        startAnalysis()
-                      }}
-                      disabled={uploadedCVs.length === 0}
-                    >
-                      Start AI Analysis
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: AI Analysis */}
-              {currentStep === "analysis" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 3: AI Analysis Results</h3>
-                  
-                  {analysisProgress < 100 ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Analyzing {uploadedCVs.length} CVs with OpenAI</span>
-                        <span className="text-sm font-medium">{analysisProgress}%</span>
-                      </div>
-                      <Progress value={analysisProgress} className="h-2" />
-                      
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4 text-center mb-6">
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {candidates.length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">Total CVs</p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="text-2xl font-bold text-green-600">
-                              {candidates.filter(c => c.matchScore >= 80).length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">Auto-Selected</p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="text-2xl font-bold text-purple-600">
-                              {selectedCandidates.length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">For Interview</p>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <div className="space-y-3">
-                        <Label>Candidate Analysis Results</Label>
-                        <div className="max-h-64 overflow-y-auto space-y-2">
-                          {candidates.map((candidate, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <Checkbox
-                                  checked={selectedCandidates.includes(candidate.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedCandidates(prev => [...prev, candidate.id]);
-                                    } else {
-                                      setSelectedCandidates(prev => prev.filter(id => id !== candidate.id));
-                                    }
-                                  }}
-                                />
-                                <div>
-                                  <div className="font-medium">{candidate.name}</div>
-                                  <div className="text-sm text-muted-foreground">{candidate.position}</div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className={`px-2 py-1 rounded text-xs font-medium ${
-                                  candidate.matchScore >= 90 ? 'bg-green-100 text-green-700' :
-                                  candidate.matchScore >= 80 ? 'bg-blue-100 text-blue-700' :
-                                  candidate.matchScore >= 70 ? 'bg-yellow-100 text-yellow-700' :
-                                  'bg-red-100 text-red-700'
-                                }`}>
-                                  {candidate.matchScore}% match
-                                </div>
-                                {candidate.matchScore >= 80 && (
-                                  <Badge variant="secondary" className="text-xs">Auto-selected</Badge>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
                       <div className="flex justify-between">
-                        <Button variant="outline" onClick={() => setCurrentStep("upload")}>
-                          Back
+                        <Button variant="outline" onClick={() => setCurrentStep("vacancy")}>
+                          Назад
                         </Button>
                         <Button 
-                          onClick={() => setCurrentStep("complete")}
-                          disabled={selectedCandidates.length === 0}
+                          onClick={() => {
+                            setCurrentStep("analysis")
+                            startAnalysis()
+                          }}
+                          disabled={uploadedCVs.length === 0}
                         >
-                          Send Invitations ({selectedCandidates.length})
+                          Запустить ИИ Анализ
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
@@ -866,6 +766,156 @@ export default function DashboardPage() {
               )}
 
 
+              {/* Step 3: Analysis */}
+              {currentStep === "analysis" && (
+                <div className="space-y-6 py-8">
+
+                  {isProcessing ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1B4F8C]"></div>
+                        <span className="text-sm text-muted-foreground">Анализ в процессе...</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-xs text-muted-foreground">Обработка резюме кандидатов</div>
+                        <Progress value={65} className="h-2" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                        <h4 className="text-lg font-semibold text-green-700 mb-2">Анализ завершен!</h4>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          Найдено {candidates.length} подходящих кандидатов. Выберите кандидатов для отправки приглашений на интервью.
+                        </p>
+                      </div>
+                      
+                      <div className="grid gap-4 max-h-96 overflow-y-auto">
+                        {candidates.map((candidate) => (
+                          <div key={candidate.id} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                            <div className="flex items-start gap-4">
+                              {/* Checkbox */}
+                              <div className="flex items-center pt-1">
+                                <input
+                                  type="checkbox"
+                                  id={`candidate-${candidate.id}`}
+                                  defaultChecked={candidate.matchScore >= 80}
+                                  className="h-4 w-4 text-[#1B4F8C] border-gray-300 rounded focus:ring-[#1B4F8C]"
+                                />
+                              </div>
+                              
+                              {/* Avatar */}
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold">
+                                {candidate.name?.split(' ').map((n: string) => n[0]).join('') || 'N/A'}
+                              </div>
+                              
+                              {/* Candidate Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h5 className="font-semibold text-base text-gray-900">{candidate.name}</h5>
+                                    <p className="text-sm text-gray-600 mb-2">{candidate.position}</p>
+                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                      <span>📧 {candidate.email}</span>
+                                      <span>📱 {candidate.phone}</span>
+                                      <span>📍 {candidate.location}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Match Score */}
+                                  <div className="text-right">
+                                    <div className={`text-lg font-bold ${
+                                      candidate.matchScore >= 90 ? 'text-green-600' :
+                                      candidate.matchScore >= 80 ? 'text-blue-600' :
+                                      candidate.matchScore >= 60 ? 'text-orange-600' :
+                                      'text-gray-600'
+                                    }`}>
+                                      {candidate.matchScore}%
+                                    </div>
+                                    <div className="text-xs text-gray-500">совпадение</div>
+                                  </div>
+                                </div>
+                                
+                                {/* Skills */}
+                                <div className="mt-3">
+                                  <div className="flex flex-wrap gap-1">
+                                    {candidate.skills?.slice(0, 4).map((skill, index) => (
+                                      <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                        {skill}
+                                      </span>
+                                    ))}
+                                    {candidate.skills && candidate.skills.length > 4 && (
+                                      <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded">
+                                        +{candidate.skills.length - 4} еще
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Experience */}
+                                <div className="mt-2 text-xs text-gray-600">
+                                  Опыт: {candidate.experience} лет
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="text-sm text-gray-600">
+                            Выбрано кандидатов: <span className="font-semibold">{selectedCandidates.length}</span> из {candidates.length}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="candidate-"]') as NodeListOf<HTMLInputElement>;
+                                checkboxes.forEach(checkbox => checkbox.checked = true);
+                              }}
+                            >
+                              Выбрать всех
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="candidate-"]') as NodeListOf<HTMLInputElement>;
+                                checkboxes.forEach(checkbox => checkbox.checked = false);
+                              }}
+                            >
+                              Снять выбор
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <Button variant="outline" onClick={() => setCurrentStep("upload")}>
+                            Назад
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              // Собираем выбранных кандидатов
+                              const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="candidate-"]:checked') as NodeListOf<HTMLInputElement>;
+                              const selectedIds = Array.from(checkboxes).map(cb => cb.id.replace('candidate-', ''));
+                              const selected = candidates.filter(c => selectedIds.includes(c.id));
+                              setSelectedCandidates(selected);
+                              setCurrentStep("complete");
+                            }}
+                            disabled={false}
+                          >
+                            Отправить приглашения ({selectedCandidates.length})
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
 
               {/* Step 4: Complete */}
@@ -874,9 +924,9 @@ export default function DashboardPage() {
                   <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold">Step 4: Process Complete!</h3>
+                  <h3 className="text-xl font-semibold">Шаг 4: Процесс завершен!</h3>
                   <p className="text-muted-foreground">
-                    Your vacancy and CVs have been successfully uploaded
+                    Ваша вакансия и резюме успешно загружены
                   </p>
                   
                   <Button 
@@ -888,7 +938,7 @@ export default function DashboardPage() {
                     }}
                     className="mt-4"
                   >
-                    Start New Process
+                    Начать новый процесс подбора
                   </Button>
                 </div>
               )}
@@ -907,7 +957,7 @@ export default function DashboardPage() {
               <Sparkles className="h-4 w-4 text-muted-foreground" />
             </CardTitle>
             <CardDescription className="text-xs">
-              AI-matched candidates with highest compatibility
+              ИИ-подобранные кандидаты с наивысшей совместимостью
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col pt-2">
@@ -917,7 +967,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 p-2 rounded-lg border hover:bg-gray-50 hover:border-[#1B4F8C]/20 transition-all cursor-pointer">
                     {/* Avatar - simple without badge */}
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-xs">
-                      {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
+                      {candidate.name?.split(' ').map((n: string) => n[0]).join('') || 'N/A'}
                     </div>
                     
                     {/* Candidate Info - just name and position */}
@@ -932,7 +982,7 @@ export default function DashboardPage() {
                       candidate.matchScore >= 80 ? 'text-blue-600' :
                       'text-gray-600'
                     }`}>
-                      {candidate.matchScore}% match
+                      {candidate.matchScore}% совпадение
                     </div>
                     
                     {/* Action Button */}
@@ -943,7 +993,7 @@ export default function DashboardPage() {
             </div>
             <Link href="/candidates">
               <Button variant="outline" className="w-full mt-3 h-8" size="sm">
-                View all candidates
+                Посмотреть всех кандидатов
               </Button>
             </Link>
           </CardContent>

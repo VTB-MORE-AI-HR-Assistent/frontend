@@ -216,19 +216,19 @@ export default function CandidatesPage() {
         {/* Left Panel - Upload Section */}
         <Card className="w-[400px] flex-shrink-0 h-fit">
           <CardHeader>
-            <CardTitle>Quick Upload</CardTitle>
-            <CardDescription>Drag & drop or click to browse</CardDescription>
+            <CardTitle>Быстрая Загрузка</CardTitle>
+            <CardDescription>Перетащите или нажмите для выбора</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col">
 
             {/* Vacancy Selection */}
             <div className="mb-4">
               <Label htmlFor="upload-vacancy" className="text-sm font-medium mb-2 block">
-                Assign to Vacancy (Optional)
+                Назначить к Вакансии (Опционально)
               </Label>
               <Select value={uploadVacancy} onValueChange={setUploadVacancy}>
                 <SelectTrigger id="upload-vacancy">
-                  <SelectValue placeholder="Select vacancy" />
+                  <SelectValue placeholder="Выберите вакансию" />
                 </SelectTrigger>
                 <SelectContent>
                   {vacancies.map((vacancy) => (
@@ -239,13 +239,13 @@ export default function CandidatesPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                Leave as "No Vacancy" to add CVs to general pool
+                Оставьте &quot;Без Вакансии&quot; чтобы добавить резюме в общий пул
               </p>
             </div>
 
             {/* Upload Drop Zone */}
             <div className="mb-4">
-              <Label className="text-sm font-medium mb-2 block">Upload CV File</Label>
+              <Label className="text-sm font-medium mb-2 block">Загрузить Резюме</Label>
               <div
                 {...getRootProps()}
                 className={cn(
@@ -261,13 +261,13 @@ export default function CandidatesPage() {
                   isDragActive ? "text-blue-500" : "text-gray-400"
                 )} />
                 <p className="font-medium text-gray-900 mb-1">
-                  Drop your CV here
+                  Перетащите резюме сюда
                 </p>
                 <p className="text-sm text-blue-600">
-                  or click to browse
+                  или нажмите для выбора
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  PDF, Word documents, and text files • Up to 10MB
+                  PDF, Word документы и текстовые файлы • До 10МБ
                 </p>
               </div>
             </div>
@@ -278,13 +278,13 @@ export default function CandidatesPage() {
               onClick={() => document.querySelector('input[type="file"]')?.click()}
             >
               <Upload className="mr-2 h-4 w-4" />
-              Upload CV
+              Загрузить Резюме
             </Button>
 
             {/* Processing Files */}
             {uploadedFiles.length > 0 && (
               <div className="mb-6">
-                <Label className="text-sm font-medium mb-2 block">Processing Files</Label>
+                <Label className="text-sm font-medium mb-2 block">Обработка Файлов</Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {uploadedFiles.map((file) => (
                     <div key={file.id} className="flex items-center justify-between p-2 border rounded-lg bg-gray-50">
@@ -333,12 +333,12 @@ export default function CandidatesPage() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>My CVs</CardTitle>
-                <CardDescription>{candidates.length} total</CardDescription>
+                <CardTitle>Мои Резюме</CardTitle>
+                <CardDescription>{candidates.length} всего</CardDescription>
               </div>
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
-                Export
+                Экспорт
               </Button>
             </div>
           </CardHeader>
@@ -349,7 +349,7 @@ export default function CandidatesPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search CVs..."
+                    placeholder="Поиск резюме..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -358,10 +358,10 @@ export default function CandidatesPage() {
               </div>
               <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="All Vacancies" />
+                  <SelectValue placeholder="Все Вакансии" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Vacancies</SelectItem>
+                  <SelectItem value="all">Все Вакансии</SelectItem>
                   {vacancies.map((vacancy) => (
                     <SelectItem key={vacancy.id} value={vacancy.id}>
                       {vacancy.title}
@@ -371,27 +371,27 @@ export default function CandidatesPage() {
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Status" />
+                  <SelectValue placeholder="Все Статусы" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="reviewing">Reviewing</SelectItem>
-                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                  <SelectItem value="interview">Interview</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="hired">Hired</SelectItem>
+                  <SelectItem value="all">Все Статусы</SelectItem>
+                  <SelectItem value="new">Новые</SelectItem>
+                  <SelectItem value="reviewing">На Рассмотрении</SelectItem>
+                  <SelectItem value="shortlisted">В Шорт-листе</SelectItem>
+                  <SelectItem value="interview">Интервью</SelectItem>
+                  <SelectItem value="rejected">Отклонены</SelectItem>
+                  <SelectItem value="hired">Приняты</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Newest" />
+                  <SelectValue placeholder="Новые" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="oldest">Oldest</SelectItem>
-                  <SelectItem value="match">Match Score</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="newest">Новые</SelectItem>
+                  <SelectItem value="oldest">Старые</SelectItem>
+                  <SelectItem value="match">Совпадение</SelectItem>
+                  <SelectItem value="name">Имя</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -400,14 +400,14 @@ export default function CandidatesPage() {
             {isLoading ? (
               <div className="text-center py-16">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-4 text-muted-foreground">Loading candidates...</p>
+                <p className="mt-4 text-muted-foreground">Загрузка кандидатов...</p>
               </div>
             ) : sortedCVs.length === 0 ? (
               <div className="text-center py-16 border rounded-lg bg-gray-50">
                 <FileText className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Welcome! Let's get started</h3>
+                <h3 className="text-xl font-semibold mb-2">Добро пожаловать! Давайте начнем</h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Upload your first CV to see the magic of AI-powered CV formatting
+                  Загрузите ваше первое резюме, чтобы увидеть магию ИИ-форматирования резюме
                 </p>
                 <Button 
                   size="lg"
@@ -415,10 +415,10 @@ export default function CandidatesPage() {
                   onClick={() => document.querySelector('input[type="file"]')?.click()}
                 >
                   <Upload className="mr-2 h-5 w-5" />
-                  Upload Your First CV
+                  Загрузить Первое Резюме
                 </Button>
                 <p className="text-xs text-muted-foreground mt-4">
-                  Supports PDF, Word documents, and text files up to 10MB
+                  Поддерживает PDF, Word документы и текстовые файлы до 10МБ
                 </p>
               </div>
             ) : (

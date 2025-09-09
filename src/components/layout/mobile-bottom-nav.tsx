@@ -12,22 +12,22 @@ import {
 
 const navItems = [
   {
-    title: "Dashboard",
+    title: "Дашборд",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Vacancies",
+    title: "Вакансии",
     href: "/vacancies",
     icon: Briefcase,
   },
   {
-    title: "Candidates",
+    title: "Кандидаты",
     href: "/candidates",
     icon: Users,
   },
   {
-    title: "Reports",
+    title: "Отчеты",
     href: "/dashboard/interview-reports",
     icon: FileText,
   },

@@ -372,12 +372,12 @@ export default function VacanciesPage() {
   }
 
   const formatSalary = (min?: number, max?: number, currency?: string) => {
-    if (!min && !max) return "Not specified"
+    if (!min && !max) return "Не указано"
     const formatter = new Intl.NumberFormat('ru-RU')
     if (min && max) {
       return `${formatter.format(min)} - ${formatter.format(max)} ${currency || 'RUB'}`
     }
-    return "Not specified"
+    return "Не указано"
   }
 
   if (isLoading) {
@@ -389,9 +389,9 @@ export default function VacanciesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vacancies</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Вакансии</h1>
           <p className="text-sm text-muted-foreground">
-            Manage vacancies, candidates, and interview questions
+            Управление вакансиями, кандидатами и вопросами интервью
           </p>
         </div>
         <Button 
@@ -399,28 +399,28 @@ export default function VacanciesPage() {
           onClick={() => setIsCreateVacancyOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Create Vacancy
+          Создать Вакансию
         </Button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
-          placeholder="Search vacancies..."
+          placeholder="Поиск вакансий..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-sm"
         />
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="Фильтр по статусу" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="all">Все статусы</SelectItem>
+            <SelectItem value="active">Активные</SelectItem>
+            <SelectItem value="published">Опубликованные</SelectItem>
+            <SelectItem value="draft">Черновики</SelectItem>
+            <SelectItem value="closed">Закрытые</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -429,7 +429,7 @@ export default function VacanciesPage() {
       <div className="space-y-4">
         {filteredVacancies.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">
-            No vacancies found matching your filters
+            Не найдено вакансий, соответствующих вашим фильтрам
           </Card>
         ) : (
           filteredVacancies.map((vacancy) => (
@@ -453,7 +453,7 @@ export default function VacanciesPage() {
                       <CardTitle className="text-lg">{vacancy.title}</CardTitle>
                       {getStatusBadge(vacancy.status)}
                       <Badge variant="outline" className="text-xs">
-                        {vacancy.priority} priority
+                        {vacancy.priority === 'high' ? 'высокий' : vacancy.priority === 'medium' ? 'средний' : 'низкий'} приоритет
                       </Badge>
                     </div>
                     <CardDescription className="mt-1 text-xs flex items-center gap-3">
@@ -477,9 +477,9 @@ export default function VacanciesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right mr-4">
-                      <p className="text-sm font-medium">{vacancy.candidates.length} candidates</p>
+                      <p className="text-sm font-medium">{vacancy.candidates.length} кандидатов</p>
                       <p className="text-xs text-muted-foreground">
-                        Avg. match: {Math.round(vacancy.candidates.reduce((sum, c) => sum + c.matchScore, 0) / vacancy.candidates.length)}%
+                        Ср. совпадение: {Math.round(vacancy.candidates.reduce((sum, c) => sum + c.matchScore, 0) / vacancy.candidates.length)}%
                       </p>
                     </div>
                     <DropdownMenu>
@@ -489,28 +489,28 @@ export default function VacanciesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Действия</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit Vacancy
+                          Редактировать Вакансию
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <UserPlus className="mr-2 h-4 w-4" />
-                          Add Candidates
+                          Добавить Кандидатов
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Copy className="mr-2 h-4 w-4" />
-                          Duplicate
+                          Дублировать
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Archive className="mr-2 h-4 w-4" />
-                          Archive
+                          Архивировать
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          Удалить
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -521,10 +521,10 @@ export default function VacanciesPage() {
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t">
                   <div className="flex items-center gap-2 text-xs">
                     <Calendar className="h-3 w-3 text-muted-foreground" />
-                    <span>Deadline: {vacancy.deadline}</span>
+                    <span>Срок: {vacancy.deadline}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Salary: {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
+                    Зарплата: {formatSalary(vacancy.salaryMin, vacancy.salaryMax, vacancy.currency)}
                   </div>
                 </div>
               </CardHeader>
@@ -535,10 +535,10 @@ export default function VacanciesPage() {
                   <Tabs defaultValue="candidates" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="candidates">
-                        Candidates ({vacancy.candidates.length})
+                        Candidates ({vacancy.candidates?.length || 0})
                       </TabsTrigger>
                       <TabsTrigger value="questions">
-                        Custom Questions ({vacancy.customQuestions.length})
+                        Custom Questions ({vacancy.customQuestions?.length || 0})
                       </TabsTrigger>
                       <TabsTrigger value="overview">
                         Overview
@@ -648,12 +648,12 @@ export default function VacanciesPage() {
                         
                         <ScrollArea className="h-[300px] pr-4">
                           <div className="space-y-2">
-                            {vacancy.customQuestions.length === 0 ? (
+                            {(vacancy.customQuestions?.length || 0) === 0 ? (
                               <div className="text-center py-8 text-muted-foreground text-sm">
                                 No custom questions added yet
                               </div>
                             ) : (
-                              vacancy.customQuestions.map((question, index) => (
+                              vacancy.customQuestions?.map((question, index) => (
                                 <div key={question.id} className="p-3 rounded-lg border">
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
