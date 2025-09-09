@@ -887,9 +887,7 @@ export default function DashboardPage() {
                                     <h5 className="font-semibold text-base text-gray-900">{candidate.name}</h5>
                                     <p className="text-sm text-gray-600 mb-2">{candidate.position}</p>
                                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                                      <span>📧 {candidate.email}</span>
-                                      <span>📱 {candidate.phone}</span>
-                                      <span>📍 {candidate.location}</span>
+                                      {/* Contact info removed for cleaner UI */}
                                     </div>
                                   </div>
                                   
@@ -923,10 +921,7 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
                                 
-                                {/* Experience */}
-                                <div className="mt-2 text-xs text-gray-600">
-                                  Опыт: {candidate.experience} лет
-                                </div>
+                                {/* Experience removed for cleaner UI */}
                               </div>
                             </div>
                           </div>

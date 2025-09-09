@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     if (!candidates || candidates.length === 0) {
       return NextResponse.json(
-        { error: 'Список кандидатов не может быть пустым' },
+        { error: "Список кандидатов не может быть пустым" },
         { status: 400 }
       );
     }
@@ -34,43 +34,54 @@ export async function POST(request: NextRequest) {
       try {
         // Для демо отправляем все письма на ваш email
         const mockEmail = "a_zhuravlev_9785@mail.ru";
-        
+
         const { data, error } = await resend.emails.send({
-          from: 'ВТБ HR Assistant <onboarding@resend.dev>',
+          from: "ВТБ HR Assistant <onboarding@resend.dev>",
           to: [mockEmail], // Используем мокированный email
           subject: `Приглашение на собеседование - ${vacancy.title}`,
           html: generateInvitationEmail(candidate, vacancy),
         });
 
         if (error) {
-          console.error(`Ошибка отправки письма кандидату ${candidate.name}:`, error);
+          console.error(
+            `Ошибка отправки письма кандидату ${candidate.name}:`,
+            error
+          );
           results.push({
             candidateId: candidate.id,
             success: false,
             error: error.message,
-            mockEmail
+            mockEmail,
           });
         } else {
-          console.log(`Письмо успешно отправлено кандидату ${candidate.name} на ${mockEmail}`);
+          console.log(
+            `Письмо успешно отправлено кандидату ${candidate.name} на ${mockEmail}`
+          );
           results.push({
             candidateId: candidate.id,
             success: true,
             emailId: data?.id,
-            mockEmail
+            mockEmail,
           });
         }
       } catch (candidateError) {
-        console.error(`Ошибка при отправке письма кандидату ${candidate.name}:`, candidateError);
+        console.error(
+          `Ошибка при отправке письма кандидату ${candidate.name}:`,
+          candidateError
+        );
         results.push({
           candidateId: candidate.id,
           success: false,
-          error: candidateError instanceof Error ? candidateError.message : 'Неизвестная ошибка',
-          mockEmail: `candidate-${candidate.id}@mock-vtb-hr.com`
+          error:
+            candidateError instanceof Error
+              ? candidateError.message
+              : "Неизвестная ошибка",
+          mockEmail: `candidate-${candidate.id}@mock-vtb-hr.com`,
         });
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
+    const successCount = results.filter((r) => r.success).length;
     const totalCount = results.length;
 
     return NextResponse.json({
@@ -80,23 +91,25 @@ export async function POST(request: NextRequest) {
       summary: {
         total: totalCount,
         sent: successCount,
-        failed: totalCount - successCount
-      }
+        failed: totalCount - successCount,
+      },
     });
-
   } catch (error) {
-    console.error('Ошибка при отправке приглашений:', error);
+    console.error("Ошибка при отправке приглашений:", error);
     return NextResponse.json(
-      { 
-        error: 'Внутренняя ошибка сервера при отправке приглашений',
-        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      {
+        error: "Внутренняя ошибка сервера при отправке приглашений",
+        details: error instanceof Error ? error.message : "Неизвестная ошибка",
       },
       { status: 500 }
     );
   }
 }
 
-function generateInvitationEmail(candidate: { id: string; name: string; score: number }, vacancy: { title: string; company: string }): string {
+function generateInvitationEmail(
+  candidate: { id: string; name: string; score: number },
+  vacancy: { title: string; company: string }
+): string {
   return `
     <!DOCTYPE html>
     <html lang="ru">
@@ -193,7 +206,7 @@ function generateInvitationEmail(candidate: { id: string; name: string; score: n
         </ul>
         
         <div style="text-align: center;">
-          <a href="#" class="button">🚀 Начать интервью</a>
+          <a href="https://interview-fe-eight.vercel.app/interview?candidate_id=3" class="button">🚀 Начать интервью</a>
         </div>
         
         <div class="highlight">
