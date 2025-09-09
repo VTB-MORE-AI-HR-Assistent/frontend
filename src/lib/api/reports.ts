@@ -1,9 +1,13 @@
-import apiClient from "./client";
+import { mockReports, simulateApiDelay } from "../mock-data";
 
 // Types based on Swagger schema
 export interface CandidateReport {
   id: number;
   candidateId: number;
+  candidateName: string;
+  position: string;
+  vacancy: string;
+  status: string;
   jobId: number;
   interviewId: number;
   overallScore: number;
@@ -85,75 +89,91 @@ export interface SaveReportResponse {
 
 // API functions
 export const reportsApi = {
-  // Save ML Report
-  saveMLReport: async (data: MLReportDTO): Promise<SaveReportResponse> => {
-    const response = await apiClient.post("/v1/reports", data);
-    return response.data;
+  // Save ML Report - MOCKED
+  saveMLReport: async (_data: MLReportDTO): Promise<SaveReportResponse> => {
+    await simulateApiDelay(800);
+    
+    const reportId = Date.now();
+    return {
+      message: "Report saved successfully",
+      reportId,
+      recommendationId: reportId + 1
+    };
   },
 
-  // Get Candidate Report
+  // Get Candidate Report - MOCKED
   getCandidateReport: async (candidateId: number): Promise<CandidateReport> => {
-    const response = await apiClient.get("/v1/reports/candidate", {
-      params: { candidateId },
-    });
-    return response.data;
+    await simulateApiDelay(400);
+    
+    const report = mockReports.find(r => r.candidateId === candidateId);
+    if (!report) {
+      throw new Error('Report not found');
+    }
+    
+    return report;
   },
 
-  // Get Candidate Recommendation
+  // Get Candidate Recommendation - MOCKED
   getCandidateRecommendation: async (
     candidateId: number
   ): Promise<CandidateRecommendation> => {
-    const response = await apiClient.get("/v1/reports/recommendations", {
-      params: { candidateId },
-    });
-    return response.data;
+    await simulateApiDelay(300);
+    
+    const report = mockReports.find(r => r.candidateId === candidateId);
+    if (!report) {
+      throw new Error('Recommendation not found');
+    }
+    
+    return {
+      id: report.id,
+      candidateId: report.candidateId,
+      jobId: report.jobId,
+      interviewId: report.interviewId,
+      recommendationDecision: report.recommendationDecision,
+      recommendationConfidence: report.recommendationConfidence,
+      recommendationReasoning: report.recommendationReasoning,
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt
+    };
   },
 
-  // Download PDF Report
+  // Download PDF Report - MOCKED
   downloadCandidateReportPdf: async (candidateId: number): Promise<Blob> => {
-    const response = await apiClient.get("/v1/reports/pdf", {
-      params: { candidateId },
-      responseType: "blob",
-    });
-    return response.data;
+    await simulateApiDelay(1000);
+    
+    // Create a mock PDF blob
+    const pdfContent = `Mock PDF Report for Candidate ${candidateId}`;
+    return new Blob([pdfContent], { type: 'application/pdf' });
   },
 
-  // Download Test PDF
+  // Download Test PDF - MOCKED
   downloadTestPdf: async (): Promise<Blob> => {
-    const response = await apiClient.get("/v1/reports/pdf/test", {
-      responseType: "blob",
-    });
-    return response.data;
+    await simulateApiDelay(500);
+    
+    // Create a mock test PDF blob
+    const pdfContent = 'Mock Test PDF Content';
+    return new Blob([pdfContent], { type: 'application/pdf' });
   },
 
-  // Get Recent Reports
-  getRecentReports: async (params: { limit?: number } = {}): Promise<CandidateReport[]> => {
-    try {
-      const response = await apiClient.get("/v1/reports", {
-        params: {
-          limit: params.limit || 10,
-          sortBy: "createdAt",
-          sortOrder: "desc"
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.warn("Recent reports endpoint not available, returning empty array");
-      return [];
-    }
+  // Get Recent Reports - MOCKED
+  getRecentReports: async (params: { limit?: number } = {}): Promise<{ total: number; reports: CandidateReport[] }> => {
+    await simulateApiDelay(400);
+    
+    const limit = params.limit || 10;
+    const recentReports = mockReports
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+    
+    return {
+      total: mockReports.length,
+      reports: recentReports
+    };
   },
 
-  // Get All Reports (custom endpoint - you might need to add this to backend)
+  // Get All Reports - MOCKED
   getAllReports: async (): Promise<CandidateReport[]> => {
-    try {
-      // Since there's no "get all reports" endpoint in the swagger,
-      // we'll need to either add it to the backend or use a different approach
-      // For now, let's return empty array and handle this in the component
-      return [];
-    } catch (error) {
-      console.error("Error fetching all reports:", error);
-      return [];
-    }
+    await simulateApiDelay(600);
+    return mockReports;
   },
 };
 

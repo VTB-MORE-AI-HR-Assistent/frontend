@@ -22,6 +22,7 @@ export interface Vacancy {
   requirements: string[];
   salary: { min: number; max: number; currency: string };
   createdAt: Date;
+  candidates: { id: string; name: string; matchScore: number }[];
 }
 
 export interface Candidate {

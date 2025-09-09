@@ -53,7 +53,7 @@ import {
   Code
 } from "lucide-react"
 
-type PipelineStep = "vacancy" | "upload" | "interview-config" | "complete"
+type PipelineStep = "vacancy" | "upload" | "complete"
 
 interface Candidate {
   id: string
@@ -87,22 +87,22 @@ export default function DashboardPage() {
     deadline: string;
     startDate: string;
     uploadedFile: File | null;
-    jobUrl: string;
+    jobId: number | null
   }>({
-    title: "",
-    description: "",
-    department: "",
-    location: "",
-    type: "Full-time",
-    experience: "",
-    priority: "medium",
-    salaryMin: "",
-    salaryMax: "",
-    currency: "RUB",
-    deadline: "",
-    startDate: "",
-    uploadedFile: null,
-    jobUrl: ""
+    title: '',
+    description: '',
+    department: '',
+    location: '',
+    type: 'Full-time',
+    experience: '',
+    priority: 'medium',
+    salaryMin: '',
+    salaryMax: '',
+    currency: 'RUB',
+    deadline: '',
+    startDate: '',
+    uploadedFile: null as File | null,
+    jobId: null as number | null
   })
   const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
   const [candidates, setCandidates] = useState<Candidate[]>([])
@@ -337,6 +337,7 @@ export default function DashboardPage() {
           salaryMin: parsedVacancy.salary?.min?.toString() || prev.salaryMin,
           salaryMax: parsedVacancy.salary?.max?.toString() || prev.salaryMax,
           currency: parsedVacancy.salary?.currency || prev.currency,
+          jobId: typeof parsedVacancy.id === 'number' ? parsedVacancy.id : prev.jobId
         }))
         
         console.log('Vacancy parsed successfully:', parsedVacancy)
@@ -580,7 +581,7 @@ export default function DashboardPage() {
                   {[
                     { label: "Upload Vacancy", icon: "📋" },
                     { label: "Upload CVs", icon: "📄" },
-                    { label: "Configure Questions", icon: "⚙️" },
+                    { label: "AI Analysis", icon: "🤖" },
                     { label: "Complete", icon: "🎯" }
                   ].map((step, index) => (
                     <div key={step.label} className="flex flex-col items-center">
@@ -614,183 +615,7 @@ export default function DashboardPage() {
               {currentStep === "vacancy" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Step 1: Upload Vacancy</h3>
-                  <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-                      <TabsTrigger value="file">Upload File</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="manual" className="space-y-4 max-h-[500px] overflow-y-auto">
-                      {/* Basic Information */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Basic Information</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Job Title <span className="text-red-500">*</span></Label>
-                            <Input 
-                              placeholder="e.g., Senior Frontend Developer"
-                              value={vacancyData.title}
-                              onChange={(e) => setVacancyData({...vacancyData, title: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Department <span className="text-red-500">*</span></Label>
-                            <Select 
-                              value={vacancyData.department}
-                              onValueChange={(v) => setVacancyData({...vacancyData, department: v})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select department" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="IT">IT</SelectItem>
-                                <SelectItem value="Product">Product</SelectItem>
-                                <SelectItem value="Design">Design</SelectItem>
-                                <SelectItem value="Analytics">Analytics</SelectItem>
-                                <SelectItem value="Sales">Sales</SelectItem>
-                                <SelectItem value="Marketing">Marketing</SelectItem>
-                                <SelectItem value="HR">HR</SelectItem>
-                                <SelectItem value="Finance">Finance</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Location <span className="text-red-500">*</span></Label>
-                            <Input 
-                              placeholder="e.g., Moscow, Remote"
-                              value={vacancyData.location}
-                              onChange={(e) => setVacancyData({...vacancyData, location: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Employment Type</Label>
-                            <Select 
-                              value={vacancyData.type}
-                              onValueChange={(v) => setVacancyData({...vacancyData, type: v})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Full-time">Full-time</SelectItem>
-                                <SelectItem value="Part-time">Part-time</SelectItem>
-                                <SelectItem value="Contract">Contract</SelectItem>
-                                <SelectItem value="Internship">Internship</SelectItem>
-                                <SelectItem value="Freelance">Freelance</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Experience Level <span className="text-red-500">*</span></Label>
-                            <Input 
-                              placeholder="e.g., 3-5 years"
-                              value={vacancyData.experience || ''}
-                              onChange={(e) => setVacancyData({...vacancyData, experience: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Priority Level</Label>
-                            <Select 
-                              value={vacancyData.priority || 'medium'}
-                              onValueChange={(v) => setVacancyData({...vacancyData, priority: v})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Compensation */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Compensation</h4>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <Label>Min Salary</Label>
-                            <Input 
-                              type="number"
-                              placeholder="150000"
-                              value={vacancyData.salaryMin || ''}
-                              onChange={(e) => setVacancyData({...vacancyData, salaryMin: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Max Salary</Label>
-                            <Input 
-                              type="number"
-                              placeholder="250000"
-                              value={vacancyData.salaryMax || ''}
-                              onChange={(e) => setVacancyData({...vacancyData, salaryMax: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Select 
-                              value={vacancyData.currency || 'RUB'}
-                              onValueChange={(v) => setVacancyData({...vacancyData, currency: v})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="RUB">RUB</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                                <SelectItem value="EUR">EUR</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Timeline */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Timeline</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Application Deadline <span className="text-red-500">*</span></Label>
-                            <Input 
-                              type="date"
-                              value={vacancyData.deadline || ''}
-                              onChange={(e) => setVacancyData({...vacancyData, deadline: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Expected Start Date</Label>
-                            <Input 
-                              type="date"
-                              value={vacancyData.startDate || ''}
-                              onChange={(e) => setVacancyData({...vacancyData, startDate: e.target.value})}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Description */}
-                      <div className="space-y-2">
-                        <Label>Job Description <span className="text-red-500">*</span></Label>
-                        <Textarea 
-                          placeholder="Detailed description of the position..."
-                          rows={4}
-                          value={vacancyData.description}
-                          onChange={(e) => setVacancyData({...vacancyData, description: e.target.value})}
-                        />
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="file" className="space-y-4">
-                      <div className="space-y-4">
+                  <div className="space-y-4">
                         <div
                           {...getVacancyRootProps()}
                           className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
@@ -831,8 +656,6 @@ export default function DashboardPage() {
                           </div>
                         )}
                       </div>
-                    </TabsContent>
-                  </Tabs>
                   
                   {/* Error Alert */}
                   {uploadError && (
@@ -848,13 +671,7 @@ export default function DashboardPage() {
                   <div className="flex justify-end">
                     <Button 
                       onClick={submitVacancy} 
-                      disabled={
-                        isProcessing || (
-                          currentTab === 'manual' 
-                            ? !vacancyData.title || !vacancyData.department || !vacancyData.location || !vacancyData.experience || !vacancyData.deadline || !vacancyData.description
-                            : !vacancyData.uploadedFile
-                        )
-                      }
+                      disabled={isProcessing || !vacancyData.uploadedFile}
                     >
                       {isProcessing ? (
                         <>
@@ -927,11 +744,20 @@ export default function DashboardPage() {
                       Back
                     </Button>
                     <Button 
-                      onClick={() => setCurrentStep("interview-config")}
-                      disabled={uploadedCVs.length === 0}
+                      onClick={uploadCVs}
+                      disabled={uploadedCVs.length === 0 || isProcessing}
                     >
-                      Next: Configure Questions
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing CVs...
+                        </>
+                      ) : (
+                        <>
+                          Process CVs
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -985,505 +811,8 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Step 3: Interview Configuration */}
-              {currentStep === "interview-config" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 3: Configure Question Distribution</h3>
 
-                  {/* Visual Question Distribution with Diagram */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Question Distribution</CardTitle>
-                      <CardDescription className="text-xs">Configure how AI will distribute interview questions</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Visual Folder/Box Representation */}
-                      <div className="grid grid-cols-3 gap-3 py-2">
-                        {/* Technical Box */}
-                        <div className="text-center space-y-2">
-                          <div className="relative mx-auto w-20 h-20 bg-blue-50 rounded-lg flex flex-col items-center justify-center border-2 border-blue-200 hover:border-blue-400 transition-colors cursor-pointer">
-                            <Code className="h-5 w-5 text-blue-600 mb-1" />
-                            <span className="text-lg font-bold text-blue-600">{questionDistribution.technical}%</span>
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium">Technical</Label>
-                            <p className="text-[10px] text-muted-foreground">Code & Skills</p>
-                          </div>
-                        </div>
-                        
-                        {/* Behavioral Box */}
-                        <div className="text-center space-y-2">
-                          <div className="relative mx-auto w-20 h-20 bg-green-50 rounded-lg flex flex-col items-center justify-center border-2 border-green-200 hover:border-green-400 transition-colors cursor-pointer">
-                            <Users className="h-5 w-5 text-green-600 mb-1" />
-                            <span className="text-lg font-bold text-green-600">{questionDistribution.behavioral}%</span>
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium">Behavioral</Label>
-                            <p className="text-[10px] text-muted-foreground">Soft Skills</p>
-                          </div>
-                        </div>
-                        
-                        {/* Experience Box */}
-                        <div className="text-center space-y-2">
-                          <div className="relative mx-auto w-20 h-20 bg-purple-50 rounded-lg flex flex-col items-center justify-center border-2 border-purple-200 hover:border-purple-400 transition-colors cursor-pointer">
-                            <Briefcase className="h-5 w-5 text-purple-600 mb-1" />
-                            <span className="text-lg font-bold text-purple-600">{questionDistribution.experience}%</span>
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium">Experience</Label>
-                            <p className="text-[10px] text-muted-foreground">Past Work</p>
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* Compact Sliders */}
-                      <div className="space-y-2 pt-2 border-t">
-                        {/* Technical */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 w-24">
-                            <Code className="h-3 w-3 text-blue-600" />
-                            <Label className="text-xs">Technical</Label>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="5"
-                            value={questionDistribution.technical}
-                            onChange={(e) => handleQuestionDistributionChange('technical', parseInt(e.target.value))}
-                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                          />
-                          <span className="text-xs font-semibold text-blue-600 w-10 text-right">{questionDistribution.technical}%</span>
-                        </div>
-
-                        {/* Behavioral */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 w-24">
-                            <Users className="h-3 w-3 text-green-600" />
-                            <Label className="text-xs">Behavioral</Label>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="5"
-                            value={questionDistribution.behavioral}
-                            onChange={(e) => handleQuestionDistributionChange('behavioral', parseInt(e.target.value))}
-                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                          />
-                          <span className="text-xs font-semibold text-green-600 w-10 text-right">{questionDistribution.behavioral}%</span>
-                        </div>
-
-                        {/* Experience */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 w-24">
-                            <Briefcase className="h-3 w-3 text-purple-600" />
-                            <Label className="text-xs">Experience</Label>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="5"
-                            value={questionDistribution.experience}
-                            onChange={(e) => handleQuestionDistributionChange('experience', parseInt(e.target.value))}
-                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                          />
-                          <span className="text-xs font-semibold text-purple-600 w-10 text-right">{questionDistribution.experience}%</span>
-                        </div>
-                      </div>
-
-                      {/* Total with Visual Indicator */}
-                      <div className="pt-2 border-t">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Total Distribution</span>
-                          <div className="flex items-center gap-1">
-                            <span className={`text-sm font-bold ${
-                              (questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100
-                                ? 'text-green-600'
-                                : 'text-red-600'
-                            }`}>
-                              {questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience}%
-                            </span>
-                            {(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) === 100 
-                              ? <CheckCircle className="h-3 w-3 text-green-600" />
-                              : <AlertCircle className="h-3 w-3 text-red-600" />
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Simplified Question Selection */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Question Selection</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Role Selection Dropdown */}
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-1.5 block">Role Template</Label>
-                        <Select 
-                          value={selectedRole || "auto"} 
-                          onValueChange={(value) => {
-                            if (value === "auto") {
-                              setSelectedRole(null)
-                              setQuestionSelectionMode("auto")
-                            } else {
-                              setSelectedRole(value)
-                              setQuestionSelectionMode("role")
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Choose a role or use automatic selection" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="auto">
-                              <div className="flex items-center gap-2">
-                                <Brain className="h-3 w-3" />
-                                <span>Automatic AI Generation</span>
-                              </div>
-                            </SelectItem>
-                            <Separator className="my-1" />
-                            <SelectItem value="junior-java">Junior Java Developer</SelectItem>
-                            <SelectItem value="middle-java">Middle Java Developer</SelectItem>
-                            <SelectItem value="senior-java">Senior Java Developer</SelectItem>
-                            <SelectItem value="junior-react">Junior React Developer</SelectItem>
-                            <SelectItem value="middle-react">Middle React Developer</SelectItem>
-                            <SelectItem value="senior-golang">Senior GoLang Developer</SelectItem>
-                            <SelectItem value="middle-frontend">Middle Frontend Developer</SelectItem>
-                            <SelectItem value="senior-backend">Senior Backend Developer</SelectItem>
-                            <SelectItem value="lead-fullstack">Lead Full Stack Developer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Custom Questions */}
-                      <div className="border-t pt-3 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs text-muted-foreground">Custom Questions (Optional)</Label>
-                          {customQuestions.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {customQuestions.length} added
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {/* Input with Add Button */}
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Type a question and click Add"
-                            value={currentQuestion}
-                            onChange={(e) => setCurrentQuestion(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter' && currentQuestion.trim()) {
-                                e.preventDefault()
-                                setCustomQuestions([...customQuestions, currentQuestion.trim()])
-                                setCurrentQuestion("")
-                              }
-                            }}
-                            className="flex-1 h-8 text-sm"
-                          />
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              if (currentQuestion.trim()) {
-                                setCustomQuestions([...customQuestions, currentQuestion.trim()])
-                                setCurrentQuestion("")
-                              }
-                            }}
-                            disabled={!currentQuestion.trim()}
-                            className="h-8"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add
-                          </Button>
-                        </div>
-
-                        {/* Questions List */}
-                        {customQuestions.length > 0 && (
-                          <div className="space-y-1 max-h-32 overflow-y-auto">
-                            {customQuestions.map((question, index) => (
-                              <div key={index} className="flex items-start gap-2 group">
-                                <span className="text-xs text-muted-foreground mt-0.5">{index + 1}.</span>
-                                <span className="flex-1 text-xs">{question}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setCustomQuestions(customQuestions.filter((_, i) => i !== index))
-                                  }}
-                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <X className="h-3 w-3 text-muted-foreground hover:text-red-500" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Compact Summary */}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            {selectedRole ? (
-                              <><BookOpen className="h-3 w-3" /> {selectedRole}</>
-                            ) : (
-                              <><Brain className="h-3 w-3" /> AI Auto</>
-                            )}
-                          </span>
-                          <span>•</span>
-                          <span>{questionDistribution.technical}% T / {questionDistribution.behavioral}% B / {questionDistribution.experience}% E</span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => {
-                            setSelectedRole(null)
-                            setQuestionSelectionMode("auto")
-                            setCustomQuestions([])
-                            setCurrentQuestion("")
-                          }}
-                        >
-                          Reset
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("upload")}>
-                      Back
-                    </Button>
-                    <Button 
-                      onClick={() => setCurrentStep("complete")}
-                      disabled={(questionDistribution.technical + questionDistribution.behavioral + questionDistribution.experience) !== 100}
-                    >
-                      Complete Setup
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Notification */}
-              {false && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 5: Select & Notify Candidates</h3>
-                  
-                  <Alert className="border-blue-200 bg-blue-50">
-                    <Brain className="h-4 w-4 text-blue-600" />
-                    <AlertTitle className="text-blue-900">AI Analysis Complete</AlertTitle>
-                    <AlertDescription className="text-blue-800">
-                      Select candidates to invite for interviews based on match scores
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="space-y-3">
-                    {candidates.map((candidate, index) => (
-                      <Card key={candidate.id} className={`transition-all ${
-                        selectedCandidates.includes(candidate.id) 
-                          ? 'border-blue-500 bg-blue-50/50' 
-                          : candidate.matchScore >= 80 
-                            ? 'border-green-200' 
-                            : candidate.matchScore >= 60 
-                              ? 'border-yellow-200'
-                              : 'border-gray-200'
-                      }`}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-4">
-                              <Avatar>
-                                <AvatarFallback className={
-                                  candidate.matchScore >= 80 
-                                    ? 'bg-green-100 text-green-700'
-                                    : candidate.matchScore >= 60
-                                      ? 'bg-yellow-100 text-yellow-700'
-                                      : 'bg-gray-100 text-gray-700'
-                                }>
-                                  {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-semibold">{candidate.name}</h4>
-                                  <Badge 
-                                    variant={
-                                      candidate.matchScore >= 80 
-                                        ? "default" 
-                                        : candidate.matchScore >= 60 
-                                          ? "secondary"
-                                          : "outline"
-                                    } 
-                                    className="gap-1"
-                                  >
-                                    {candidate.matchScore >= 80 && "🏆 "}
-                                    {candidate.matchScore}% Match
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Mail className="h-3 w-3" />
-                                    {candidate.email}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {candidate.phone}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                    <span className="font-semibold">{candidate.matchScore}%</span>
-                                  </div>
-                                  <Separator orientation="vertical" className="h-4" />
-                                  <span className="text-sm">{candidate.experience}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={selectedCandidates.includes(candidate.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedCandidates([...selectedCandidates, candidate.id])
-                                  } else {
-                                    setSelectedCandidates(selectedCandidates.filter(id => id !== candidate.id))
-                                  }
-                                }}
-                                className="h-4 w-4"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("analysis")}>
-                      Back
-                    </Button>
-                    <Button 
-                      onClick={sendNotifications}
-                      disabled={selectedCandidates.length === 0 || isProcessing}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          Send Interview Invitations
-                          <Mail className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 6: Scheduling */}
-
-              {false && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Step 6: Share Scheduling Links</h3>
-                  
-                  <Alert className="border-blue-200 bg-blue-50">
-                    <Mail className="h-4 w-4 text-blue-600" />
-                    <AlertTitle className="text-blue-900">Invitations Sent</AlertTitle>
-                    <AlertDescription className="text-blue-800">
-                      Scheduling links have been sent to candidates. They will select their preferred interview times.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="space-y-4">
-                    {candidates.filter(c => c.status === "notified").map((candidate, index) => (
-                      <Card key={candidate.id}>
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarFallback>
-                                  {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h4 className="font-semibold">{candidate.name}</h4>
-                                <p className="text-sm text-muted-foreground">{candidate.email}</p>
-                              </div>
-                            </div>
-                            <Badge className="bg-amber-100 text-amber-800">
-                              <Clock className="mr-1 h-3 w-3" />
-                              Awaiting Response
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div className="flex-1">
-                              <Label className="text-xs text-muted-foreground mb-1">Scheduling Link</Label>
-                              <div className="flex items-center gap-2">
-                                <LinkIcon className="h-4 w-4 text-slate-500" />
-                                <code className="text-xs text-slate-600">
-                                  {`${window.location.origin}/interview-schedule/${candidate.id}-${index + 1}`}
-                                </code>
-                              </div>
-                            </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(
-                                  `${window.location.origin}/interview-schedule/${candidate.id}-${index + 1}`
-                                )
-                                // In production, would show a toast notification
-                                alert("Link copied to clipboard!")
-                              }}
-                            >
-                              <LinkIcon className="mr-2 h-3 w-3" />
-                              Copy Link
-                            </Button>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Mail className="h-3 w-3" />
-                            <span>Email sent at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Tracking Interview Scheduling</AlertTitle>
-                    <AlertDescription>
-                      You'll receive notifications when candidates select their interview times. 
-                      The dashboard will automatically update with confirmed schedules.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="flex justify-between">
-                    <Button variant="outline" onClick={() => setCurrentStep("interview-config")}>
-                      Back
-                    </Button>
-                    <Button 
-                      onClick={() => setCurrentStep("complete")}
-                    >
-                      Finish Setup
-                      <CheckCircle className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
 
               {/* Complete */}
               {currentStep === "complete" && (
@@ -1514,168 +843,7 @@ export default function DashboardPage() {
       </Dialog>
 
       {/* Main Content Grid - Fill remaining height */}
-      <div className="grid gap-6 md:grid-cols-2 flex-1">
-        {/* AI Interview Schedule */}
-        <Card className="lg:col-span-1 flex flex-col h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span>Upcoming AI Interviews</span>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-xs text-muted-foreground">Live</span>
-              </div>
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Next {Math.min(5, todayInterviews.length)} interviews • {todayInterviews.filter(i => i.status === 'in_progress').length} in progress
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col pt-2">
-            <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {todayInterviews.slice(0, 5).map((interview) => (
-                <div 
-                  key={interview.id} 
-                  onClick={() => document.getElementById('calendar-trigger')?.click()}
-                  className={`flex items-start space-x-2 p-1.5 rounded-lg transition-all cursor-pointer ${
-                    interview.status === 'in-progress' 
-                      ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' 
-                      : 'hover:bg-gray-50 hover:border hover:border-[#1B4F8C]/20'
-                  }`}
-                >
-                  <div className="text-xs font-medium text-muted-foreground w-12 pt-0.5">
-                    {interview.time}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium leading-tight truncate">{interview.candidateName}</p>
-                      {interview.status === 'in-progress' && (
-                        <Badge className="text-[10px] py-0 px-1 h-3.5 bg-blue-500">
-                          LIVE
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight truncate">{interview.position}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-gray-500">
-                        {interview.duration}
-                      </span>
-                      <span className="text-[10px] font-medium text-green-600">
-                        {interview.matchScore}% match
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-3 w-3 text-gray-400" />
-                </div>
-              ))}
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button id="calendar-trigger" variant="outline" className="w-full mt-3 h-8" size="sm">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  View full calendar
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Today's AI Interviews</DialogTitle>
-                  <DialogDescription>
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                  </DialogDescription>
-                </DialogHeader>
-                
-                {/* Today's Schedule */}
-                <div className="mt-4">
-                  <div className="border rounded-lg">
-                    {/* Time slots from 9 AM to 6 PM */}
-                    {[
-                      { time: '9:00 AM', hour: 9 },
-                      { time: '10:00 AM', hour: 10 },
-                      { time: '11:00 AM', hour: 11 },
-                      { time: '12:00 PM', hour: 12 },
-                      { time: '1:00 PM', hour: 13 },
-                      { time: '2:00 PM', hour: 14 },
-                      { time: '3:00 PM', hour: 15 },
-                      { time: '4:00 PM', hour: 16 },
-                      { time: '5:00 PM', hour: 17 },
-                      { time: '6:00 PM', hour: 18 }
-                    ].map((slot, index) => {
-                      // Find interviews for this time slot
-                      const slotInterviews = todayInterviews.filter(interview => {
-                        // Match the scheduled time with slot time
-                        const interviewTime = new Date(interview.scheduledAt);
-                        return interviewTime.getHours() === slot.hour;
-                      });
-                      
-                      return (
-                        <div key={slot.time} className={`flex border-b last:border-b-0 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                          {/* Time column */}
-                          <div className="w-24 p-3 text-sm text-gray-500 font-medium border-r">
-                            {slot.time}
-                          </div>
-                          
-                          {/* Interview slot */}
-                          <div className="flex-1 p-3">
-                            {slotInterviews.length > 0 ? (
-                              slotInterviews.map((interview) => (
-                                <div key={interview.id} className={`rounded-lg p-3 ${
-                                  interview.status === 'in-progress' 
-                                    ? 'bg-blue-100 border border-blue-300' 
-                                    : 'bg-green-50 border border-green-200'
-                                }`}>
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <p className="font-medium text-sm">{interview.candidateName}</p>
-                                        {interview.status === 'in-progress' && (
-                                          <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0 h-4">
-                                            LIVE NOW
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <p className="text-xs text-gray-600 mt-0.5">{interview.position}</p>
-                                      <div className="flex items-center gap-3 mt-1">
-                                        <span className="text-xs text-gray-500">
-                                          Duration: {interview.duration}
-                                        </span>
-                                        <span className="text-xs font-medium text-green-600">
-                                          Match: {interview.matchScore}%
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <Button variant="outline" size="sm" className="h-7 text-xs">
-                                      View Details
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="text-sm text-gray-400">Available</div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Summary */}
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm">
-                        <span className="font-medium">Total interviews today:</span> {todayInterviews.length}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Average score:</span> {
-                          todayInterviews.length > 0 
-                            ? Math.round(todayInterviews.reduce((sum, i) => sum + (i.score || 0), 0) / todayInterviews.length)
-                            : 0
-                        }%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 md:grid-cols-1 flex-1">
 
         {/* Top Match Candidates */}
         <Card className="lg:col-span-1 flex flex-col h-full">

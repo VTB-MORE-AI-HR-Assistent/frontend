@@ -6,18 +6,12 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+// Tooltip component not available - removing import
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
   Home,
   Briefcase,
   Users,
-  Calendar,
   BarChart3,
   Settings,
   HelpCircle,
@@ -29,8 +23,6 @@ import {
   BookOpen,
   TrendingUp,
   Clock,
-  Star,
-  FileText,
 } from "lucide-react"
 import { ROUTES } from "@/lib/constants"
 
@@ -78,20 +70,10 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
       badge: "3",
     },
     {
-      href: ROUTES.HR_CALENDAR,
-      label: "Calendar",
-      icon: Calendar,
-    },
-    {
       href: ROUTES.HR_INTERVIEW_REPORTS,
       label: "Reports",
       icon: FileText,
       badge: "New",
-    },
-    {
-      href: ROUTES.HR_QUESTION_BANK,
-      label: "Question Bank",
-      icon: BookOpen,
     },
     {
       href: ROUTES.HR_ANALYTICS,
@@ -252,17 +234,15 @@ export function Sidebar({ collapsed = false, onCollapsedChange, className }: Sid
   )
 
   return (
-    <TooltipProvider>
-      <aside
-        className={cn(
-          "hidden lg:flex lg:flex-col bg-white border-r border-slate-200 transition-all duration-300",
-          isCollapsed ? "w-[70px]" : "w-[280px]",
-          className
-        )}
-      >
-        <SidebarContent />
-      </aside>
-    </TooltipProvider>
+    <aside
+      className={cn(
+        "hidden lg:flex lg:flex-col bg-white border-r border-slate-200 transition-all duration-300",
+        isCollapsed ? "w-[70px]" : "w-[280px]",
+        className
+      )}
+    >
+      <SidebarContent />
+    </aside>
   )
 }
 
@@ -308,22 +288,9 @@ function NavLink({
     </Link>
   )
 
+  // Simplified collapsed view without tooltip
   if (isCollapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{linkElement}</TooltipTrigger>
-        <TooltipContent side="right">
-          <div className="flex items-center gap-2">
-            <span>{item.label}</span>
-            {item.badge && (
-              <span className="rounded-full bg-[#1B4F8C]/10 px-1.5 text-[10px] font-semibold text-[#1B4F8C]">
-                {item.badge}
-              </span>
-            )}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    )
+    return linkElement
   }
 
   return linkElement

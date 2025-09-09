@@ -1,5 +1,6 @@
-import apiClient from './client';
 import { Candidate } from '@/types';
+import { mockCandidates, mockStats, simulateApiDelay } from '../mock-data';
+import apiClient from './client';
 
 export interface CandidatesResponse {
   candidates: Candidate[];
@@ -39,6 +40,25 @@ export interface CreateCandidateRequest {
   expectedSalary?: number;
   availability?: string;
   source?: string;
+}
+
+export interface UploadCVsRequest {
+  jobId?: number;
+  files: File[];
+}
+
+export interface UploadCVsResponse {
+  uploadId: string;
+  status: 'COMPLETED' | 'COMPLETED_WITH_ERRORS' | 'FAILED';
+  items: Array<{
+    id: number;
+    filename: string;
+    status: 'COMPLETED' | 'FAILED';
+    candidateId?: number;
+    email?: string;
+    errorCode?: string;
+    errorMessage?: string;
+  }>;
 }
 
 export interface UpdateCandidateRequest {
@@ -82,91 +102,150 @@ export interface CandidateAssessment {
 
 export const candidatesApi = {
   // ЗАМЕТКА: Эти эндпоинты НЕ СУЩЕСТВУЮТ в backend - требуют реализации
-  // Получить всех кандидатов с фильтрами
+  // Получить всех кандидатов с фильтрами - MOCKED
   getCandidates: async (filters: CandidateFilters = {}): Promise<CandidatesResponse> => {
-    const params = new URLSearchParams();
-    if (filters.search) params.append('search', filters.search);
-    if (filters.status) params.append('status', filters.status);
-    if (filters.position) params.append('position', filters.position);
-    if (filters.experience) params.append('experience', filters.experience.toString());
-    if (filters.skills && filters.skills.length > 0) {
-      filters.skills.forEach(skill => params.append('skills', skill));
-    }
-    if (filters.page !== undefined) params.append('page', filters.page.toString());
-    if (filters.size !== undefined) params.append('size', filters.size.toString());
-
-    const response = await apiClient.get(`/v1/candidates?${params.toString()}`);
-    return response.data;
-  },
-
-  // Получить кандидата по ID
-  getCandidate: async (id: string): Promise<Candidate> => {
-    const response = await apiClient.get(`/v1/candidates/${id}`);
-    return response.data;
-  },
-
-  // Создать нового кандидата (используем upload для CV)
-  createCandidate: async (candidate: CreateCandidateRequest): Promise<Candidate> => {
-    const formData = new FormData();
+    await simulateApiDelay(600);
     
-    // Добавляем все поля кроме файла
-    Object.entries(candidate).forEach(([key, value]) => {
-      if (key !== 'resumeFile' && value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(v => formData.append(key, v.toString()));
-        } else {
-          formData.append(key, value.toString());
-        }
-      }
-    });
-
-    // Добавляем файл резюме если есть
-    if (candidate.resumeFile) {
-      formData.append('files', candidate.resumeFile);
-    }
-
-    // Используем реальный эндпоинт для создания кандидата
-    const response = await apiClient.post('/v1/candidates', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  // Обновить кандидата
-  updateCandidate: async (id: string, candidate: UpdateCandidateRequest): Promise<Candidate> => {
-    const response = await apiClient.put(`/v1/candidates/${id}`, candidate);
-    return response.data;
-  },
-
-  // Upload CV function
-  uploadCV: async (file: File, candidateData?: any): Promise<any> => {
-    const formData = new FormData();
-    formData.append('file', file);
+    let filteredCandidates = [...mockCandidates];
     
-    if (candidateData) {
-      Object.entries(candidateData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, value.toString());
-        }
+    // Apply filters
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filteredCandidates = filteredCandidates.filter(c => 
+        c.name.toLowerCase().includes(searchLower) ||
+        c.email.toLowerCase().includes(searchLower) ||
+        c.position.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (filters.status) {
+      filteredCandidates = filteredCandidates.filter(c => c.status === filters.status);
+    }
+    
+    if (filters.position) {
+      filteredCandidates = filteredCandidates.filter(c => 
+        c.position.toLowerCase().includes(filters.position!.toLowerCase())
+      );
+    }
+    
+    // Apply sorting
+    if (filters.sortBy) {
+      filteredCandidates.sort((a, b) => {
+        const aVal = (a as any)[filters.sortBy!];
+        const bVal = (b as any)[filters.sortBy!];
+        const order = filters.sortOrder === 'desc' ? -1 : 1;
+        return aVal > bVal ? order : -order;
       });
     }
+    
+    // Apply pagination
+    const page = filters.page || 0;
+    const limit = filters.limit || 10;
+    const start = page * limit;
+    const paginatedCandidates = filteredCandidates.slice(start, start + limit);
+    
+    return {
+      candidates: paginatedCandidates,
+      total: filteredCandidates.length,
+      page,
+      limit
+    };
+  },
 
-    const response = await apiClient.post('/v1/candidates', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+  // Получить кандидата по ID - MOCKED
+  getCandidate: async (id: string): Promise<Candidate> => {
+    await simulateApiDelay(300);
+    
+    const candidate = mockCandidates.find(c => c.id === id);
+    if (!candidate) {
+      throw new Error('Candidate not found');
+    }
+    
+    return candidate;
+  },
+
+  // Создать нового кандидата - MOCKED
+  createCandidate: async (candidate: CreateCandidateRequest): Promise<Candidate> => {
+    await simulateApiDelay(1000);
+    
+    // Create new candidate with mock data
+    const newCandidate: Candidate = {
+      id: `cand-${Date.now()}`,
+      name: `${candidate.firstName} ${candidate.lastName}`,
+      email: candidate.email,
+      phone: candidate.phone || '+7 (999) 000-00-00',
+      position: candidate.position,
+      experience: candidate.experience || 0,
+      skills: candidate.skills || [],
+      matchScore: Math.floor(Math.random() * 40) + 60, // 60-100
+      status: 'New',
+      resumeUrl: candidate.resumeFile?.name || 'uploaded_resume.pdf',
+      appliedAt: new Date()
+    };
+    
+    // Add to mock data (in real app this would be persisted)
+    mockCandidates.push(newCandidate);
+    
+    return newCandidate;
+  },
+
+  // Обновить кандидата - MOCKED
+  updateCandidate: async (id: string, candidateUpdate: UpdateCandidateRequest): Promise<Candidate> => {
+    await simulateApiDelay(500);
+    
+    const candidateIndex = mockCandidates.findIndex(c => c.id === id);
+    if (candidateIndex === -1) {
+      throw new Error('Candidate not found');
+    }
+    
+    // Update candidate
+    const updatedCandidate = {
+      ...mockCandidates[candidateIndex],
+      ...candidateUpdate,
+      name: candidateUpdate.firstName && candidateUpdate.lastName 
+        ? `${candidateUpdate.firstName} ${candidateUpdate.lastName}`
+        : mockCandidates[candidateIndex].name
+    };
+    
+    mockCandidates[candidateIndex] = updatedCandidate;
+    return updatedCandidate;
+  },
+
+  // Upload CV function - MOCKED
+  uploadCV: async (file: File, candidateData?: any): Promise<any> => {
+    await simulateApiDelay(1200);
+    
+    // Mock CV analysis result
+    return {
+      id: `upload-${Date.now()}`,
+      fileName: file.name,
+      fileSize: file.size,
+      status: 'processed',
+      extractedData: {
+        name: candidateData?.name || 'Extracted Name',
+        email: candidateData?.email || 'extracted@email.com',
+        phone: candidateData?.phone || '+7 (999) 123-45-67',
+        skills: ['React', 'TypeScript', 'Node.js'],
+        experience: Math.floor(Math.random() * 8) + 2,
+        education: 'Bachelor\'s Degree in Computer Science'
       },
-    });
-    return response.data;
+      matchScore: Math.floor(Math.random() * 40) + 60
+    };
   },
 
-  // Удалить кандидата
+  // Удалить кандидата - MOCKED
   deleteCandidate: async (id: string): Promise<void> => {
-    await apiClient.delete(`/v1/candidates/${id}`);
+    await simulateApiDelay(300);
+    
+    const candidateIndex = mockCandidates.findIndex(c => c.id === id);
+    if (candidateIndex === -1) {
+      throw new Error('Candidate not found');
+    }
+    
+    mockCandidates.splice(candidateIndex, 1);
   },
 
-  // Получить статистику по кандидатам
+  // Получить статистику по кандидатам - MOCKED
   getCandidateStats: async (): Promise<{
     total: number;
     new: number;
@@ -176,8 +255,8 @@ export const candidatesApi = {
     hired: number;
     rejected: number;
   }> => {
-    const response = await apiClient.get('/v1/candidates/stats');
-    return response.data;
+    await simulateApiDelay(400);
+    return mockStats.candidates;
   },
 
   // ЗАМЕТКА: Все нижеперечисленные эндпоинты НЕ РЕАЛИЗОВАНЫ в backend
@@ -215,6 +294,29 @@ export const candidatesApi = {
   // Скачать резюме кандидата
   downloadResume: async (candidateId: string): Promise<Blob> => {
     throw new Error('API endpoint GET /api/v1/candidates/{id}/resume not implemented in backend');
+  },
+
+  // Загрузить CV файлы
+  uploadCVs: async (request: UploadCVsRequest): Promise<UploadCVsResponse> => {
+    const formData = new FormData();
+    
+    // Добавляем jobId если есть
+    if (request.jobId) {
+      formData.append('jobId', request.jobId.toString());
+    }
+    
+    // Добавляем файлы
+    request.files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const response = await apiClient.post('/api/v1/candidates/uploads', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data;
   },
 
   // Отправить email кандидату (используем реальный эндпоинт)

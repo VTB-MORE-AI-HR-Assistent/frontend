@@ -1,117 +1,132 @@
-import apiClient from "./client";
 import { tokenManager } from "../auth/token-manager";
-import { formatAuthError } from "../auth/auth-helpers";
+import { mockAuthResponse, simulateApiDelay } from "../mock-data";
 import {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
-  RefreshRequest,
   RefreshResponse,
   UserDto,
 } from "./types";
 
-// Login user
+// Login user - MOCKED
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>("/v1/auth/login", data);
+    // Simulate API delay
+    await simulateApiDelay(800);
 
-    // Store tokens and user data
-    tokenManager.setTokens({
-      accessToken: response.data.accessToken,
-      refreshToken: response.data.refreshToken,
-      expiresIn: response.data.expiresIn,
-    });
+    // Mock validation - check for demo credentials
+    if (data.email === "hr.manager@vtb.com" && data.password === "password") {
+      // Store tokens and user data
+      tokenManager.setTokens({
+        accessToken: mockAuthResponse.accessToken,
+        refreshToken: mockAuthResponse.refreshToken,
+        expiresIn: mockAuthResponse.expiresIn,
+      });
 
-    // Store user data in localStorage
-    if (typeof window !== "undefined" && response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // Store user data in localStorage
+      if (typeof window !== "undefined" && mockAuthResponse.user) {
+        localStorage.setItem("user", JSON.stringify(mockAuthResponse.user));
+      }
+
+      return mockAuthResponse;
+    } else {
+      throw new Error("Invalid credentials");
     }
-
-    return response.data;
-  } catch (error: any) {
-    const status = error.response?.status;
-    const message = error.response?.data?.message;
-    throw new Error(formatAuthError(status, message));
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Invalid credentials") {
+      throw error;
+    }
+    throw new Error("Login failed");
   }
 }
 
-// Register new user
+// Register new user - MOCKED
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>(
-      "/v1/auth/register",
-      data
-    );
+    // Simulate API delay
+    await simulateApiDelay(800);
+
+    // Mock registration - create new user with provided data
+    const mockResponse = {
+      ...mockAuthResponse,
+      user: {
+        ...mockAuthResponse.user,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName
+      }
+    };
 
     // Store tokens and user data
     tokenManager.setTokens({
-      accessToken: response.data.accessToken,
-      refreshToken: response.data.refreshToken,
-      expiresIn: response.data.expiresIn,
+      accessToken: mockResponse.accessToken,
+      refreshToken: mockResponse.refreshToken,
+      expiresIn: mockResponse.expiresIn,
     });
 
     // Store user data in localStorage
-    if (typeof window !== "undefined" && response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+    if (typeof window !== "undefined" && mockResponse.user) {
+      localStorage.setItem("user", JSON.stringify(mockResponse.user));
     }
 
-    return response.data;
-  } catch (error: any) {
-    const status = error.response?.status;
-    const message = error.response?.data?.message;
-    throw new Error(formatAuthError(status, message));
+    return mockResponse;
+  } catch {
+    throw new Error("Registration failed");
   }
 }
 
-// Refresh access token
+// Refresh access token - MOCKED
 export async function refreshToken(
-  refreshToken: string
+  _refreshToken: string
 ): Promise<RefreshResponse> {
   try {
-    const response = await apiClient.post<RefreshResponse>("/v1/auth/refresh", {
-      refreshToken,
-    } as RefreshRequest);
+    // Simulate API delay
+    await simulateApiDelay(300);
+
+    // Mock refresh response
+    const mockRefreshResponse: RefreshResponse = {
+      accessToken: "mock_new_access_token_" + Date.now(),
+      tokenType: "Bearer",
+      expiresIn: 3600
+    };
 
     // Update access token with new expiry
     tokenManager.updateAccessToken(
-      response.data.accessToken,
-      response.data.expiresIn
+      mockRefreshResponse.accessToken,
+      mockRefreshResponse.expiresIn
     );
 
-    return response.data;
-  } catch (error: any) {
+    return mockRefreshResponse;
+  } catch {
     // If refresh fails, clear tokens and redirect to login
     tokenManager.clearTokens();
-    throw new Error(
-      error.response?.data?.message || "Session expired. Please login again."
-    );
+    throw new Error("Session expired. Please login again.");
   }
 }
 
-// Get current user
+// Get current user - MOCKED
 export async function getCurrentUser(): Promise<UserDto> {
   try {
-    const response = await apiClient.get<UserDto>("/v1/users/me");
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to get user data");
+    // Simulate API delay
+    await simulateApiDelay(200);
+    
+    // Return mock user data
+    return mockAuthResponse.user;
+  } catch {
+    throw new Error("Failed to get user data");
   }
 }
 
-// Logout user
+// Logout user - MOCKED
 export async function logout(): Promise<void> {
-  const refreshToken = tokenManager.getRefreshToken();
-
-  // Try to invalidate token on backend if endpoint exists
-  if (refreshToken) {
-    try {
-      await apiClient.post("/v1/auth/logout", { refreshToken });
-    } catch (error) {
-      // Ignore errors - backend might not have logout endpoint
-      console.log("Logout endpoint not available, clearing tokens locally");
-    }
-  }
-
-  // Always clear tokens locally
+  // Simulate API delay
+  await simulateApiDelay(200);
+  
+  // Always clear tokens locally (no backend call needed for mock)
   tokenManager.clearTokens();
+  
+  // Clear user data from localStorage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user");
+  }
 }

@@ -7,12 +7,12 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   FileText,
   BookOpen,
-  Settings
+  BarChart3,
+  Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -34,24 +34,9 @@ const navItems = [
     icon: Users,
   },
   {
-    title: "Calendar",
-    href: "/dashboard/calendar",
-    icon: Calendar,
-  },
-  {
     title: "Reports",
     href: "/dashboard/interview-reports",
     icon: FileText,
-  },
-  {
-    title: "Questions Bank",
-    href: "/dashboard/questions-bank",
-    icon: BookOpen,
-  },
-  {
-    title: "Position Config",
-    href: "/dashboard/interview-config",
-    icon: Settings,
   },
 ]
 

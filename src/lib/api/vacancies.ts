@@ -1,5 +1,5 @@
-import apiClient from './client';
 import { Vacancy } from '@/types';
+import { mockVacancies, mockStats, simulateApiDelay } from '../mock-data';
 
 export interface VacanciesResponse {
   vacancies: Vacancy[];
@@ -21,24 +21,53 @@ export interface VacancyFilters {
 }
 
 export const vacanciesApi = {
-  // Получить все вакансии с фильтрами
+  // Получить все вакансии с фильтрами - MOCKED
   getVacancies: async (filters: VacancyFilters = {}): Promise<VacanciesResponse> => {
-    const params = new URLSearchParams();
+    await simulateApiDelay(500);
     
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        params.append(key, value.toString());
-      }
-    });
-
-    const response = await apiClient.get(`/v1/vacancies?${params.toString()}`);
-    return response.data;
+    let filteredVacancies = [...mockVacancies];
+    
+    // Apply filters
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filteredVacancies = filteredVacancies.filter(v => 
+        v.title.toLowerCase().includes(searchLower) ||
+        v.department.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (filters.department) {
+      filteredVacancies = filteredVacancies.filter(v => v.department === filters.department);
+    }
+    
+    if (filters.status) {
+      filteredVacancies = filteredVacancies.filter(v => v.status === filters.status);
+    }
+    
+    // Apply pagination
+    const page = filters.page || 0;
+    const limit = filters.limit || 10;
+    const start = page * limit;
+    const paginatedVacancies = filteredVacancies.slice(start, start + limit);
+    
+    return {
+      vacancies: paginatedVacancies,
+      total: filteredVacancies.length,
+      page,
+      limit
+    };
   },
 
-  // Получить вакансию по ID
+  // Получить вакансию по ID - MOCKED
   getVacancy: async (id: string): Promise<Vacancy> => {
-    const response = await apiClient.get(`/v1/vacancies/${id}`);
-    return response.data;
+    await simulateApiDelay(300);
+    
+    const vacancy = mockVacancies.find(v => v.id === id);
+    if (!vacancy) {
+      throw new Error('Vacancy not found');
+    }
+    
+    return vacancy;
   },
 
   // Создать новую вакансию (из JSON данных)
@@ -64,7 +93,7 @@ export const vacanciesApi = {
     return response.data;
   },
 
-  // Получить статистику по вакансиям
+  // Получить статистику по вакансиям - MOCKED
   getVacancyStats: async (): Promise<{
     total: number;
     active: number;
@@ -73,17 +102,8 @@ export const vacanciesApi = {
     totalCandidates: number;
     totalInterviews: number;
   }> => {
-    const response = await apiClient.get('/v1/vacancies/stats');
-    const data = response.data;
-    
-    return {
-      total: data.total || 0,
-      active: data.active || 0,
-      paused: 0, // Нет такого статуса в backend
-      closed: data.closed || 0,
-      totalCandidates: 0, // TODO: Добавить подсчет кандидатов
-      totalInterviews: 0  // TODO: Добавить подсчет интервью
-    };
+    await simulateApiDelay(400);
+    return mockStats.vacancies;
   },
 
   // Получить кандидатов по вакансии
@@ -107,17 +127,27 @@ export const vacanciesApi = {
     await apiClient.post(`/v1/vacancies/${id}/pause`);
   },
 
-  // Загрузить и распарсить файл вакансии
+  // Загрузить и распарсить файл вакансии - MOCKED
   uploadVacancyFile: async (file: File): Promise<Vacancy> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await apiClient.post('/v1/vacancies/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    await simulateApiDelay(1500);
+    
+    // Mock parsed vacancy from file
+    const mockParsedVacancy: Vacancy = {
+      id: `vac-${Date.now()}`,
+      title: `Parsed Position from ${file.name}`,
+      department: 'IT',
+      location: 'Moscow',
+      type: 'Full-time',
+      status: 'Active',
+      applicants: 0,
+      interviewed: 0,
+      description: 'This is a parsed job description from the uploaded file.',
+      requirements: ['Requirement 1', 'Requirement 2', 'Requirement 3'],
+      salary: { min: 150000, max: 250000, currency: 'RUB' },
+      createdAt: new Date()
+    };
+    
+    return mockParsedVacancy;
   },
 
   // Предварительный просмотр парсинга файла вакансии (без сохранения)
