@@ -40,6 +40,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // optimizeCss: true, // Disabled - requires additional setup
     optimizePackageImports: ['lucide-react', '@radix-ui/react-*'],
+    serverComponentsExternalPackages: ['resend'],
   },
 
   // Webpack optimization

@@ -19,10 +19,12 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "@/components/ui/use-toast"
 import vacanciesApi from "@/lib/api/vacancies";
 import candidatesApi from "@/lib/api/candidates";
 import interviewsApi from "@/lib/api/interviews";
 import reportsApi from "@/lib/api/reports";
+import { EmailService, type SendInvitationResponse } from "@/lib/emailService";
 import { 
   Brain,
   Clock,
@@ -110,6 +112,8 @@ export default function DashboardPage() {
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isSendingEmails, setIsSendingEmails] = useState(false)
+  const [emailResults, setEmailResults] = useState<SendInvitationResponse | null>(null)
   
   // Question distribution state
   const [questionDistribution, setQuestionDistribution] = useState({
@@ -375,15 +379,15 @@ export default function DashboardPage() {
     // Generate mock candidates after "analysis"
     setTimeout(() => {
       const candidateNames = [
-        "Maria Petrova", "Alexander Smirnov", "Elena Kozlova", 
-        "Ivan Petrov", "Natalia Volkova", "Sergey Ivanov",
-        "Olga Fedorova", "Dmitry Sokolov", "Anna Mikhailova", "Pavel Novikov"
+        "Журавлев Александр Александрович", "Maria Petrova", "Alexander Smirnov", 
+        "Elena Kozlova", "Ivan Petrov", "Natalia Volkova", "Sergey Ivanov",
+        "Olga Fedorova", "Dmitry Sokolov", "Anna Mikhailova"
       ]
       
       const candidateEmails = [
-        "maria@email.com", "alex@email.com", "elena@email.com",
-        "ivan@email.com", "natalia@email.com", "sergey@email.com",
-        "olga@email.com", "dmitry@email.com", "anna@email.com", "pavel@email.com"
+        "a_zhuravlev_9785@mail.ru", "maria@email.com", "alex@email.com",
+        "elena@email.com", "ivan@email.com", "natalia@email.com", "sergey@email.com",
+        "olga@email.com", "dmitry@email.com", "anna@email.com"
       ]
       
       // Generate 8-10 candidates with varied match scores
@@ -400,6 +404,22 @@ export default function DashboardPage() {
         } else {
           // Lower candidates
           matchScore = Math.floor(Math.random() * 20) + 40 // 40-59%
+        }
+        
+        // Специальные данные для Журавлева Александра
+        if (index === 0) {
+          return {
+            id: `candidate-${index}`,
+            name: candidateNames[index],
+            email: candidateEmails[index],
+            phone: "+7 (978) 555-12-34",
+            position: "Senior Full-Stack Developer",
+            matchScore: 94, // Высокий рейтинг для демо
+            skills: ["React", "TypeScript", "Next.js", "Node.js", "JavaScript", "HTML/CSS", "Git", "REST API"],
+            experience: "5+ лет опыта в разработке",
+            status: "analyzing",
+            cvUrl: uploadedCVs[index]?.name || "Журавлев_Александр_Александрович_3.pdf"
+          }
         }
         
         return {
@@ -432,19 +452,69 @@ export default function DashboardPage() {
     }, 5500)
   }
 
-  const sendNotifications = () => {
-    setIsProcessing(true)
+  const sendNotifications = async () => {
+    setIsSendingEmails(true)
+    setEmailResults(null)
     
-    // Simulate sending notifications
-    setTimeout(() => {
+    try {
+      // Собираем выбранных кандидатов из чекбоксов
+      const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="candidate-"]:checked') as NodeListOf<HTMLInputElement>;
+      const selectedIds = Array.from(checkboxes).map(cb => cb.id.replace('candidate-', ''));
+      const selectedCandidatesData = candidates.filter(c => selectedIds.includes(c.id));
+      
+      if (selectedCandidatesData.length === 0) {
+        toast({
+          title: "Ошибка",
+          description: "Выберите хотя бы одного кандидата для отправки приглашений",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Отправляем приглашения через EmailService
+      const result = await EmailService.sendInvitations(
+        selectedCandidatesData.map(c => ({
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          score: c.matchScore
+        })),
+        {
+          title: vacancyData.title || 'Software Developer',
+          company: 'ВТБ'
+        }
+      );
+      
+      setEmailResults(result);
+      
+      // Обновляем статус кандидатов
+      const successfulCandidateIds = EmailService.getSuccessfulCandidates(result).map(r => r.candidateId);
       setCandidates(prev => prev.map(c => 
-        selectedCandidates.includes(c.id) 
+        successfulCandidateIds.includes(c.id) 
           ? { ...c, status: "notified" as const }
           : c
-      ))
-      setIsProcessing(false)
-      setCurrentStep("complete")
-    }, 2000)
+      ));
+      
+      // Показываем результат
+      const message = EmailService.formatSendResults(result);
+      toast({
+        title: result.summary.sent > 0 ? "Приглашения отправлены" : "Ошибка отправки",
+        description: message,
+        variant: result.summary.sent > 0 ? "default" : "destructive"
+      });
+      
+      setCurrentStep("complete");
+      
+    } catch (error) {
+      console.error('Ошибка при отправке приглашений:', error);
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Не удалось отправить приглашения",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingEmails(false);
+    }
   }
 
   const handleQuestionDistributionChange = (type: 'technical' | 'behavioral' | 'experience', value: number) => {
@@ -897,18 +967,21 @@ export default function DashboardPage() {
                             Назад
                           </Button>
                           <Button 
-                            onClick={() => {
-                              // Собираем выбранных кандидатов
-                              const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="candidate-"]:checked') as NodeListOf<HTMLInputElement>;
-                              const selectedIds = Array.from(checkboxes).map(cb => cb.id.replace('candidate-', ''));
-                              const selected = candidates.filter(c => selectedIds.includes(c.id));
-                              setSelectedCandidates(selected);
-                              setCurrentStep("complete");
-                            }}
-                            disabled={false}
+                            onClick={sendNotifications}
+                            disabled={isSendingEmails}
+                            className="bg-[#1B4F8C] hover:bg-[#163c6e]"
                           >
-                            Отправить приглашения ({selectedCandidates.length})
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            {isSendingEmails ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Отправка писем...
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Отправить приглашения
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -920,14 +993,72 @@ export default function DashboardPage() {
 
               {/* Step 4: Complete */}
               {currentStep === "complete" && (
-                <div className="space-y-4 text-center py-8">
+                <div className="space-y-6 text-center py-8">
                   <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold">Шаг 4: Процесс завершен!</h3>
+                  <h3 className="text-xl font-semibold">Процесс завершен!</h3>
                   <p className="text-muted-foreground">
-                    Ваша вакансия и резюме успешно загружены
+                    Приглашения на интервью отправлены выбранным кандидатам
                   </p>
+                  
+                  {/* Email Results Summary */}
+                  {emailResults && (
+                    <div className="max-w-md mx-auto">
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-900">Результаты отправки:</h4>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-600">{emailResults.summary.total}</div>
+                            <div className="text-xs text-gray-600">Всего</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-green-600">{emailResults.summary.sent}</div>
+                            <div className="text-xs text-gray-600">Отправлено</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-red-600">{emailResults.summary.failed}</div>
+                            <div className="text-xs text-gray-600">Ошибки</div>
+                          </div>
+                        </div>
+                        
+                        {/* Show successful candidates */}
+                        {EmailService.getSuccessfulCandidates(emailResults).length > 0 && (
+                          <div className="text-left">
+                            <h5 className="font-medium text-xs text-gray-700 mb-2">Приглашения отправлены:</h5>
+                            <div className="space-y-1">
+                              {EmailService.getSuccessfulCandidates(emailResults).map((result) => {
+                                const candidate = candidates.find(c => c.id === result.candidateId);
+                                return (
+                                  <div key={result.candidateId} className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-700">{candidate?.name}</span>
+                                    <span className="text-green-600 font-mono">{result.mockEmail}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Show failed candidates */}
+                        {EmailService.getFailedCandidates(emailResults).length > 0 && (
+                          <div className="text-left">
+                            <h5 className="font-medium text-xs text-red-700 mb-2">Ошибки отправки:</h5>
+                            <div className="space-y-1">
+                              {EmailService.getFailedCandidates(emailResults).map((result) => {
+                                const candidate = candidates.find(c => c.id === result.candidateId);
+                                return (
+                                  <div key={result.candidateId} className="text-xs text-red-600">
+                                    {candidate?.name}: {result.error}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   
                   <Button 
                     onClick={() => {
@@ -935,6 +1066,7 @@ export default function DashboardPage() {
                       setUploadedCVs([])
                       setCandidates([])
                       setSelectedCandidates([])
+                      setEmailResults(null)
                     }}
                     className="mt-4"
                   >
