@@ -144,6 +144,30 @@ export const mockVacancies: Vacancy[] = [
       { id: "9", name: "Tom Garcia", matchScore: 82 },
       { id: "10", name: "Anna Martinez", matchScore: 89 }
     ]
+  },
+  {
+    id: "vac-5",
+    title: "ИТ-специалист",
+    department: "ИТ",
+    location: "Москва",
+    type: "Full-time",
+    status: "Active",
+    applicants: 15,
+    interviewed: 4,
+    description: "Ищем опытного ИТ-специалиста для поддержки и развития корпоративной ИТ-инфраструктуры банка.",
+    requirements: [
+      "Высшее техническое образование",
+      "Опыт работы с корпоративными ИТ-системами от 3 лет",
+      "Знание Windows Server, Active Directory",
+      "Опыт администрирования баз данных",
+      "Навыки работы с сетевым оборудованием",
+      "Понимание принципов информационной безопасности"
+    ],
+    salary: { min: 120000, max: 180000, currency: "RUB" },
+    createdAt: new Date("2024-01-30"),
+    candidates: [
+      { id: "87", name: "Журавлев Александр Александрович", matchScore: 94 }
+    ]
   }
 ];
 

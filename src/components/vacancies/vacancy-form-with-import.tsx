@@ -25,7 +25,8 @@ import {
   CheckCircle,
   Globe,
   Import,
-  Upload
+  Upload,
+  Edit
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,7 +62,7 @@ interface VacancyFormProps {
 
 export default function VacancyFormWithImport({ mode, initialData }: VacancyFormProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"manual" | "import" | "file">("manual")
+  const [activeTab, setActiveTab] = useState<"file">("file")
   const [importUrl, setImportUrl] = useState("")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -326,129 +327,33 @@ export default function VacancyFormWithImport({ mode, initialData }: VacancyForm
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 pb-20 md:pb-6 md:p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Button 
-            variant="ghost" 
-            onClick={() => router.back()}
-            className="mb-2"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {mode === "create" ? "Create New Vacancy" : "Edit Vacancy"}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-gray-900">
+            {mode === "create" ? "Создать новую вакансию" : "Редактировать вакансию"}
           </h2>
-          <p className="text-muted-foreground">
-            {mode === "create" 
-              ? "Import from job site or fill in the details manually" 
-              : "Update vacancy information"}
-          </p>
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Назад
+          </Button>
         </div>
-      </div>
 
-      {/* Import/Manual/File Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "manual" | "import" | "file")}>
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
-          <TabsTrigger value="manual" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Manual Entry
-          </TabsTrigger>
-          <TabsTrigger value="import" className="flex items-center gap-2">
-            <Import className="h-4 w-4" />
-            Import from URL
-          </TabsTrigger>
-          <TabsTrigger value="file" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Upload File
-          </TabsTrigger>
-        </TabsList>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Загрузить вакансию
+            </h3>
+            <p className="text-sm text-gray-600">
+              Загрузите файл с описанием вакансии
+            </p>
+          </div>
 
-        {/* Import Tab */}
-        <TabsContent value="import" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Import Vacancy from Job Site
-              </CardTitle>
-              <CardDescription>
-                Paste a URL from a job posting and we'll automatically extract the information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* URL Input */}
-              <div className="space-y-2">
-                <Label htmlFor="import-url">Job Posting URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="import-url"
-                    type="url"
-                    placeholder="https://hh.ru/vacancy/12345678"
-                    value={importUrl}
-                    onChange={(e) => setImportUrl(e.target.value)}
-                    disabled={isImporting}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleImportFromUrl}
-                    disabled={isImporting || !importUrl.trim()}
-                  >
-                    {isImporting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Parsing...
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="mr-2 h-4 w-4" />
-                        Import
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Import Status */}
-              {importStatus.type && (
-                <Alert variant={importStatus.type === "error" ? "destructive" : "default"}>
-                  {importStatus.type === "success" && <CheckCircle className="h-4 w-4" />}
-                  {importStatus.type === "error" && <AlertCircle className="h-4 w-4" />}
-                  {importStatus.type === "info" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <AlertTitle>
-                    {importStatus.type === "success" && "Success!"}
-                    {importStatus.type === "error" && "Error"}
-                    {importStatus.type === "info" && "Processing"}
-                  </AlertTitle>
-                  <AlertDescription>
-                    {importStatus.message}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Supported Sites */}
-              <div className="space-y-3">
-                <Label>Supported Job Sites</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {supportedSites.map((site) => (
-                    <div key={site.domain} className="flex items-center gap-2 p-2 border rounded-lg">
-                      <span className="text-lg">{site.icon}</span>
-                      <span className="text-sm">{site.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  More job sites will be added soon. Contact support to request a specific site.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* File Upload Tab */}
-        <TabsContent value="file" className="space-y-4">
+          <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -569,289 +474,8 @@ export default function VacancyFormWithImport({ mode, initialData }: VacancyForm
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Manual Entry Tab */}
-        <TabsContent value="manual" className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Basic Information
-              </CardTitle>
-              <CardDescription>
-                Essential details about the position
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Job Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange("title", e.target.value)}
-                    placeholder="e.g., Senior React Developer"
-                  />
-                  {errors.title && (
-                    <p className="text-sm text-red-500">{errors.title}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department *</Label>
-                  <Select
-                    value={formData.department}
-                    onValueChange={(value) => handleInputChange("department", value)}
-                  >
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Engineering">Engineering</SelectItem>
-                      <SelectItem value="Product">Product</SelectItem>
-                      <SelectItem value="Design">Design</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="HR">Human Resources</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.department && (
-                    <p className="text-sm text-red-500">{errors.department}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange("location", e.target.value)}
-                    placeholder="e.g., Moscow, Russia"
-                  />
-                  {errors.location && (
-                    <p className="text-sm text-red-500">{errors.location}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="type">Employment Type</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) => handleInputChange("type", value)}
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Full-time">Full-time</SelectItem>
-                      <SelectItem value="Part-time">Part-time</SelectItem>
-                      <SelectItem value="Contract">Contract</SelectItem>
-                      <SelectItem value="Internship">Internship</SelectItem>
-                      <SelectItem value="Remote">Remote</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Experience Level</Label>
-                  <Input
-                    id="experience"
-                    value={formData.experience}
-                    onChange={(e) => handleInputChange("experience", e.target.value)}
-                    placeholder="e.g., 3-5 years"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Salary Range</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      value={formData.salaryMin}
-                      onChange={(e) => handleInputChange("salaryMin", e.target.value)}
-                      placeholder="Min"
-                    />
-                    <Input
-                      type="number"
-                      value={formData.salaryMax}
-                      onChange={(e) => handleInputChange("salaryMax", e.target.value)}
-                      placeholder="Max"
-                    />
-                    <Select
-                      value={formData.currency}
-                      onValueChange={(value) => handleInputChange("currency", value)}
-                    >
-                      <SelectTrigger className="w-24">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="RUB">RUB</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Job Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Job Description</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  placeholder="Describe the role, team, and what makes this opportunity exciting..."
-                  rows={6}
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-500">{errors.description}</p>
-                )}
-              </div>
-
-              {/* Responsibilities */}
-              <div className="space-y-2">
-                <Label>Key Responsibilities</Label>
-                {formData.responsibilities.map((resp, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={resp}
-                      onChange={(e) => handleArrayFieldChange("responsibilities", index, e.target.value)}
-                      placeholder="Enter a responsibility"
-                    />
-                    {formData.responsibilities.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeArrayField("responsibilities", index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addArrayField("responsibilities")}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Responsibility
-                </Button>
-              </div>
-
-              {/* Requirements */}
-              <div className="space-y-2">
-                <Label>Requirements</Label>
-                {formData.requirements.map((req, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={req}
-                      onChange={(e) => handleArrayFieldChange("requirements", index, e.target.value)}
-                      placeholder="Enter a requirement"
-                    />
-                    {formData.requirements.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeArrayField("requirements", index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addArrayField("requirements")}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Requirement
-                </Button>
-              </div>
-
-              {/* Benefits */}
-              <div className="space-y-2">
-                <Label>Benefits & Perks</Label>
-                {formData.benefits.map((benefit, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={benefit}
-                      onChange={(e) => handleArrayFieldChange("benefits", index, e.target.value)}
-                      placeholder="Enter a benefit"
-                    />
-                    {formData.benefits.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeArrayField("benefits", index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addArrayField("benefits")}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Benefit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => router.back()}>
-              Cancel
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSubmit("draft")}
-              disabled={isSubmitting}
-            >
-              Save as Draft
-            </Button>
-            <Button
-              onClick={() => handleSubmit("published")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Publish Vacancy
-                </>
-              )}
-            </Button>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   )
 }

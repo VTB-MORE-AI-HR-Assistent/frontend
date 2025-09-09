@@ -2,7 +2,7 @@ name: CI/CD & Deploy
 
 on:
   push:
-    branches: [main, master, dev, prod-deploy]
+    branches: [main, master, dev, prod-deploy, mock]
   pull_request:
     branches: [main, master, dev]
   workflow_dispatch: # Allow manual trigger
@@ -43,7 +43,7 @@ jobs:
   build-and-deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prod-deploy' || github.event_name == 'workflow_dispatch' # Deploy from main, prod-deploy branches or manual trigger
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/mock'  || github.ref == 'refs/heads/prod-deploy' || github.event_name == 'workflow_dispatch' # Deploy from main, prod-deploy branches or manual trigger
 
     steps:
       - name: Checkout code
