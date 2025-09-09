@@ -110,7 +110,7 @@ export function DashboardHeader() {
               <Button variant="ghost" size="icon" className="rounded-full">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB]">
                   <span className="text-xs font-medium text-white">
-                    {user?.name?.split(' ').map(n => n[0]).join('') || 'HR'}
+                    {user?.name?.split(' ')?.map(n => n[0])?.join('') || 'HR'}
                   </span>
                 </div>
               </Button>

@@ -578,7 +578,7 @@ export default function VacanciesPage() {
                                     />
                                     <Avatar className="h-8 w-8">
                                       <AvatarFallback className="text-xs">
-                                        {candidate.name.split(' ').map(n => n[0]).join('')}
+                                        {candidate.name?.split(' ')?.map(n => n[0])?.join('') || 'N/A'}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div>

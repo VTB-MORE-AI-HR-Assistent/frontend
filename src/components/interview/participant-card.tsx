@@ -59,7 +59,7 @@ export function ParticipantCard({
   }, [isActiveSpeaker, isMuted])
 
   // Generate avatar initials if not provided
-  const avatarInitials = initials || name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const avatarInitials = initials || name?.split(' ')?.map(n => n[0])?.join('')?.toUpperCase()?.slice(0, 2) || 'XX'
 
   // Connection quality colors
   const connectionColors = {

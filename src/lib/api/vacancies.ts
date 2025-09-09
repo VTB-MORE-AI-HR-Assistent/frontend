@@ -64,7 +64,6 @@ export const vacanciesApi = {
     return response.data;
   },
 
-  // ЗАМЕТКА: Эти эндпоинты НЕ СУЩЕСТВУЮТ в backend - требуют реализации
   // Получить статистику по вакансиям
   getVacancyStats: async (): Promise<{
     total: number;
@@ -74,32 +73,38 @@ export const vacanciesApi = {
     totalCandidates: number;
     totalInterviews: number;
   }> => {
-    // TODO: Добавить в backend job-service
-    throw new Error('API endpoint /api/v1/vacancies/stats not implemented in backend');
+    const response = await apiClient.get('/v1/vacancies/stats');
+    const data = response.data;
+    
+    return {
+      total: data.total || 0,
+      active: data.active || 0,
+      paused: 0, // Нет такого статуса в backend
+      closed: data.closed || 0,
+      totalCandidates: 0, // TODO: Добавить подсчет кандидатов
+      totalInterviews: 0  // TODO: Добавить подсчет интервью
+    };
   },
 
   // Получить кандидатов по вакансии
   getVacancyCandidates: async (id: string): Promise<any[]> => {
-    // TODO: Добавить в backend job-service
-    throw new Error('API endpoint /api/v1/vacancies/{id}/candidates not implemented in backend');
+    const response = await apiClient.get(`/v1/vacancies/${id}/candidates`);
+    return response.data;
   },
 
   // Архивировать вакансию
   archiveVacancy: async (id: string): Promise<void> => {
-    // TODO: Добавить в backend job-service
-    throw new Error('API endpoint /api/v1/vacancies/{id}/archive not implemented in backend');
+    await apiClient.post(`/v1/vacancies/${id}/archive`);
   },
 
   // Опубликовать вакансию
   publishVacancy: async (id: string): Promise<void> => {
-    // TODO: Добавить в backend job-service
-    throw new Error('API endpoint /api/v1/vacancies/{id}/publish not implemented in backend');
+    await apiClient.post(`/v1/vacancies/${id}/publish`);
   },
 
   // Приостановить вакансию
   pauseVacancy: async (id: string): Promise<void> => {
-    // TODO: Добавить в backend job-service
-    throw new Error('API endpoint /api/v1/vacancies/{id}/pause not implemented in backend');
+    await apiClient.post(`/v1/vacancies/${id}/pause`);
   }
 };
 

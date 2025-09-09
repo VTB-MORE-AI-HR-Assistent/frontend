@@ -139,33 +139,60 @@ export default function DashboardPage() {
       try {
         setIsLoading(true)
         
-        // Load stats from all services
+        // Load stats from all services with individual error handling
+        const loadWithTimeout = (promise: Promise<any>, timeout: number, fallback: any) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout')), timeout)
+            )
+          ]).catch(() => fallback);
+        };
+
         const [vacancyStats, candidateStats, interviewStats, reportStats] = await Promise.all([
-          vacanciesApi.getVacancyStats(),
-          candidatesApi.getCandidateStats(),
-          interviewsApi.getInterviewStats(),
-          reportsApi.getRecentReports({ limit: 5 })
+          loadWithTimeout(vacanciesApi.getVacancyStats(), 5000, { active: 0, total: 0 }),
+          loadWithTimeout(candidatesApi.getCandidateStats(), 5000, { total: 0 }),
+          loadWithTimeout(interviewsApi.getInterviewStats(), 3000, { scheduled: 0 }),
+          loadWithTimeout(reportsApi.getRecentReports({ limit: 5 }), 5000, { total: 0, reports: [] })
         ])
 
         setStats({
-          openPositions: vacancyStats.active,
-          totalCandidates: candidateStats.total,
-          interviewsToday: interviewStats.scheduled,
-          pendingReviews: reportStats.total
+          openPositions: vacancyStats?.active || 0,
+          totalCandidates: candidateStats?.total || 0,
+          interviewsToday: interviewStats?.scheduled || 0,
+          pendingReviews: reportStats?.total || 0
         })
 
-        // Load top candidates
-        const candidatesResponse = await candidatesApi.getCandidates({
-          sortBy: 'matchScore',
-          sortOrder: 'desc',
-          limit: 10
-        })
-        setTopCandidates(candidatesResponse.candidates)
+        // Load top candidates with error handling
+        try {
+          const candidatesResponse = await loadWithTimeout(
+            candidatesApi.getCandidates({
+              sortBy: 'matchScore',
+              sortOrder: 'desc',
+              limit: 10
+            }),
+            5000,
+            { candidates: [] }
+          );
+          setTopCandidates(candidatesResponse?.candidates || [])
+        } catch (error) {
+          console.warn('Failed to load candidates:', error)
+          setTopCandidates([])
+        }
         
-        setRecentReports(reportStats.reports || [])
+        setRecentReports(reportStats?.reports || [])
         
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
+        // Set fallback values to prevent crashes
+        setStats({
+          openPositions: 0,
+          totalCandidates: 0,
+          interviewsToday: 0,
+          pendingReviews: 0
+        })
+        setTopCandidates([])
+        setRecentReports([])
       } finally {
         setIsLoading(false)
       }
@@ -187,16 +214,31 @@ export default function DashboardPage() {
         const startOfDay = new Date(today.setHours(0, 0, 0, 0))
         const endOfDay = new Date(today.setHours(23, 59, 59, 999))
         
-        const interviewsResponse = await interviewsApi.getInterviews({
-          dateFrom: startOfDay.toISOString(),
-          dateTo: endOfDay.toISOString(),
-          sortBy: 'scheduledAt',
-          sortOrder: 'asc'
-        })
+        // Add timeout handling for interviews API
+        const loadWithTimeout = (promise: Promise<any>, timeout: number, fallback: any) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout')), timeout)
+            )
+          ]).catch(() => fallback);
+        };
         
-        setTodayInterviews(interviewsResponse.interviews)
+        const interviewsResponse = await loadWithTimeout(
+          interviewsApi.getInterviews({
+            dateFrom: startOfDay.toISOString(),
+            dateTo: endOfDay.toISOString(),
+            sortBy: 'scheduledAt',
+            sortOrder: 'asc'
+          }),
+          3000,
+          { interviews: [] }
+        );
+        
+        setTodayInterviews(interviewsResponse?.interviews || [])
       } catch (error) {
         console.error('Failed to load today interviews:', error)
+        setTodayInterviews([])
       }
     }
 
@@ -209,15 +251,31 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadTopVacancies = async () => {
       try {
-        const vacanciesResponse = await vacanciesApi.getVacancies({
-          status: 'active',
-          sortBy: 'applicants',
-          sortOrder: 'desc',
-          limit: 4
-        })
-        setTopVacancies(vacanciesResponse.vacancies)
+        // Add timeout handling for vacancies API
+        const loadWithTimeout = (promise: Promise<any>, timeout: number, fallback: any) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout')), timeout)
+            )
+          ]).catch(() => fallback);
+        };
+        
+        const vacanciesResponse = await loadWithTimeout(
+          vacanciesApi.getVacancies({
+            status: 'active',
+            sortBy: 'applicants',
+            sortOrder: 'desc',
+            limit: 4
+          }),
+          5000,
+          { vacancies: [] }
+        );
+        
+        setTopVacancies(vacanciesResponse?.vacancies || [])
       } catch (error) {
         console.error('Failed to load top vacancies:', error)
+        setTopVacancies([])
       }
     }
 
@@ -1192,7 +1250,7 @@ export default function DashboardPage() {
                                       ? 'bg-yellow-100 text-yellow-700'
                                       : 'bg-gray-100 text-gray-700'
                                 }>
-                                  {candidate.name.split(' ').map(n => n[0]).join('')}
+                                  {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="space-y-1">
@@ -1298,7 +1356,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-3">
                               <Avatar>
                                 <AvatarFallback>
-                                  {candidate.name.split(' ').map(n => n[0]).join('')}
+                                  {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
@@ -1581,7 +1639,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 p-2 rounded-lg border hover:bg-gray-50 hover:border-[#1B4F8C]/20 transition-all cursor-pointer">
                     {/* Avatar - simple without badge */}
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] flex items-center justify-center text-white font-semibold text-xs">
-                      {candidate.name.split(' ').map(n => n[0]).join('')}
+                      {candidate.name?.split(' ').map(n => n[0]).join('') || 'N/A'}
                     </div>
                     
                     {/* Candidate Info - just name and position */}

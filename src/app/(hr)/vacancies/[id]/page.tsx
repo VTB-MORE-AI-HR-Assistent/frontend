@@ -470,7 +470,7 @@ export default function VacancyDetailPage() {
                     <div className="flex items-start gap-4">
                       <Avatar className="h-12 w-12">
                         <AvatarFallback>
-                          {cv.candidateName.split(' ').map(n => n[0]).join('')}
+                          {cv.candidateName?.split(' ')?.map(n => n[0])?.join('') || 'N/A'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-1">
@@ -654,7 +654,7 @@ export default function VacancyDetailPage() {
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarFallback>
-                          {vacancy.hiringManager.name.split(' ').map(n => n[0]).join('')}
+                          {vacancy.hiringManager.name?.split(' ')?.map(n => n[0])?.join('') || 'HM'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -681,7 +681,7 @@ export default function VacancyDetailPage() {
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarFallback>
-                          {vacancy.recruiter.name.split(' ').map(n => n[0]).join('')}
+                          {vacancy.recruiter.name?.split(' ')?.map(n => n[0])?.join('') || 'R'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">

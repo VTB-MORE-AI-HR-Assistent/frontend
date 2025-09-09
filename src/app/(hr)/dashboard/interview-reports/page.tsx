@@ -260,9 +260,9 @@ export default function InterviewReportsPage() {
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="text-xs">
                             {report.candidateName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                              ?.split(" ")
+                              ?.map((n) => n[0])
+                              ?.join("") || 'N/A'}
                           </AvatarFallback>
                         </Avatar>
                         <div>

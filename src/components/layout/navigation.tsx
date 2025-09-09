@@ -258,7 +258,7 @@ export function Navigation({ user }: NavigationProps) {
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="bg-gradient-to-br from-[#1B4F8C] to-[#2563EB] text-white">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {user.name?.split(' ')?.map(n => n[0])?.join('') || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

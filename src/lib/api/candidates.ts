@@ -176,8 +176,8 @@ export const candidatesApi = {
     hired: number;
     rejected: number;
   }> => {
-    // TODO: Добавить в backend candidate-service
-    throw new Error('API endpoint /api/v1/candidates/stats not implemented in backend');
+    const response = await apiClient.get('/v1/candidates/stats');
+    return response.data;
   },
 
   // ЗАМЕТКА: Все нижеперечисленные эндпоинты НЕ РЕАЛИЗОВАНЫ в backend
